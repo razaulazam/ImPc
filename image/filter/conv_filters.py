@@ -69,7 +69,7 @@ def corr2d(
 
 # -------------------------------------------------------------------------
 
-def blur(
+def average_blur(
     image: PyFaroImage,
     kernel_size: Union[List[int], Tuple[int, int]],
     normalize: Optional[bool] = True,
@@ -123,9 +123,18 @@ def blur(
 
 # -------------------------------------------------------------------------
 
+def gaussian_blur(
+    image: PyFaroImage,
+    kernel_size: Union[List[int], Tuple[int, int]],
+    sigma_x: float,
+    sigma_y: Optional[float] = 0.0,
+    border_type: Optional[str] = "default"
+) -> PyFaroImage:
+    ...
 
 if __name__ == "__main__":
     path_image = "C:\\dev\\pyfaro\\sample.jpg"
     a = cv2.imread(path_image)
     b = cv2.blur(a, (1000, 1000))
+    c = cv2.getGaussianKernel(ksize=5, sigma=0.1)
     print("hallo")

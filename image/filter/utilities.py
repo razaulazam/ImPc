@@ -14,7 +14,7 @@ ALLOWED_KERNELS = {
 
 # -------------------------------------------------------------------------
 
-def get_kernel(kernel_shape: str, kernel_size: Union[List[int], Tuple[int, int]]):
+def get_kernel(kernel_shape: str, kernel_size: Union[List[int], Tuple[int, int]]) -> namedtuple:
     if not isinstance(kernel_shape, str):
         raise WrongArgumentsType(
             "Please check the type of the first argument. Only strings are allowed"
@@ -26,21 +26,17 @@ def get_kernel(kernel_shape: str, kernel_size: Union[List[int], Tuple[int, int]]
             "Provided shape of the kernel is currently not supported. Please provide it yourself or stick to the provided ones by the library"
         )
 
-    if not isinstance(kernel_size, (tuple, int)):
+    if not isinstance(kernel_size, (tuple, list)):
         raise WrongArgumentsType(
             "Please check the type of the size argument. Only tuples and lists are allowed"
         )
-
-    if not isinstance(kernel_size[0], int) or not isinstance(kernel_size[1], int):
-        raise WrongArgumentsValue("Only integers are accepted for the kernel size")
-
+        
     if len(kernel_size) != 2:
         raise WrongArgumentsValue("Expected a tuple/list of length two for the kernel size")
 
     if not all(i > 0 for i in kernel_size):
         raise WrongArgumentsValue(
-            "Provided size for the kernel is not accurate. Please check again"
-        )
+            "Provided width or height of the kernel is negative which is not allowed")
 
     structuring_element = cv2.getStructuringElement(shape_strategy, kernel_size)
     _pyfaro_array = namedtuple("PyFaroArray", "array_")
