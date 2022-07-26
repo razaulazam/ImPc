@@ -80,7 +80,7 @@ def average_blur(
 
     image_array_check_conversion(image, "openCV")
 
-    if not isinstance(kernel_size, (Tuple, List)):
+    if not isinstance(kernel_size, (tuple, list)):
         raise WrongArgumentsType("Kernel size can only be defined in form of a tuple or list")
 
     if len(kernel_size) != 2:
@@ -130,11 +130,31 @@ def gaussian_blur(
     sigma_y: Optional[float] = 0.0,
     border_type: Optional[str] = "default"
 ) -> PyFaroImage:
-    ...
+    """Warp border is not supported here. It is better to supply both the kernel size and the sigma_x. If the kernel size is zero
+    then it is computed from the sigma's provided by the user. If sigma_y is zero, it is computed from sigma_x. If both sigma_x and sigma_y is 
+    zero then it is computed from the kernel_size."""
+
+    image_array_check_conversion(image, "openCV")
+
+    if not isinstance(kernel_size, (tuple, list)):
+        raise WrongArgumentsType("Kernel size can only be defined in form of a tuple or list")
+
+    if len(kernel_size) != 2:
+        raise WrongArgumentsValue("Kernal size can only span in the height and the width direction")
+
+    if not all(i > 0 for i in kernel_size):
+        raise WrongArgumentsValue("Kernel size cannot be negative")
+    
+    if all(i == 0 for i in kernel_size):
+        DefaultSetting("Kernel size would be computed from the standard deviations both in the x and y direction")
+        
+    if not isinstance(sigma_x, (int, float)):
+        raise WrongArgumentsType("Provided value of sigma in the x direction does not have the accurate type")
+    
 
 if __name__ == "__main__":
     path_image = "C:\\dev\\pyfaro\\sample.jpg"
     a = cv2.imread(path_image)
-    b = cv2.blur(a, (1000, 1000))
+    b = cv2.blur(a, (10, 10))
     c = cv2.getGaussianKernel(ksize=5, sigma=0.1)
     print("hallo")
