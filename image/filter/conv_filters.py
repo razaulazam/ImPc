@@ -1,10 +1,11 @@
+from tabnanny import check
 import cv2
 import numpy as np
 
 from typing import Union, Optional, Tuple, List
 from collections import namedtuple
 from commons.exceptions import FilteringError, WrongArgumentsType, WrongArgumentsValue
-from commons.warning import DefaultSetting
+from commons.warning import DefaultSetting, ImageDataTypeConversion
 from image.load._interface import PyFaroImage
 from image._decorators import check_image_exist_external
 from image._helpers import image_array_check_conversion, check_user_provided_ndarray
@@ -69,6 +70,7 @@ def corr2d(
 
 # -------------------------------------------------------------------------
 
+@check_image_exist_external
 def average_blur(
     image: PyFaroImage,
     kernel_size: Union[List[int], Tuple[int, int]],
@@ -123,12 +125,13 @@ def average_blur(
 
 # -------------------------------------------------------------------------
 
+@check_image_exist_external
 def gaussian_blur(
     image: PyFaroImage,
     kernel_size: Union[List[int], Tuple[int, int]],
     sigma_x: float,
     sigma_y: Optional[float] = 0.0,
-    border_type: Optional[str] = "default"
+    border: Optional[str] = "default"
 ) -> PyFaroImage:
     """Warp border is not supported here. It is better to supply both the kernel size and the sigma_x. If the kernel size is zero
     then it is computed from the sigma's provided by the user. If sigma_y is zero, it is computed from sigma_x. If both sigma_x and sigma_y is 
@@ -144,17 +147,98 @@ def gaussian_blur(
 
     if not all(i > 0 for i in kernel_size):
         raise WrongArgumentsValue("Kernel size cannot be negative")
-    
+
     if all(i == 0 for i in kernel_size):
-        DefaultSetting("Kernel size would be computed from the standard deviations both in the x and y direction")
-        
+        DefaultSetting(
+            "Kernel size would be computed from the standard deviations both in the x and y direction"
+        )
+
     if not isinstance(sigma_x, (int, float)):
-        raise WrongArgumentsType("Provided value of sigma in the x direction does not have the accurate type")
+        raise WrongArgumentsType(
+            "Provided value of sigma in the x direction does not have the accurate type"
+        )
+
+    if not isinstance(sigma_y, (float, int)):
+        raise WrongArgumentsType(
+            "Provided value of sigma in the y direction does not have the accurate type"
+        )
+
+    if not isinstance(border, str):
+        raise WrongArgumentsType("Border argument can only be specified as a string")
+
+    if border == "wrap":
+        DefaultSetting(
+            "Provided border option is not supported for this operation. Using the default strategy (reflect)"
+        )
+        border_actual = BORDER_INTERPOLATION["default"]
+    else:
+        border_actual = BORDER_INTERPOLATION.get(border, "None")
+
+    if not border_actual:
+        DefaultSetting(
+            "Provided border option is not supported by the library currently. Using the default strategy (reflect)"
+        )
+        border_actual = BORDER_INTERPOLATION["default"]
+
+    try:
+        new_im = image.copy()
+        new_im.image = cv2.GaussianBlur(
+            new_im.image, kernel_size, sigma_x, sigma_y, borderType=border_actual
+        )
+        new_im.update_file_stream()
+        new_im.set_loader_properties()
+    except Exception as e:
+        raise FilteringError("Failed to filter the image") from e
     
+    return new_im
+
+# -------------------------------------------------------------------------
+
+@check_image_exist_external
+def median_blur(image: PyFaroImage, kernel_size: Union[List[int], Tuple[int, int]]) -> PyFaroImage:
+    """Kernel size has to be odd. Different data types for different kernel size"""
+
+    image_array_check_conversion(image, "openCV")
+
+    if not isinstance(kernel_size, (tuple, list)):
+        raise WrongArgumentsType("Kernel size can only be defined as either tuple or list")
+
+    if len(kernel_size) != 2:
+        raise WrongArgumentsValue("Kernal size can only span in the height and the width direction")
+
+    if kernel_size[0] != kernel_size[1]:
+        raise WrongArgumentsValue("Kernel should have the same width and the height dimension")
+
+    if not all(i > 1 for i in kernel_size):
+        raise WrongArgumentsValue("Kernel size should be positive and greater than 1")
+
+    if kernel_size[0] % 2 == 0:
+        raise WrongArgumentsValue("Kernel width/height should be an odd integer")
+
+    if kernel_size > 5 and image.dtype != np.uint8:
+        ImageDataTypeConversion("Converting the image type to uint8 since for kernel sizes > 5 only this type is supported")
+        image.image = image.image.astype(np.uint8)
+        image.update_file_stream()
+        image.set_loader_properties()
+
+    try:
+        new_im = image.copy()
+        new_im.image = cv2.medianBlur(
+            new_im.image, kernel_size[0]
+        )
+        new_im.update_file_stream()
+        new_im.set_loader_properties()
+    except Exception as e:
+        raise FilteringError("Failed to filter the image") from e
+    
+    return new_im
+
+# -------------------------------------------------------------------------
 
 if __name__ == "__main__":
     path_image = "C:\\dev\\pyfaro\\sample.jpg"
     a = cv2.imread(path_image)
-    b = cv2.blur(a, (10, 10))
+    a = a.astype(np.float32)
+    b = cv2.medianBlur(a, 7)
     c = cv2.getGaussianKernel(ksize=5, sigma=0.1)
     print("hallo")
