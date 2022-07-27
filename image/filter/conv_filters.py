@@ -1,4 +1,5 @@
 import cv2
+from cv2 import BRISK
 import numpy as np
 
 from typing import Union, Optional, Tuple, List
@@ -59,7 +60,9 @@ def corr2d(
 
     try:
         new_im = image.copy()
-        new_im.image = cv2.filter2D(new_im.image, -1, kernel, delta=delta, borderType=border_actual)
+        new_im.image = cv2.filter2D(
+            new_im.image, -1, kernel, delta=float(delta), borderType=border_actual
+        )
         new_im.update_file_stream()
         new_im.set_loader_properties()
     except Exception as e:
@@ -110,6 +113,7 @@ def average_blur(
         )
         border_actual = BORDER_INTERPOLATION["default"]
 
+    kernel_size = [int(i) for i in kernel_size]
     try:
         new_im = image.copy()
         new_im.image = cv2.boxFilter(
@@ -179,6 +183,7 @@ def gaussian_blur(
         )
         border_actual = BORDER_INTERPOLATION["default"]
 
+    kernel_size = [int(i) for i in kernel_size]
     try:
         new_im = image.copy()
         new_im.image = cv2.GaussianBlur(
@@ -236,9 +241,14 @@ def median_blur(image: PyFaroImage, kernel_size: Union[List[int], Tuple[int, int
 
 @check_image_exist_external
 def bilateral_filter(
-    image: PyFaroImage, kernel_diameter: int, color_sigma: float, spatial_sigma: float, border: str
+    image: PyFaroImage,
+    kernel_diameter: int,
+    color_sigma: float,
+    spatial_sigma: float,
+    border: Optional[str] = "default"
 ) -> PyFaroImage:
     """Only 8-bit and 32-bit floating point images are supported"""
+    """These fail idk why"""
 
     image_array_check_conversion(image, "openCV")
 
@@ -251,11 +261,46 @@ def bilateral_filter(
         image.set_loader_properties()
 
     if not isinstance(kernel_diameter, (float, int)):
-        ...
+        raise WrongArgumentsType("Diameter value can only be either an integer or float value")
+
+    if kernel_diameter < 0:
+        DefaultSetting("Diameter value will be computed from the spatial sigma value")
+
+    if not isinstance(color_sigma, (float, int)):
+        raise WrongArgumentsType("Color sigma value can either be an integer or a float value")
+
+    if not isinstance(spatial_sigma, (float, int)):
+        raise WrongArgumentsType("Spatial sigma value can either be an integer or a float value")
+
+    if not isinstance(border, str):
+        raise WrongArgumentsType("Border argument can only be specified as a string")
+
+    border_actual = BORDER_INTERPOLATION.get(border, "None")
+    if not border_actual:
+        DefaultSetting(
+            "Provided border option is not supported by the library currently. Using the default strategy (reflect)"
+        )
+        border_actual = BORDER_INTERPOLATION["default"]
+
+    try:
+        new_im = image.copy()
+        new_im._image = cv2.bilateralFilter(
+            image._image, int(kernel_diameter), float(color_sigma), float(spatial_sigma), border
+        )
+        new_im.update_file_stream()
+        new_im.set_loader_properties()
+    except Exception as e:
+        raise FilteringError("Failed to filter the image") from e
+
+    return new_im
+
+# -------------------------------------------------------------------------
 
 if __name__ == "__main__":
     path_image = "C:\\dev\\pyfaro\\sample.jpg"
-    a = cv2.imread(path_image)
-    a = a.astype(np.uint8)
-    c = cv2.GaussianBlur(a, [int(5.0), int(5.0)], 0)
+    from image.load.loader import open_image
+
+    a = open_image(path_image)
+    c = bilateral_filter(a, 9, 75, 75)
+
     print("hallo")
