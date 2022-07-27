@@ -1,4 +1,3 @@
-from tabnanny import check
 import cv2
 import numpy as np
 
@@ -183,13 +182,13 @@ def gaussian_blur(
     try:
         new_im = image.copy()
         new_im.image = cv2.GaussianBlur(
-            new_im.image, kernel_size, sigma_x, sigma_y, borderType=border_actual
+            new_im.image, kernel_size, float(sigma_x), float(sigma_y), borderType=border_actual
         )
         new_im.update_file_stream()
         new_im.set_loader_properties()
     except Exception as e:
         raise FilteringError("Failed to filter the image") from e
-    
+
     return new_im
 
 # -------------------------------------------------------------------------
@@ -216,29 +215,47 @@ def median_blur(image: PyFaroImage, kernel_size: Union[List[int], Tuple[int, int
         raise WrongArgumentsValue("Kernel width/height should be an odd integer")
 
     if kernel_size > 5 and image.dtype != np.uint8:
-        ImageDataTypeConversion("Converting the image type to uint8 since for kernel sizes > 5 only this type is supported")
-        image.image = image.image.astype(np.uint8)
+        ImageDataTypeConversion(
+            "Converting the image type to uint8 since for kernel sizes > 5 only this type is supported"
+        )
+        image._image_conversion_helper(np.uint8)
         image.update_file_stream()
         image.set_loader_properties()
 
     try:
         new_im = image.copy()
-        new_im.image = cv2.medianBlur(
-            new_im.image, kernel_size[0]
-        )
+        new_im.image = cv2.medianBlur(new_im.image, int(kernel_size[0]))
         new_im.update_file_stream()
         new_im.set_loader_properties()
     except Exception as e:
         raise FilteringError("Failed to filter the image") from e
-    
+
     return new_im
 
 # -------------------------------------------------------------------------
 
+@check_image_exist_external
+def bilateral_filter(
+    image: PyFaroImage, kernel_diameter: int, color_sigma: float, spatial_sigma: float, border: str
+) -> PyFaroImage:
+    """Only 8-bit and 32-bit floating point images are supported"""
+
+    image_array_check_conversion(image, "openCV")
+
+    if image.dtype == "uint16":
+        ImageDataTypeConversion(
+            "Converting the image from 16 bits to 8 bits per channel since this is what is only supported for this filter"
+        )
+        image._image_conversion_helper(np.uint8)
+        image.update_file_stream()
+        image.set_loader_properties()
+
+    if not isinstance(kernel_diameter, (float, int)):
+        ...
+
 if __name__ == "__main__":
     path_image = "C:\\dev\\pyfaro\\sample.jpg"
     a = cv2.imread(path_image)
-    a = a.astype(np.float32)
-    b = cv2.medianBlur(a, 7)
-    c = cv2.getGaussianKernel(ksize=5, sigma=0.1)
+    a = a.astype(np.uint8)
+    c = cv2.GaussianBlur(a, [int(5.0), int(5.0)], 0)
     print("hallo")

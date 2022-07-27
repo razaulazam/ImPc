@@ -30,13 +30,16 @@ def get_kernel(kernel_shape: str, kernel_size: Union[List[int], Tuple[int, int]]
         raise WrongArgumentsType(
             "Please check the type of the size argument. Only tuples and lists are allowed"
         )
-        
+
     if len(kernel_size) != 2:
         raise WrongArgumentsValue("Expected a tuple/list of length two for the kernel size")
 
     if not all(i > 0 for i in kernel_size):
         raise WrongArgumentsValue(
-            "Provided width or height of the kernel is negative which is not allowed")
+            "Provided width or height of the kernel is negative which is not allowed"
+        )
+
+    kernel_size = [int(i) for i in kernel_size]
 
     structuring_element = cv2.getStructuringElement(shape_strategy, kernel_size)
     _pyfaro_array = namedtuple("PyFaroArray", "array_")

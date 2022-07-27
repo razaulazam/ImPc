@@ -112,6 +112,9 @@ class ImageLoader:
     def get_mode_description(self) -> str:
         return IMAGE_MODES_DESCRIPTION.get(self._mode, "")
 
+    def _image_conversion_helper(self, desired_type: np.dtype):
+        self._image = self._image.astype(desired_type)
+
     @property
     @check_image_exist_internal
     def file_stream(self) -> Image.Image:
