@@ -250,8 +250,11 @@ def bilateral_filter(
     border: Optional[str] = "default"
 ) -> PyFaroImage:
     """Only 8-bit and 32-bit floating point images are supported"""
-    """These fail idk why"""
+    """Does not work with RGBA images"""
 
+    if image.channels > 3:
+        raise FilteringError("This filter cannot operate on images that have color channels more than 3")
+    
     image_array_check_conversion(image, "openCV")
 
     if image.dtype == "uint16":

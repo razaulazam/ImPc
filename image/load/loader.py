@@ -152,7 +152,12 @@ class ImageLoader:
     @check_image_exist_internal
     def dims(self) -> Tuple[int, int]:
         return (self.height, self.width)
-
+    
+    @cached_property
+    @check_image_exist_internal
+    def channels(self) -> int:
+        return self._image.shape[-1]
+    
     @cached_property
     @check_image_exist_internal
     def extension(self) -> str:
@@ -172,7 +177,7 @@ class ImageLoader:
     @check_image_exist_internal
     def mode(self) -> str:
         return self._mode
-
+    
     @check_image_exist_internal
     def normalize(self):
         """Normalizes the image. Supports only 8-bit, 16-bit and 32-bit encoding"""
