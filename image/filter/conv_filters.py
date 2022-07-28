@@ -1,5 +1,7 @@
+# Copyright (C) 2022 FARO Technologies Inc., All Rights Reserved.
+# \brief Image filters based on convolutions
+
 import cv2
-from cv2 import BRISK
 import numpy as np
 
 from typing import Union, Optional, Tuple, List
@@ -219,7 +221,7 @@ def median_blur(image: PyFaroImage, kernel_size: Union[List[int], Tuple[int, int
     if kernel_size[0] % 2 == 0:
         raise WrongArgumentsValue("Kernel width/height should be an odd integer")
 
-    if kernel_size > 5 and image.dtype != np.uint8:
+    if kernel_size[0] > 5 and image.dtype != np.uint8:
         ImageDataTypeConversion(
             "Converting the image type to uint8 since for kernel sizes > 5 only this type is supported"
         )
@@ -284,8 +286,9 @@ def bilateral_filter(
 
     try:
         new_im = image.copy()
-        new_im._image = cv2.bilateralFilter(
-            image._image, int(kernel_diameter), float(color_sigma), float(spatial_sigma), border
+        new_im.image = cv2.bilateralFilter(
+            new_im.image, int(kernel_diameter), float(color_sigma), float(spatial_sigma),
+            border_actual
         )
         new_im.update_file_stream()
         new_im.set_loader_properties()
@@ -295,12 +298,3 @@ def bilateral_filter(
     return new_im
 
 # -------------------------------------------------------------------------
-
-if __name__ == "__main__":
-    path_image = "C:\\dev\\pyfaro\\sample.jpg"
-    from image.load.loader import open_image
-
-    a = open_image(path_image)
-    c = bilateral_filter(a, 9, 75, 75)
-
-    print("hallo")
