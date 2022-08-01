@@ -1,3 +1,6 @@
+# Copyright (C) Raza Ul Azam, All Rights Reserved.
+# \brief Utilites required for filtering methods
+
 import cv2
 
 from typing import Union, List, Tuple

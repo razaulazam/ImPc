@@ -1,3 +1,6 @@
+# Copyright (C) Raza Ul Azam, All Rights Reserved.
+# \brief Image gradient methods
+
 import cv2
 
 from image.load._interface import BaseImage

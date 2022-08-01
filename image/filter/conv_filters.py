@@ -1,7 +1,6 @@
-# Copyright (C) 2022 FARO Technologies Inc., All Rights Reserved.
+# Copyright (C) Raza Ul Azam, All Rights Reserved.
 # \brief Image filters based on convolutions
 
-from re import L
 import cv2
 import numpy as np
 

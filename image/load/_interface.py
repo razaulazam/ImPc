@@ -1,4 +1,4 @@
-# Copyright (C) 2022 FARO Technologies Inc., All Rights Reserved.
+# Copyright (C) Raza Ul Azam, All Rights Reserved.
 # \brief Abstract base class for Image loader
 
 from abc import ABC, abstractclassmethod, abstractmethod, abstractproperty

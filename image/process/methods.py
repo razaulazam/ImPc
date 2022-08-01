@@ -1,4 +1,4 @@
-# Copyright (C) 2022 FARO Technologies Inc., All Rights Reserved.
+# Copyright (C) Raza Ul Azam, All Rights Reserved.
 # \brief Image processing methods
 
 from PIL import Image
