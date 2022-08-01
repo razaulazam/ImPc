@@ -5,7 +5,7 @@ import cv2
 
 from commons.exceptions import TransformError, WrongArgumentsValue, WrongArgumentsType
 from image._decorators import check_image_exist_external
-from image.load._interface import PyFaroImage
+from image.load._interface import BaseImage
 from image._helpers import image_array_check_conversion
 
 # -------------------------------------------------------------------------
@@ -195,7 +195,7 @@ COLOR_REGISTRY = {
 # -------------------------------------------------------------------------
 
 @check_image_exist_external
-def convert(image: PyFaroImage, code: str) -> PyFaroImage:
+def convert(image: BaseImage, code: str) -> BaseImage:
 
     image_array_check_conversion(image, "openCV")
 

@@ -2,7 +2,7 @@
 # \brief Image processing methods
 
 from PIL import Image
-from image.load._interface import PyFaroImage
+from image.load._interface import BaseImage
 from image.load.loader import ImageLoader
 from commons.exceptions import WrongArgumentsType
 from image._helpers import image_array_check_conversion
@@ -10,15 +10,15 @@ from commons.exceptions import ProcessingError, ImageAlreadyClosed
 
 # -------------------------------------------------------------------------
 
-def alpha_composite(image_one: PyFaroImage, image_two: PyFaroImage) -> PyFaroImage:
+def alpha_composite(image_one: BaseImage, image_two: BaseImage) -> BaseImage:
 
     image_one = image_array_check_conversion(image_one, "PIL")
     image_two = image_array_check_conversion(image_two, "PIL")
 
-    if not isinstance(image_one, PyFaroImage):
+    if not isinstance(image_one, BaseImage):
         raise WrongArgumentsType("Please check the type of the image_one argument")
 
-    if not isinstance(image_two, PyFaroImage):
+    if not isinstance(image_two, BaseImage):
         raise WrongArgumentsType("Please check the type of the image_two argument")
 
     if image_one.closed:
@@ -43,15 +43,15 @@ def alpha_composite(image_one: PyFaroImage, image_two: PyFaroImage) -> PyFaroIma
 
 # -------------------------------------------------------------------------
 
-def blend(image_one: PyFaroImage, image_two: PyFaroImage, alpha: float) -> PyFaroImage:
+def blend(image_one: BaseImage, image_two: BaseImage, alpha: float) -> BaseImage:
 
     image_one = image_array_check_conversion(image_one, "PIL")
     image_two = image_array_check_conversion(image_two, "PIL")
 
-    if not isinstance(image_one, PyFaroImage):
+    if not isinstance(image_one, BaseImage):
         raise WrongArgumentsType("Please check the type of the image_one argument")
 
-    if not isinstance(image_two, PyFaroImage):
+    if not isinstance(image_two, BaseImage):
         raise WrongArgumentsType("Please check the type of the image_two argument")
 
     if image_one.closed:
@@ -79,19 +79,19 @@ def blend(image_one: PyFaroImage, image_two: PyFaroImage, alpha: float) -> PyFar
 
 # -------------------------------------------------------------------------
 
-def composite(image_one: PyFaroImage, image_two: PyFaroImage, mask: PyFaroImage) -> PyFaroImage:
+def composite(image_one: BaseImage, image_two: BaseImage, mask: BaseImage) -> BaseImage:
 
     image_one = image_array_check_conversion(image_one, "PIL")
     image_two = image_array_check_conversion(image_two, "PIL")
     mask = image_array_check_conversion(mask, "PIL")
 
-    if not isinstance(image_one, PyFaroImage):
+    if not isinstance(image_one, BaseImage):
         raise WrongArgumentsType("Please check the type of the image_one argument")
 
-    if not isinstance(image_two, PyFaroImage):
+    if not isinstance(image_two, BaseImage):
         raise WrongArgumentsType("Please check the type of the image_two argument")
 
-    if not isinstance(mask, PyFaroImage):
+    if not isinstance(mask, BaseImage):
         raise WrongArgumentsType("Please check the type of the mask argument")
 
     if image_one.closed:

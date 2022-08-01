@@ -15,7 +15,7 @@ from image._decorators import check_image_exist_internal
 from commons.warning import ImageAlreadyOpen
 from commons.exceptions import WrongArgumentsValue, NotSupportedDataType
 from commons.exceptions import PathDoesNotExist, WrongArgumentsType, LoaderError
-from image.load._interface import PyFaroImage
+from image.load._interface import BaseImage
 
 # -------------------------------------------------------------------------
 
@@ -52,7 +52,7 @@ IMAGE_MODES_DESCRIPTION = {
 
 # -------------------------------------------------------------------------
 
-@PyFaroImage.register
+@BaseImage.register
 class ImageLoader:
 
     def __init__(self):
@@ -152,12 +152,12 @@ class ImageLoader:
     @check_image_exist_internal
     def dims(self) -> Tuple[int, int]:
         return (self.height, self.width)
-    
+
     @cached_property
     @check_image_exist_internal
     def channels(self) -> int:
         return self._image.shape[-1]
-    
+
     @cached_property
     @check_image_exist_internal
     def extension(self) -> str:
@@ -177,7 +177,7 @@ class ImageLoader:
     @check_image_exist_internal
     def mode(self) -> str:
         return self._mode
-    
+
     @check_image_exist_internal
     def normalize(self):
         """Normalizes the image. Supports only 8-bit, 16-bit and 32-bit encoding"""
@@ -319,13 +319,13 @@ class ImageLoader:
 # -------------------------------------------------------------------------
 
 @singledispatch
-def open_image() -> PyFaroImage:
+def open_image() -> BaseImage:
     ...
 
 # -------------------------------------------------------------------------
 
 @open_image.register(str)
-def _(path, formats: Optional[Union[List[str], Tuple[str], str]] = None) -> PyFaroImage:
+def _(path, formats: Optional[Union[List[str], Tuple[str], str]] = None) -> BaseImage:
     if formats and not isinstance(formats, (list, tuple)):
         raise WrongArgumentsType("Please check the type of the formats argument")
 
@@ -344,7 +344,7 @@ def _(path, formats: Optional[Union[List[str], Tuple[str], str]] = None) -> PyFa
 # -------------------------------------------------------------------------
 
 @open_image.register(BinaryIO)
-def _(path, formats: Optional[Union[List[str], Tuple[str]]] = None) -> PyFaroImage:
+def _(path, formats: Optional[Union[List[str], Tuple[str]]] = None) -> BaseImage:
     if formats and not isinstance(formats, (list, tuple)):
         raise WrongArgumentsType("Please check the type of the formats argument")
 

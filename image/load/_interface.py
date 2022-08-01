@@ -5,22 +5,10 @@ from abc import ABC, abstractclassmethod, abstractmethod, abstractproperty
 
 # -------------------------------------------------------------------------
 
-class PyFaroImage(ABC):
+class BaseImage(ABC):
 
     @abstractclassmethod
     def create_loader(cls):
-        ...
-
-    @abstractmethod
-    def set_loader_properties(self):
-        ...
-
-    @abstractmethod
-    def update_image(self):
-        ...
-
-    @abstractmethod
-    def update_file_stream(self):
         ...
 
     @abstractmethod

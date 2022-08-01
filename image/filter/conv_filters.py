@@ -9,7 +9,7 @@ from typing import Union, Optional, Tuple, List
 from collections import namedtuple
 from commons.exceptions import FilteringError, WrongArgumentsType, WrongArgumentsValue
 from commons.warning import DefaultSetting, ImageDataTypeConversion
-from image.load._interface import PyFaroImage
+from image.load._interface import BaseImage
 from image._decorators import check_image_exist_external
 from image._helpers import image_array_check_conversion, check_user_provided_ndarray
 
@@ -28,11 +28,11 @@ BORDER_INTERPOLATION = {
 
 @check_image_exist_external
 def corr2d(
-    image: PyFaroImage,
+    image: BaseImage,
     kernel: Union[namedtuple, np.ndarray],
     delta: Optional[Union[float, int]] = 0,
     border: Optional[str] = "default",
-) -> PyFaroImage:
+) -> BaseImage:
     """Outputs the image with the same depth. Places the computed/filtered value in the center of the area covered by the kernel.
        Note: Kernel windows are not variable sized here. They have a constant size over each pixel neighborhood."""
 
@@ -77,11 +77,11 @@ def corr2d(
 
 @check_image_exist_external
 def average_blur(
-    image: PyFaroImage,
+    image: BaseImage,
     kernel_size: Union[List[int], Tuple[int, int]],
     normalize: Optional[bool] = True,
     border: Optional[str] = "default"
-) -> PyFaroImage:
+) -> BaseImage:
     """Wrap border is not supported here. Normalize = False can be used to extract useful image chracteristics e.g. covariance matrix of the image gradients
     can help with extracting images demonstrating optical flow for object tracking."""
 
@@ -133,12 +133,12 @@ def average_blur(
 
 @check_image_exist_external
 def gaussian_blur(
-    image: PyFaroImage,
+    image: BaseImage,
     kernel_size: Union[List[int], Tuple[int, int]],
     sigma_x: float,
     sigma_y: Optional[float] = 0.0,
     border: Optional[str] = "default"
-) -> PyFaroImage:
+) -> BaseImage:
     """Warp border is not supported here. It is better to supply both the kernel size and the sigma_x. If the kernel size is zero
     then it is computed from the sigma's provided by the user. If sigma_y is zero, it is computed from sigma_x. If both sigma_x and sigma_y is 
     zero then it is computed from the kernel_size."""
@@ -202,7 +202,7 @@ def gaussian_blur(
 # -------------------------------------------------------------------------
 
 @check_image_exist_external
-def median_blur(image: PyFaroImage, kernel_size: Union[List[int], Tuple[int, int]]) -> PyFaroImage:
+def median_blur(image: BaseImage, kernel_size: Union[List[int], Tuple[int, int]]) -> BaseImage:
     """Kernel size has to be odd. Different data types for different kernel size"""
 
     image_array_check_conversion(image, "openCV")
@@ -244,12 +244,12 @@ def median_blur(image: PyFaroImage, kernel_size: Union[List[int], Tuple[int, int
 
 @check_image_exist_external
 def bilateral_filter(
-    image: PyFaroImage,
+    image: BaseImage,
     kernel_diameter: int,
     color_sigma: float,
     spatial_sigma: float,
     border: Optional[str] = "default"
-) -> PyFaroImage:
+) -> BaseImage:
     """Only 8-bit and 32-bit floating point images are supported"""
     """Does not work with RGBA images"""
 

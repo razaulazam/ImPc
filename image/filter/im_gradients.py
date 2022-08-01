@@ -1,6 +1,6 @@
 import cv2
 
-from image.load._interface import PyFaroImage
+from image.load._interface import BaseImage
 from image._decorators import check_image_exist_external
 from image._helpers import image_array_check_conversion
 from commons.exceptions import WrongArgumentsType, WrongArgumentsValue, FilteringError
@@ -12,12 +12,12 @@ from conv_filters import BORDER_INTERPOLATION
 
 @check_image_exist_external
 def laplacian(
-    image: PyFaroImage,
+    image: BaseImage,
     kernel_size: Union[List[int], Tuple[int, int]],
     scale: Optional[float] = 0.0,
     delta: Optional[float] = 0.0,
     border: Optional[str] = "default"
-) -> PyFaroImage:
+) -> BaseImage:
     """Scale factor, delta and border are optional
     Kernal size must be odd and positive"""
 
@@ -81,23 +81,23 @@ def laplacian(
 
 @check_image_exist_external
 def sobel(
-    image: PyFaroImage,
+    image: BaseImage,
     xorder: int,
     yorder: int,
     scale: float,
     delta: float,
     border: Optional[str] = "default"
-) -> PyFaroImage:
+) -> BaseImage:
     """First, second, and mixed image derivatives can be calculated from this function."""
 
     image_array_check_conversion(image, "openCV")
 
     if not isinstance(xorder, int):
         raise WrongArgumentsType("Provided argument (xorder) should have a integer type")
-    
+
     if not isinstance(yorder, int):
         raise WrongArgumentsType("Provided argument (yorder) should have a integer type")
-    
+
     if not isinstance(scale, (int, float)):
         raise WrongArgumentsType("Provided value of scale does not have the accurate type")
 
@@ -114,18 +114,18 @@ def sobel(
         border_actual = BORDER_INTERPOLATION["default"]
     else:
         border_actual = BORDER_INTERPOLATION.get(border, "None")
-        
 
     if not border_actual:
         DefaultSetting(
             "Provided border option is not supported by the library currently. Using the default strategy (reflect)"
         )
         border_actual = BORDER_INTERPOLATION["default"]
-        
+
     try:
         new_im = image.copy()
         new_im.image = cv2.Sobel(
-            new_im.image, -1, xorder, yorder, cv2.FILTER_SCHARR, float(scale), float(delta), border_actual
+            new_im.image, -1, xorder, yorder, cv2.FILTER_SCHARR, float(scale), float(delta),
+            border_actual
         )
         new_im.update_file_stream()
         new_im.set_loader_properties()

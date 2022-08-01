@@ -3,7 +3,7 @@
 
 import numpy as np
 
-from image.load._interface import PyFaroImage
+from image.load._interface import BaseImage
 from commons.exceptions import NotSupportedDataType
 from commons.warning import ImageDataTypeConversion
 
@@ -19,7 +19,7 @@ def check_user_provided_ndarray(array_: np.ndarray, strategy: str):
 
 # -------------------------------------------------------------------------
 
-def image_array_check_conversion(image: PyFaroImage, strategy: str) -> PyFaroImage:
+def image_array_check_conversion(image: BaseImage, strategy: str) -> BaseImage:
     data_type = image.dtype
     if not _correct_type(data_type, strategy):
         if not _conversion_type(data_type, strategy):
@@ -47,7 +47,7 @@ def _conversion_type(data_type: np.dtype, strategy: str):
 
 # -------------------------------------------------------------------------
 
-def _convert_image_dtype(image: PyFaroImage):
+def _convert_image_dtype(image: BaseImage):
     data_type = image.dtype
     stored_image = image.image
     if data_type == "float16":

@@ -6,7 +6,7 @@ import cv2
 import numpy as np
 from typing import Optional, Union
 from commons.exceptions import WrongArgumentsType, WrongArgumentsValue, FilteringError
-from image.load._interface import PyFaroImage
+from image.load._interface import BaseImage
 from image._helpers import image_array_check_conversion, check_user_provided_ndarray
 from image._decorators import check_image_exist_external
 from collections import namedtuple
@@ -15,10 +15,10 @@ from collections import namedtuple
 
 @check_image_exist_external
 def erode(
-    image: PyFaroImage,
+    image: BaseImage,
     kernel: Union[namedtuple, np.ndarray],
     iterations: Optional[Union[int, float]] = 1
-) -> PyFaroImage:
+) -> BaseImage:
 
     image_array_check_conversion(image, "openCV")
 
@@ -53,10 +53,10 @@ def erode(
 
 @check_image_exist_external
 def dilate(
-    image: PyFaroImage,
+    image: BaseImage,
     kernel: Union[namedtuple, np.ndarray],
     iterations: Optional[int] = 1
-) -> PyFaroImage:
+) -> BaseImage:
     image_array_check_conversion(image, "openCV")
 
     if not isinstance(kernel, np.ndarray) and _is_not_namedtuple(kernel):
@@ -89,7 +89,7 @@ def dilate(
 # -------------------------------------------------------------------------
 
 @check_image_exist_external
-def closing(image: PyFaroImage, kernel: Union[namedtuple, np.ndarray]) -> PyFaroImage:
+def closing(image: BaseImage, kernel: Union[namedtuple, np.ndarray]) -> BaseImage:
     image_array_check_conversion(image, "openCV")
 
     if not isinstance(kernel, np.ndarray) and _is_not_namedtuple(kernel):
@@ -115,7 +115,7 @@ def closing(image: PyFaroImage, kernel: Union[namedtuple, np.ndarray]) -> PyFaro
 # -------------------------------------------------------------------------
 
 @check_image_exist_external
-def morph_gradient(image: PyFaroImage, kernel: Union[namedtuple, np.ndarray]) -> PyFaroImage:
+def morph_gradient(image: BaseImage, kernel: Union[namedtuple, np.ndarray]) -> BaseImage:
     image_array_check_conversion(image, "openCV")
 
     if not isinstance(kernel, np.ndarray) and _is_not_namedtuple(kernel):
@@ -141,7 +141,7 @@ def morph_gradient(image: PyFaroImage, kernel: Union[namedtuple, np.ndarray]) ->
 # -------------------------------------------------------------------------
 
 @check_image_exist_external
-def top_hat(image: PyFaroImage, kernel: Union[namedtuple, np.ndarray]) -> PyFaroImage:
+def top_hat(image: BaseImage, kernel: Union[namedtuple, np.ndarray]) -> BaseImage:
     image_array_check_conversion(image, "openCV")
 
     if not isinstance(kernel, np.ndarray) and _is_not_namedtuple(kernel):
@@ -167,7 +167,7 @@ def top_hat(image: PyFaroImage, kernel: Union[namedtuple, np.ndarray]) -> PyFaro
 # -------------------------------------------------------------------------
 
 @check_image_exist_external
-def black_hat(image: PyFaroImage, kernel: Union[namedtuple, np.ndarray]) -> PyFaroImage:
+def black_hat(image: BaseImage, kernel: Union[namedtuple, np.ndarray]) -> BaseImage:
     image_array_check_conversion(image, "openCV")
 
     if not isinstance(kernel, np.ndarray) and _is_not_namedtuple(kernel):
