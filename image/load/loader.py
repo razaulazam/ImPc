@@ -9,7 +9,7 @@ import numpy as np
 
 from PIL import Image
 from pathlib import Path
-from functools import cached_property, singledispatch
+from functools import singledispatch
 from typing import Mapping, Tuple, List, Optional, Any, BinaryIO, Union
 from image._decorators import check_image_exist_internal
 from commons.warning import ImageAlreadyOpen
@@ -105,7 +105,8 @@ class ImageLoader:
 
     def update_file_stream(self):
         try:
-            self.__file_stream = Image.fromarray(self._image)
+            #self.__file_stream.close()
+            self.__file_stream = Image.fromarray(self._image, "RGB")
         except Exception as e:
             raise RuntimeError("Failed to update the file stream") from e
 
@@ -138,42 +139,42 @@ class ImageLoader:
                           ), WrongArgumentsValue("Trying to set the wrong image instance type")
         self._image = image
 
-    @cached_property
+    @property
     @check_image_exist_internal
     def height(self) -> int:
         return self._image.shape[0]
 
-    @cached_property
+    @property
     @check_image_exist_internal
     def width(self) -> int:
         return self._image.shape[1]
 
-    @cached_property
+    @property
     @check_image_exist_internal
     def dims(self) -> Tuple[int, int]:
         return (self.height, self.width)
 
-    @cached_property
+    @property
     @check_image_exist_internal
     def channels(self) -> int:
         return self._image.shape[-1]
 
-    @cached_property
+    @property
     @check_image_exist_internal
     def extension(self) -> str:
         return self._file_extension
 
-    @cached_property
+    @property
     @check_image_exist_internal
     def info(self) -> Mapping[str, Any]:
         return self._info
 
-    @cached_property
+    @property
     @check_image_exist_internal
     def dtype(self) -> np.dtype:
         return self._data_type
 
-    @cached_property
+    @property
     @check_image_exist_internal
     def mode(self) -> str:
         return self._mode

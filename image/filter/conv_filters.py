@@ -237,7 +237,11 @@ def median_blur(image: BaseImage, kernel_size: Union[List[int], Tuple[int, int]]
     except Exception as e:
         raise FilteringError("Failed to filter the image") from e
 
-    return new_im
+    image._image_conversion_helper(np.float32)
+    image.update_file_stream()
+    image.set_loader_properties()
+
+    #return new_im
 
 # -------------------------------------------------------------------------
 
@@ -303,3 +307,16 @@ def bilateral_filter(
     return new_im
 
 # -------------------------------------------------------------------------
+
+if __name__ == "__main__":
+    
+    from image.load.loader import open_image
+    import cv2
+
+    path_image = "C:\\dev\\ImProcMagic\\sample.jpg"
+    image_ = open_image(path_image)
+    image_1 = cv2.imread(path_image)
+    print(id(image_.dtype))
+    median_blur(image_, [3, 3])
+    print(id(image_.dtype))
+    print("hallo")
