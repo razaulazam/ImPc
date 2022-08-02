@@ -105,8 +105,7 @@ class ImageLoader:
 
     def update_file_stream(self):
         try:
-            #self.__file_stream.close()
-            self.__file_stream = Image.fromarray(self._image, "RGB")
+            self.__file_stream = Image.fromarray(self._image, self.mode)
         except Exception as e:
             raise RuntimeError("Failed to update the file stream") from e
 

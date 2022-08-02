@@ -201,7 +201,7 @@ def gaussian_blur(
 # -------------------------------------------------------------------------
 
 @check_image_exist_external
-def median_blur(image: BaseImage, kernel_size: Union[List[int], Tuple[int, int]]) -> BaseImage:
+def median_blur(image: BaseImage, kernel_size: Union[List[int], Tuple[int, int]]):
     """Kernel size has to be odd. Different data types for different kernel size"""
 
     image_array_check_conversion(image, "openCV")
@@ -237,11 +237,8 @@ def median_blur(image: BaseImage, kernel_size: Union[List[int], Tuple[int, int]]
     except Exception as e:
         raise FilteringError("Failed to filter the image") from e
 
-    image._image_conversion_helper(np.float32)
-    image.update_file_stream()
-    image.set_loader_properties()
 
-    #return new_im
+   # return image
 
 # -------------------------------------------------------------------------
 
@@ -312,11 +309,15 @@ if __name__ == "__main__":
     
     from image.load.loader import open_image
     import cv2
-
-    path_image = "C:\\dev\\ImProcMagic\\sample.jpg"
-    image_ = open_image(path_image)
-    image_1 = cv2.imread(path_image)
+    from pathlib import Path
+    path_image = Path(__file__).parent.parent.parent / "sample.jpg"
+    image_ = open_image(str(path_image))
+    image_._image_conversion_helper(np.uint16)
+    image_.update_file_stream()
+    image_.set_loader_properties()
+    print(image_.dtype)
     print(id(image_.dtype))
-    median_blur(image_, [3, 3])
+    median_blur(image_, [7, 7])
+    print(image_.dtype)
     print(id(image_.dtype))
     print("hallo")
