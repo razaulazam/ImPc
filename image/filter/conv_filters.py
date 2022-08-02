@@ -222,7 +222,7 @@ def median_blur(image: BaseImage, kernel_size: Union[List[int], Tuple[int, int]]
     if kernel_size[0] % 2 == 0:
         raise WrongArgumentsValue("Kernel width/height should be an odd integer")
 
-    if kernel_size[0] > 5 and new_im.dtype != np.uint8:
+    if kernel_size[0] > 5 and image.dtype != np.uint8:
         ImageDataTypeConversion(
             "Converting the image type to uint8 since for kernel sizes > 5 only this type is supported"
         )
@@ -257,15 +257,16 @@ def bilateral_filter(
             "This filter cannot operate on images that have color channels more than 3"
         )
 
+    new_im = image.copy()
     image_array_check_conversion(image, "openCV")
 
     if image.dtype == "uint16":
         ImageDataTypeConversion(
             "Converting the image from 16 bits to 8 bits per channel since this is what is only supported for this filter"
         )
-        image._image_conversion_helper(np.uint8)
-        image.update_file_stream()
-        image.set_loader_properties()
+        new_im._image_conversion_helper(np.uint8)
+        new_im.update_file_stream()
+        new_im.set_loader_properties()
 
     if not isinstance(kernel_diameter, (float, int)):
         raise WrongArgumentsType("Diameter value can only be either an integer or float value")
@@ -290,7 +291,6 @@ def bilateral_filter(
         border_actual = BORDER_INTERPOLATION["default"]
 
     try:
-        new_im = image.copy()
         new_im.image = cv2.bilateralFilter(
             new_im.image, int(kernel_diameter), float(color_sigma), float(spatial_sigma),
             border_actual
