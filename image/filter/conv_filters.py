@@ -201,10 +201,11 @@ def gaussian_blur(
 # -------------------------------------------------------------------------
 
 @check_image_exist_external
-def median_blur(image: BaseImage, kernel_size: Union[List[int], Tuple[int, int]]):
+def median_blur(image: BaseImage, kernel_size: Union[List[int], Tuple[int, int]]) -> BaseImage:
     """Kernel size has to be odd. Different data types for different kernel size"""
 
-    image_array_check_conversion(image, "openCV")
+    new_im = image.copy()
+    image_array_check_conversion(new_im, "openCV")
 
     if not isinstance(kernel_size, (tuple, list)):
         raise WrongArgumentsType("Kernel size can only be defined as either tuple or list")
@@ -221,24 +222,22 @@ def median_blur(image: BaseImage, kernel_size: Union[List[int], Tuple[int, int]]
     if kernel_size[0] % 2 == 0:
         raise WrongArgumentsValue("Kernel width/height should be an odd integer")
 
-    if kernel_size[0] > 5 and image.dtype != np.uint8:
+    if kernel_size[0] > 5 and new_im.dtype != np.uint8:
         ImageDataTypeConversion(
             "Converting the image type to uint8 since for kernel sizes > 5 only this type is supported"
         )
-        image._image_conversion_helper(np.uint8)
-        image.update_file_stream()
-        image.set_loader_properties()
+        new_im._image_conversion_helper(np.uint8)
+        new_im.update_file_stream()
+        new_im.set_loader_properties()
 
     try:
-        new_im = image.copy()
         new_im.image = cv2.medianBlur(new_im.image, int(kernel_size[0]))
         new_im.update_file_stream()
         new_im.set_loader_properties()
     except Exception as e:
         raise FilteringError("Failed to filter the image") from e
 
-
-   # return image
+    return new_im
 
 # -------------------------------------------------------------------------
 
@@ -317,7 +316,11 @@ if __name__ == "__main__":
     image_.set_loader_properties()
     print(image_.dtype)
     print(id(image_.dtype))
-    median_blur(image_, [7, 7])
+    im_new = median_blur(image_, [7, 7])
     print(image_.dtype)
+    print(im_new.dtype)
     print(id(image_.dtype))
     print("hallo")
+
+    import warnings
+    warnings.warn("hello")

@@ -8,7 +8,7 @@ import warnings
 class BaseWarning:
 
     def __init__(self, message: str):
-        warnings.warn(message)
+        warnings.warn(message, stacklevel=3)
 
 # -------------------------------------------------------------------------
 
