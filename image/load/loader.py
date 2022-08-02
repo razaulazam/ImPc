@@ -113,7 +113,7 @@ class ImageLoader:
         return IMAGE_MODES_DESCRIPTION.get(self._mode, "")
 
     def _image_conversion_helper(self, desired_type: np.dtype):
-        self._image = self._image.astype(desired_type)
+        self._image = self._image.astype(desired_type, casting="same_kind", copy=False)
 
     @property
     @check_image_exist_internal
@@ -194,7 +194,7 @@ class ImageLoader:
             )
 
         norm_factor = (2**num_bits) - 1
-        self._image = (self._image / norm_factor).astype(data_type)
+        self._image = (self._image / norm_factor).astype(data_type, casting="same_kind", copy=False)
 
         return self
 

@@ -321,6 +321,7 @@ if __name__ == "__main__":
     print(im_new.dtype)
     print(id(image_.dtype))
     print("hallo")
-
+    # Do we want to return the same data types for the input images?
+    # Or, do we accept the converted types?
     import warnings
     warnings.warn("hello")
