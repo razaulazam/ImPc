@@ -35,7 +35,8 @@ def corr2d(
     """Outputs the image with the same depth. Places the computed/filtered value in the center of the area covered by the kernel.
        Note: Kernel windows are not variable sized here. They have a constant size over each pixel neighborhood."""
 
-    image_array_check_conversion(image, "openCV")
+    new_im = image.copy()
+    new_im = image_array_check_conversion(new_im, "openCV")
 
     if not isinstance(kernel, (np.ndarray, namedtuple)):
         raise WrongArgumentsType(
@@ -61,7 +62,6 @@ def corr2d(
         border_actual = BORDER_INTERPOLATION["default"]
 
     try:
-        new_im = image.copy()
         new_im.image = cv2.filter2D(
             new_im.image, -1, kernel, delta=float(delta), borderType=border_actual
         )
@@ -295,6 +295,7 @@ def bilateral_filter(
             new_im.image, int(kernel_diameter), float(color_sigma), float(spatial_sigma),
             border_actual
         )
+        new
         new_im.update_file_stream()
         new_im.set_loader_properties()
     except Exception as e:
@@ -311,9 +312,9 @@ if __name__ == "__main__":
     from pathlib import Path
     path_image = Path(__file__).parent.parent.parent / "sample.jpg"
     image_ = open_image(str(path_image))
-    image_._image_conversion_helper(np.uint16)
-    image_.update_file_stream()
-    image_.set_loader_properties()
+    #image_._image_conversion_helper(np.uint16)
+    #image_.update_file_stream()
+    #image_.set_loader_properties()
     print(image_.dtype)
     print(id(image_.dtype))
     im_new = median_blur(image_, [7, 7])

@@ -24,8 +24,7 @@ def image_array_check_conversion(image: BaseImage, strategy: str) -> BaseImage:
     if not _correct_type(data_type, strategy):
         if not _conversion_type(data_type, strategy):
             raise NotSupportedDataType("Image has a data-type which is currently not supported")
-        image = _convert_image_dtype(image)
-    return image
+        _convert_image_dtype(image)
 
 # -------------------------------------------------------------------------
 
@@ -72,7 +71,7 @@ def _convert_image_dtype(image: BaseImage):
         raise NotSupportedDataType("Image has a data-type which is currently not supported")
 
     image.update_file_stream()
-    return image
+    image.set_loader_properties()
 
 # -------------------------------------------------------------------------
 
