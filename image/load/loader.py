@@ -12,7 +12,6 @@ from pathlib import Path
 from functools import singledispatch
 from typing import Mapping, Tuple, List, Optional, Any, BinaryIO, Union
 from image._decorators import check_image_exist_internal
-from commons.warning import ImageAlreadyOpen
 from commons.exceptions import WrongArgumentsValue, NotSupportedDataType
 from commons.exceptions import PathDoesNotExist, WrongArgumentsType, LoaderError
 from image.load._interface import BaseImage
@@ -24,7 +23,6 @@ Image.MAX_IMAGE_PIXELS = 15000000000
 # -------------------------------------------------------------------------
 
 IMAGE_MODES_DESCRIPTION = {
-    "1": "1-bit pixels, black and white, stored with one pixel per byte",
     "L": "8-bit pixels, black and white (grayscale)",
     "P": "8-bit pixels, mapped to any other mode using a color palette",
     "RGB": "3x8-bit pixels, true color",
@@ -33,7 +31,6 @@ IMAGE_MODES_DESCRIPTION = {
     "YCbCr": "3x8-bit pixels, color video format (refers to the JPEG)",
     "LAB": "3x8-bit pixels, the L*a*b color space",
     "HSV": "3x8-bit pixels, Hue, Saturation, Value color space",
-    "I": "32-bit signed integer pixels",
     "F": "32-bit floating point pixels",
     "LA": "L with alpha",
     "PA": "P with alpha",
@@ -44,9 +41,7 @@ IMAGE_MODES_DESCRIPTION = {
     "I;16L": "16 bit little endian unsigned integer pixels",
     "I;16B": "16 bit big endian unsigned integer pixels",
     "I;16N": "16 bit native endian unsigned integer pixels",
-    "BGR;15": "15 bit reversed true color",
     "BGR;16": "16 bit reversed true color",
-    "BGR;24": "24 bit reversed true color",
     "BGR;32": "32 bit reversed true color"
 }
 
@@ -80,18 +75,27 @@ class ImageLoader:
     def create_loader(cls):
         return cls()
 
+    def __check_image_mode(self) -> bool:
+        allowed_modes = {
+            "L", "P", "RGB", "RGBA", "CMYK", "YCbCr", "LAB", "HSV", "F", "LA", "PA", "RGBX", "RGBa",
+            "La", "I;16", "I;16L", "I;16B", "I;16N", "BGR;16", "BGR;32"
+        }
+        if self.__file_stream.mode not in allowed_modes:
+            return False
+        return True
+
     def _load_image(
         self, path: Union[BinaryIO, str], formats: Optional[Union[List[str], Tuple[str]]] = None
     ):
-        if self._image is None:
-            try:
-                self.__file_stream = Image.open(path, formats=formats)
-                self._image = np.ascontiguousarray(self.__file_stream)
-                self.set_loader_properties()
-            except Exception as e:
-                raise LoaderError("Failed to load the image file") from e
-        else:
-            ImageAlreadyOpen("This image is already open!")
+        try:
+            self.__file_stream = Image.open(path, formats=formats)
+            self._image = np.ascontiguousarray(self.__file_stream)
+            self.set_loader_properties()
+            if not self.__check_image_mode():
+                raise NotSupportedDataType("The provide image data type is not supported")
+        except Exception as e:
+            raise LoaderError("Failed to load the image file") from e
+
         return self
 
     def set_loader_properties(self):

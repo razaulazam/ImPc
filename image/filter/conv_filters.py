@@ -306,7 +306,7 @@ def bilateral_filter(
 # -------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    
+
     from image.load.loader import open_image
     import cv2
     from pathlib import Path
