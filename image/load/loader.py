@@ -23,7 +23,7 @@ Image.MAX_IMAGE_PIXELS = 15000000000
 # -------------------------------------------------------------------------
 
 # We should map these descriptions to some easy descriptions that the user can understand
-# and pretty print it.
+# and pretty print it. Add more
 IMAGE_MODES_DESCRIPTION = {
     "L": ("GrayU8", "8-bit pixels, black and white (grayscale)"),
     "P": ("GrayU8P", "8-bit pixels, mapped to any other mode using a color palette"),
