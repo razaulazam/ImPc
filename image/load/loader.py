@@ -22,29 +22,30 @@ Image.MAX_IMAGE_PIXELS = 15000000000
 
 # -------------------------------------------------------------------------
 
+# We should map these descriptions to some easy descriptions that the user can understand
+# and pretty print it.
 IMAGE_MODES_DESCRIPTION = {
-    "L": "8-bit pixels, black and white (grayscale)",
-    "P": "8-bit pixels, mapped to any other mode using a color palette",
-    "RGB": "3x8-bit pixels, true color",
-    "RGBA": "4x8-bit pixels, true color with transparency mask",
-    "CMYK": "4x8-bit pixels, color separation",
-    "YCbCr": "3x8-bit pixels, color video format (refers to the JPEG)",
-    "LAB": "3x8-bit pixels, the L*a*b color space",
-    "HSV": "3x8-bit pixels, Hue, Saturation, Value color space",
-    "F": "32-bit floating point pixels",
-    "LA": "L with alpha",
-    "PA": "P with alpha",
-    "RGBX": "True color with padding",
-    "RGBa": "True color with premultiplied alpha",
-    "La": "L with premultiplied alpha",
-    "I;16": "16 bit unsigned integer pixels",
-    "I;16L": "16 bit little endian unsigned integer pixels",
-    "I;16B": "16 bit big endian unsigned integer pixels",
-    "I;16N": "16 bit native endian unsigned integer pixels",
-    "BGR;16": "16 bit reversed true color",
-    "BGR;32": "32 bit reversed true color"
+    "L": ("GrayU8", "8-bit pixels, black and white (grayscale)"),
+    "P": ("GrayU8P", "8-bit pixels, mapped to any other mode using a color palette"),
+    "RGB": ("RGBU8", "3x8-bit pixels, true color"),
+    "RGBA": ("RGBAU8", "4x8-bit pixels, true color with transparency mask"),
+    "CMYK": ("CMYKU8", "4x8-bit pixels, color separation"),
+    "YCbCr": ("YCbCrU8", "3x8-bit pixels, color video format (refers to the JPEG)"),
+    "LAB": ("LABU8", "3x8-bit pixels, the L*a*b color space"),
+    "HSV": ("HSVU8", "3x8-bit pixels, Hue, Saturation, Value color space"),
+    "F": ("Float32", "32-bit floating point pixels"),
+    "LA": ("GrayU8_A", "L with alpha"),
+    "PA": ("GrayU8P_A", "P with alpha"),
+    "RGBX": ("RGBPadU8", "True color with padding"),
+    "RGBa": ("RGBMaU8", "True color with premultiplied alpha"),
+    "La": ("GrayU8a", "L with premultiplied alpha"),
+    "I;16": ("Uint16", "16 bit unsigned integer pixels"),
+    "I;16L": ("Uint16LE", "16 bit little endian unsigned integer pixels"),
+    "I;16B": ("Uint16BE", "16 bit big endian unsigned integer pixels"),
+    "I;16N": ("Uint16NE", "16 bit native endian unsigned integer pixels"),
+    "BGR;16": ("BGR16", "16 bit reversed true color"),
+    "BGR;32": ("BGRFloat32", "32 bit reversed true color")
 }
-
 # -------------------------------------------------------------------------
 
 @BaseImage.register
@@ -76,11 +77,7 @@ class ImageLoader:
         return cls()
 
     def __check_image_mode(self) -> bool:
-        allowed_modes = {
-            "L", "P", "RGB", "RGBA", "CMYK", "YCbCr", "LAB", "HSV", "F", "LA", "PA", "RGBX", "RGBa",
-            "La", "I;16", "I;16L", "I;16B", "I;16N", "BGR;16", "BGR;32"
-        }
-        if self.__file_stream.mode not in allowed_modes:
+        if self.__file_stream.mode not in IMAGE_MODES_DESCRIPTION:
             return False
         return True
 
@@ -91,13 +88,18 @@ class ImageLoader:
             self.__file_stream = Image.open(path, formats=formats)
             self._image = np.ascontiguousarray(self.__file_stream)
             self.set_loader_properties()
+            print(IMAGE_MODES_DESCRIPTION)
             if not self.__check_image_mode():
                 raise NotSupportedDataType("The provide image data type is not supported")
+            # Some functions need to change here since we are early exiting as well as the other transform functions
+            # and the helpers as well
         except Exception as e:
             raise LoaderError("Failed to load the image file") from e
 
         return self
 
+    # When the image is converted to a different type, its mode gets changed
+    # It could be still RGB, but with different data type that needs to be reflected
     def set_loader_properties(self):
         self._file_extension = self.__file_stream.format
         self._info = self.__file_stream.info
@@ -109,7 +111,7 @@ class ImageLoader:
 
     def update_file_stream(self):
         try:
-            self.__file_stream = Image.fromarray(self._image, self.mode)
+            self.__file_stream = Image.fromarray(self._image, "BGR;24")
         except Exception as e:
             raise RuntimeError("Failed to update the file stream") from e
 
@@ -183,7 +185,7 @@ class ImageLoader:
         return self._mode
 
     @check_image_exist_internal
-    def normalize(self):
+    def normalize(self): # This needs to change
         """Normalizes the image. Supports only 8-bit, 16-bit and 32-bit encoding"""
 
         data_type = self.dtype

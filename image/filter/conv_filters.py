@@ -195,7 +195,7 @@ def gaussian_blur(
         new_im.set_loader_properties()
     except Exception as e:
         raise FilteringError("Failed to filter the image") from e
-
+    np.uint32
     return new_im
 
 # -------------------------------------------------------------------------
@@ -295,7 +295,6 @@ def bilateral_filter(
             new_im.image, int(kernel_diameter), float(color_sigma), float(spatial_sigma),
             border_actual
         )
-        new
         new_im.update_file_stream()
         new_im.set_loader_properties()
     except Exception as e:
@@ -312,9 +311,10 @@ if __name__ == "__main__":
     from pathlib import Path
     path_image = Path(__file__).parent.parent.parent / "sample.jpg"
     image_ = open_image(str(path_image))
-    #image_._image_conversion_helper(np.uint16)
-    #image_.update_file_stream()
-    #image_.set_loader_properties()
+    image_._image_conversion_helper(np.uint32)
+    image_.update_file_stream()
+    image_.set_loader_properties()
+    print(image_.mode)
     print(image_.dtype)
     print(id(image_.dtype))
     im_new = median_blur(image_, [7, 7])
