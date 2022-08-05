@@ -44,18 +44,34 @@ IMAGE_MODES_DESCRIPTION = {
     "BGR;16": ("BGR16", "16 bit reversed true color"),
     "BGR;32": ("BGRFloat32", "32 bit reversed true color")
 }
+
+# Modes that are supported for loading purposes
+IMAGE_LOADER_MODES = {
+    "L": ("GrayU8", "8-bit pixels, black and white (grayscale)"),
+    "RGB": ("RGBU8", "3x8-bit pixels, true color"),
+    "RGBA": ("RGBAU8", "4x8-bit pixels, true color with transparency mask"),
+    "CMYK": ("CMYKU8", "4x8-bit pixels, color separation"),
+    "YCbCr": ("YCbCrU8", "3x8-bit pixels, color video format (refers to the JPEG)"),
+    "LAB": ("LABU8", "3x8-bit pixels, the L*a*b color space"),
+    "HSV": ("HSVU8", "3x8-bit pixels, Hue, Saturation, Value color space"),
+    "F": ("Float32", "32-bit floating point pixels"),
+    "I;16": ("Uint16", "16 bit unsigned integer pixels"),
+    "I;16L": ("Uint16LE", "16 bit little endian unsigned integer pixels"),
+    "I;16B": ("Uint16BE", "16 bit big endian unsigned integer pixels"),
+}
+
+# Error handling needs to be more explicit. Very short errors might not prove to be that descriptive
+
 # -------------------------------------------------------------------------
 
 @BaseImage.register
 class ImageLoader:
 
     def __init__(self):
-        self.__file_stream = None
         self._image: np.ndarray = None
         self._file_extension: str = ""
         self._mode: str = ""
         self._data_type: np.dtype = None
-        self._info: Any = None
         self.closed = False
 
     def __enter__(self):
@@ -75,7 +91,7 @@ class ImageLoader:
         return cls()
 
     def __check_image_mode(self) -> bool:
-        if self.__file_stream.mode not in IMAGE_MODES_DESCRIPTION:
+        if self.mode not in IMAGE_LOADER_MODES:
             return False
         return True
 
@@ -83,10 +99,11 @@ class ImageLoader:
         self, path: Union[BinaryIO, str], formats: Optional[Union[List[str], Tuple[str]]] = None
     ):
         try:
-            self._image = np.ascontiguousarray(Image.open(path, formats=formats))
-            self.set_loader_properties()
+            file_stream = Image.open(path, formats=formats)
+            self._image = np.ascontiguousarray(file_stream)
+            self.set_initial_loader_properties(file_stream)
             if not self.__check_image_mode():
-                raise NotSupportedDataType("The provide image data type is not supported")
+                raise NotSupportedDataType("The provide image can not be loaded by the library")
             # Some functions need to change here since we are early exiting as well as the other transform functions
             # and the helpers as well
         except Exception as e:
@@ -102,12 +119,17 @@ class ImageLoader:
         self._mode = self.__file_stream.mode
         self._data_type = self._image.dtype
 
+    def set_initial_loader_properties(self, file_stream: Image.Image):
+        self._file_extension = file_stream.format
+        self._mode = file_stream.mode
+        self._data_type = self._image.dtype
+
     def update_image(self):
         self._image = np.ascontiguousarray(self.__file_stream)
 
     def update_file_stream(self):
         try:
-            self.__file_stream = Image.fromarray(self._image, "CMYK")
+            self.__file_stream = Image.fromarray(self._image, "I")
         except Exception as e:
             raise RuntimeError("Failed to update the file stream") from e
 
@@ -164,11 +186,6 @@ class ImageLoader:
     @check_image_exist_internal
     def extension(self) -> str:
         return self._file_extension
-
-    @property
-    @check_image_exist_internal
-    def info(self) -> Mapping[str, Any]:
-        return self._info
 
     @property
     @check_image_exist_internal
@@ -364,12 +381,3 @@ def _find_path(path: Path) -> Tuple[bool, Union[Path, None]]:
     return (False, None)
 
 # -------------------------------------------------------------------------
-
-# Why did I decide to remove the PIL filestream completely from this library?
-# - First of all, it is not a good practice to maintain multiple states at the same time
-# - Second, it adds a lot of additional overhead
-# - Third, huge source of bug
-# - Fourth, some methods require changing data-types. Maintaining, the conversion there is hard
-# - Fifth, color conversion would further complicate things. Mode is determined based on the PIL
-# file stream and if we change the color type to something, it would get really difficult to identify which mode
-# this is in the PIL language

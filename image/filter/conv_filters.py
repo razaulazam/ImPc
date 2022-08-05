@@ -311,7 +311,6 @@ if __name__ == "__main__":
     from pathlib import Path
     path_image = Path(__file__).parent.parent.parent / "sample.jpg"
     image_ = open_image(str(path_image))
-    image_._image_conversion_helper(np.uint32)
     image_.update_file_stream()
     image_.set_loader_properties()
     print(image_.mode)
