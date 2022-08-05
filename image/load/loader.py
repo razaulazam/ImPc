@@ -22,8 +22,6 @@ Image.MAX_IMAGE_PIXELS = 15000000000
 
 # -------------------------------------------------------------------------
 
-# We should map these descriptions to some easy descriptions that the user can understand
-# and pretty print it. Add more
 IMAGE_MODES_DESCRIPTION = {
     "L": ("GrayU8", "8-bit pixels, black and white (grayscale)"),
     "P": ("GrayU8P", "8-bit pixels, mapped to any other mode using a color palette"),
@@ -85,10 +83,8 @@ class ImageLoader:
         self, path: Union[BinaryIO, str], formats: Optional[Union[List[str], Tuple[str]]] = None
     ):
         try:
-            self.__file_stream = Image.open(path, formats=formats)
-            self._image = np.ascontiguousarray(self.__file_stream)
+            self._image = np.ascontiguousarray(Image.open(path, formats=formats))
             self.set_loader_properties()
-            print(IMAGE_MODES_DESCRIPTION)
             if not self.__check_image_mode():
                 raise NotSupportedDataType("The provide image data type is not supported")
             # Some functions need to change here since we are early exiting as well as the other transform functions
@@ -111,7 +107,7 @@ class ImageLoader:
 
     def update_file_stream(self):
         try:
-            self.__file_stream = Image.fromarray(self._image, "BGR;24")
+            self.__file_stream = Image.fromarray(self._image, "CMYK")
         except Exception as e:
             raise RuntimeError("Failed to update the file stream") from e
 
@@ -368,3 +364,12 @@ def _find_path(path: Path) -> Tuple[bool, Union[Path, None]]:
     return (False, None)
 
 # -------------------------------------------------------------------------
+
+# Why did I decide to remove the PIL filestream completely from this library?
+# - First of all, it is not a good practice to maintain multiple states at the same time
+# - Second, it adds a lot of additional overhead
+# - Third, huge source of bug
+# - Fourth, some methods require changing data-types. Maintaining, the conversion there is hard
+# - Fifth, color conversion would further complicate things. Mode is determined based on the PIL
+# file stream and if we change the color type to something, it would get really difficult to identify which mode
+# this is in the PIL language
