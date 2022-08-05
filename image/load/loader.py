@@ -47,13 +47,13 @@ IMAGE_MODES_DESCRIPTION = {
 
 # Modes that are supported for loading purposes
 IMAGE_LOADER_MODES = {
-    "L": ("GrayU8", "8-bit pixels, black and white (grayscale)"),
-    "RGB": ("RGBU8", "3x8-bit pixels, true color"),
-    "RGBA": ("RGBAU8", "4x8-bit pixels, true color with transparency mask"),
-    "CMYK": ("CMYKU8", "4x8-bit pixels, color separation"),
-    "YCbCr": ("YCbCrU8", "3x8-bit pixels, color video format (refers to the JPEG)"),
-    "LAB": ("LABU8", "3x8-bit pixels, the L*a*b color space"),
-    "HSV": ("HSVU8", "3x8-bit pixels, Hue, Saturation, Value color space"),
+    "L": ("Gray", "8-bit pixels, black and white (grayscale)"),
+    "RGB": ("RGB", "3x8-bit pixels, true color"),
+    "RGBA": ("RGBA", "4x8-bit pixels, true color with transparency mask"),
+    "CMYK": ("CMYK", "4x8-bit pixels, color separation"),
+    "YCbCr": ("YCbCr", "3x8-bit pixels, color video format (refers to the JPEG)"),
+    "LAB": ("LAB", "3x8-bit pixels, the L*a*b color space"),
+    "HSV": ("HSV", "3x8-bit pixels, Hue, Saturation, Value color space"),
     "F": ("Float32", "32-bit floating point pixels"),
     "I;16": ("Uint16", "16 bit unsigned integer pixels"),
     "I;16L": ("Uint16LE", "16 bit little endian unsigned integer pixels"),

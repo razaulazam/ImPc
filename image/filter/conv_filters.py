@@ -311,6 +311,13 @@ if __name__ == "__main__":
     from pathlib import Path
     path_image = Path(__file__).parent.parent.parent / "sample.jpg"
     image_ = open_image(str(path_image))
+    image_._image_conversion_helper(np.uint16)
+
+    cv2.imwrite("./file_check.png", image_.image)
+
+    # Why don't we get the accurate mode here?
+    image_new = open_image("./file_check.png")
+
     image_.update_file_stream()
     image_.set_loader_properties()
     print(image_.mode)
