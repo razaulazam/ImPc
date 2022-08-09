@@ -58,7 +58,7 @@ IMAGE_LOADER_MODES = {
     "I;16": ("Uint16", "16 bit unsigned integer pixels"),
     "I;16L": ("Uint16LE", "16 bit little endian unsigned integer pixels"),
     "I;16B": ("Uint16BE", "16 bit big endian unsigned integer pixels"),
-}
+} # allows uint8, uint16 and float32
 
 # Error handling needs to be more explicit. Very short errors might not prove to be that descriptive
 
@@ -71,6 +71,7 @@ class ImageLoader:
         self._image: np.ndarray = None
         self._file_extension: str = ""
         self._mode: str = ""
+        self._mode_description: str = ""
         self._data_type: np.dtype = None
         self.closed = False
 
@@ -101,22 +102,19 @@ class ImageLoader:
         try:
             file_stream = Image.open(path, formats=formats)
             self._image = np.ascontiguousarray(file_stream)
-            self.set_initial_loader_properties(file_stream)
-            if not self.__check_image_mode():
-                raise NotSupportedDataType("The provide image can not be loaded by the library")
-            # Some functions need to change here since we are early exiting as well as the other transform functions
-            # and the helpers as well
         except Exception as e:
             raise LoaderError("Failed to load the image file") from e
+
+        self.set_initial_loader_properties(file_stream)
+        if not self.__check_image_mode():
+            raise NotSupportedDataType("The provide image can not be loaded by the library")
 
         return self
 
     # When the image is converted to a different type, its mode gets changed
     # It could be still RGB, but with different data type that needs to be reflected
     def set_loader_properties(self):
-        self._file_extension = self.__file_stream.format
-        self._info = self.__file_stream.info
-        self._mode = self.__file_stream.mode
+        self._mode = self.__file_stream.mode # -- needs to change
         self._data_type = self._image.dtype
 
     def set_initial_loader_properties(self, file_stream: Image.Image):
@@ -127,6 +125,7 @@ class ImageLoader:
     def update_image(self):
         self._image = np.ascontiguousarray(self.__file_stream)
 
+    # This needs to go away
     def update_file_stream(self):
         try:
             self.__file_stream = Image.fromarray(self._image, "I")
@@ -138,18 +137,6 @@ class ImageLoader:
 
     def _image_conversion_helper(self, desired_type: np.dtype):
         self._image = self._image.astype(desired_type, casting="same_kind", copy=False)
-
-    @property
-    @check_image_exist_internal
-    def file_stream(self) -> Image.Image:
-        return self.__file_stream
-
-    @file_stream.setter
-    def file_stream(self, file_stream: Image.Image):
-        assert isinstance(
-            file_stream, Image.Image
-        ), WrongArgumentsValue("Trying to set the wrong file stream instance plugin")
-        self.__file_stream = file_stream
 
     @property
     @check_image_exist_internal
@@ -192,6 +179,7 @@ class ImageLoader:
     def dtype(self) -> np.dtype:
         return self._data_type
 
+    # this might need to change
     @property
     @check_image_exist_internal
     def mode(self) -> str:
@@ -222,6 +210,7 @@ class ImageLoader:
         new_im = copy.deepcopy(self)
         return new_im
 
+    # This needs to go away since we would get rid of the file stream 
     @check_image_exist_internal
     def show(self):
         self.__file_stream.show()
@@ -289,6 +278,7 @@ class ImageLoader:
 
         return pixel
 
+    # This needs to get rid of the file stream
     @check_image_exist_internal
     def tobytes(self) -> bytes:
         try:
@@ -298,6 +288,7 @@ class ImageLoader:
 
         return image_bytes
 
+    # This need to get rid of the file stream
     @check_image_exist_internal
     def getbbox(self):
         try:
@@ -310,7 +301,7 @@ class ImageLoader:
     @check_image_exist_internal
     def close(self):
         try:
-            self.__file_stream.close()
+            # self.__file_stream.close()
             del self._image
             self.closed = True
         except Exception as e:
@@ -319,7 +310,7 @@ class ImageLoader:
     def __del__(self):
         if self._image is not None:
             try:
-                self.__file_stream.close()
+                # self.__file_stream.close()
                 del self._image
                 self.closed = True
             except Exception as e:
@@ -328,8 +319,7 @@ class ImageLoader:
     def __eq__(self, other):
         return (
             self.__class__ == other.__class__ and self.mode == other.mode
-            and self.dims == other.dims and self.info == other.info
-            and self.tobytes() == other.tobytes()
+            and self.dims == other.dims and self.tobytes() == other.tobytes()
         )
 
     def __repr__(self):
