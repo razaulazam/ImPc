@@ -22,30 +22,6 @@ Image.MAX_IMAGE_PIXELS = 15000000000
 
 # -------------------------------------------------------------------------
 
-IMAGE_MODES_DESCRIPTION = {
-    "L": ("GrayU8", "8-bit pixels, black and white (grayscale)"),
-    "P": ("GrayU8P", "8-bit pixels, mapped to any other mode using a color palette"),
-    "RGB": ("RGBU8", "3x8-bit pixels, true color"),
-    "RGBA": ("RGBAU8", "4x8-bit pixels, true color with transparency mask"),
-    "CMYK": ("CMYKU8", "4x8-bit pixels, color separation"),
-    "YCbCr": ("YCbCrU8", "3x8-bit pixels, color video format (refers to the JPEG)"),
-    "LAB": ("LABU8", "3x8-bit pixels, the L*a*b color space"),
-    "HSV": ("HSVU8", "3x8-bit pixels, Hue, Saturation, Value color space"),
-    "F": ("Float32", "32-bit floating point pixels"),
-    "LA": ("GrayU8_A", "L with alpha"),
-    "PA": ("GrayU8P_A", "P with alpha"),
-    "RGBX": ("RGBPadU8", "True color with padding"),
-    "RGBa": ("RGBMaU8", "True color with premultiplied alpha"),
-    "La": ("GrayU8a", "L with premultiplied alpha"),
-    "I;16": ("Uint16", "16 bit unsigned integer pixels"),
-    "I;16L": ("Uint16LE", "16 bit little endian unsigned integer pixels"),
-    "I;16B": ("Uint16BE", "16 bit big endian unsigned integer pixels"),
-    "I;16N": ("Uint16NE", "16 bit native endian unsigned integer pixels"),
-    "BGR;16": ("BGR16", "16 bit reversed true color"),
-    "BGR;32": ("BGRFloat32", "32 bit reversed true color")
-}
-
-# Modes that are supported for loading purposes
 IMAGE_LOADER_MODES = {
     "L": ("Gray", "8-bit pixels, black and white (grayscale)"),
     "RGB": ("RGB", "3x8-bit pixels, true color"),
@@ -142,19 +118,26 @@ class ImageLoader:
     def get_mode_description(self) -> str:
         return self._mode_description
 
+    def _set_mode_description(self, mode_desc: str):
+        assert isinstance(mode_desc, str), WrongArgumentsValue("Provide mode description does not have the valid type")
+        self._mode_description = mode_desc
+    
+    def _set_mode(self, mode: str): 
+        assert isinstance(mode, str), WrongArgumentsValue("Provided mode does not have the accurate type")
+        self._mode = mode  
+
     def _image_conversion_helper(self, desired_type: np.dtype):
         self._image = self._image.astype(desired_type, casting="same_kind", copy=False)
+
+    def _set_image(self, image: np.ndarray):
+        assert isinstance(image, np.ndarray
+                          ), WrongArgumentsValue("Trying to set the wrong image instance type")
+        self._image = image
 
     @property
     @check_image_exist_internal
     def image(self) -> np.ndarray:
         return self._image
-
-    @image.setter
-    def image(self, image: np.ndarray):
-        assert isinstance(image, np.ndarray
-                          ), WrongArgumentsValue("Trying to set the wrong image instance type")
-        self._image = image
 
     @property
     @check_image_exist_internal
@@ -186,7 +169,6 @@ class ImageLoader:
     def dtype(self) -> np.dtype:
         return self._data_type
 
-    # this might need to change
     @property
     @check_image_exist_internal
     def mode(self) -> str:
