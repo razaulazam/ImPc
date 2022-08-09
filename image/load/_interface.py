@@ -74,5 +74,34 @@ class BaseImage(ABC):
     @abstractmethod
     def close(self):
         ...
+    
+    @abstractmethod
+    def _load_image(self):
+        ...
+
+    @abstractmethod
+    def _set_initial_loader_properties(self):
+        ...
+
+    @abstractmethod
+    def _get_original_image_mode(self):
+        ...
+
+    @abstractmethod
+    def _set_mode_description(self):
+        ...
+
+    @abstractmethod
+    def _set_mode(self):
+        ...
+
+    @abstractmethod
+    def _image_conversion_helper(self):
+        ...
+
+    @abstractmethod
+    def _set_image(self):
+        ...
+    
 
 # -------------------------------------------------------------------------
