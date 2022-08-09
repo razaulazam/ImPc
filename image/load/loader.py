@@ -138,8 +138,9 @@ class ImageLoader:
         except Exception as e:
             raise RuntimeError("Failed to update the file stream") from e
 
+    @check_image_exist_internal
     def get_mode_description(self) -> str:
-        return IMAGE_MODES_DESCRIPTION.get(self._mode, "")
+        return self._mode_description
 
     def _image_conversion_helper(self, desired_type: np.dtype):
         self._image = self._image.astype(desired_type, casting="same_kind", copy=False)
