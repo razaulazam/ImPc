@@ -373,6 +373,7 @@ INTERNAL_CONVERSION_MODES = {
     "bayerrg2bgr": ("BGR", "BGR with the native data type as of the original image"),
     "bayergr2bgr": ("BGR", "BGR with the native data type as of the original image"),
 }
+
 # -------------------------------------------------------------------------
 
 @check_image_exist_external
