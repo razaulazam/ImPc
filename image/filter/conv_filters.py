@@ -36,7 +36,7 @@ def corr2d(
        Note: Kernel windows are not variable sized here. They have a constant size over each pixel neighborhood."""
 
     new_im = image.copy()
-    new_im = image_array_check_conversion(new_im, "openCV")
+    image_array_check_conversion(new_im, "openCV")
 
     if not isinstance(kernel, (np.ndarray, namedtuple)):
         raise WrongArgumentsType(
@@ -62,10 +62,10 @@ def corr2d(
         border_actual = BORDER_INTERPOLATION["default"]
 
     try:
-        new_im.image = cv2.filter2D(
+        image = cv2.filter2D(
             new_im.image, -1, kernel, delta=float(delta), borderType=border_actual
         )
-        new_im.update_file_stream()
+        new_im._set_image(image) # this needs to be applied to all the methods
         new_im.set_loader_properties()
     except Exception as e:
         raise FilteringError("Failed to filter the image") from e

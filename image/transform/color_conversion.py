@@ -394,7 +394,8 @@ def convert(image: BaseImage, code: str) -> BaseImage:
     try:
         new_im = image.copy()
         new_im.image = cv2.cvtColor(new_im.image, opencv_code).astype(image.dtype)
-        new_im.set_loader_properties()
+        new_im._set_mode(mode)
+        new_im._set_mode_description(mode_description)
     except Exception as e:
         raise TransformError(f"Conversion to {code} is not possible") from e
 

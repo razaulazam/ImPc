@@ -117,6 +117,10 @@ class ImageLoader:
     def _image_conversion_helper(self, desired_type: np.dtype):
         self._image = self._image.astype(desired_type, casting="same_kind", copy=False)
 
+    @check_image_exist_internal
+    def _update_dtype(self):
+        self.dtype = self._image.dtype
+
     def _set_image(self, image: np.ndarray):
         assert isinstance(image, np.ndarray
                           ), WrongArgumentsValue("Trying to set the wrong image instance type")
@@ -283,6 +287,7 @@ class ImageLoader:
         except Exception as e:
             raise LoaderError("Failed to close the image") from e
 
+    # doesn't work appropriately
     def __del__(self):
         if self._image is not None:
             try:
@@ -310,7 +315,7 @@ def open_image() -> BaseImage:
 # -------------------------------------------------------------------------
 
 @open_image.register(str)
-def _(path, formats: Optional[Union[List[str], Tuple[str], str]] = None) -> BaseImage:
+def _(path, formats: Optional[Union[List[str], Tuple[str]]] = None) -> BaseImage:
     if formats and not isinstance(formats, (list, tuple)):
         raise WrongArgumentsType("Please check the type of the formats argument")
 
@@ -352,19 +357,10 @@ if __name__ == "__main__":
     from pathlib import Path
     import matplotlib.pyplot as plt
     image_path = Path(__file__).parent.parent.parent / "sample.jpg"
-    import cv2
-    image = cv2.imread(str(image_path))
-    plt.imshow(image)
-    plt.show()
-    image = image.astype(np.float32)
-    image_new = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-    plt.imshow(image_new)
-    plt.show()
-    image_one = open_image(str(image_path))
-    image_one.normalize()
-    from skimage.io import imread
-    image_two = imread(str(image_path))
-
+    import numpy as np
+    a = open_image(str(image_path))
+    a.close()
+    print(a)
     print("hallo")
 
 

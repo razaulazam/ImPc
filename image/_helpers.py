@@ -15,7 +15,7 @@ def check_user_provided_ndarray(array_: np.ndarray, strategy: str):
         if not _conversion_type(data_type, strategy):
             raise NotSupportedDataType("Image has a data-type which is currently not supported")
         array_ = _convert_array_dtype(array_)
-    return array_
+    return array_ # need to check on this
 
 # -------------------------------------------------------------------------
 
@@ -29,18 +29,14 @@ def image_array_check_conversion(image: BaseImage, strategy: str) -> BaseImage:
 # -------------------------------------------------------------------------
 
 def _correct_type(data_type: np.dtype, strategy: str):
-    if strategy == "PIL":
-        flag = data_type in ["uint8", "uint16", "uint32", "float32"]
-    elif strategy == "openCV":
+    if strategy == "openCV":
         flag = data_type in ["uint8", "uint16", "float32"]
     return flag
 
 # -------------------------------------------------------------------------
 
 def _conversion_type(data_type: np.dtype, strategy: str):
-    if strategy == "PIL":
-        flag = data_type == "float16"
-    elif strategy == "openCV":
+    if strategy == "openCV":
         flag = data_type in ["uint32", "float16"]
     return flag
 
@@ -70,7 +66,6 @@ def _convert_image_dtype(image: BaseImage):
     else:
         raise NotSupportedDataType("Image has a data-type which is currently not supported")
 
-    image.update_file_stream()
     image.set_loader_properties()
 
 # -------------------------------------------------------------------------
