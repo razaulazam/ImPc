@@ -389,10 +389,11 @@ def convert(image: BaseImage, code: str) -> BaseImage:
     if not opencv_code:
         raise WrongArgumentsValue("Provided conversion code is currently not supported")
 
+    mode, mode_description = INTERNAL_CONVERSION_MODES.get(code.lower())
+
     try:
         new_im = image.copy()
         new_im.image = cv2.cvtColor(new_im.image, opencv_code).astype(image.dtype)
-        new_im.update_file_stream()
         new_im.set_loader_properties()
     except Exception as e:
         raise TransformError(f"Conversion to {code} is not possible") from e

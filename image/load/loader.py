@@ -37,6 +37,8 @@ IMAGE_LOADER_MODES = {
 } # allows uint8, uint16 and float32
 
 # Error handling needs to be more explicit. Very short errors might not prove to be that descriptive
+# mode would need to change as well as the mode description
+# data type might need to change as well
 
 # -------------------------------------------------------------------------
 
@@ -84,17 +86,17 @@ class ImageLoader:
 
         if not self.__valid_image_mode(file_stream.mode):
             raise NotSupportedMode("The provide image can not be loaded by the library")
-        self.set_initial_loader_properties(file_stream)
+        self._set_initial_loader_properties(file_stream)
         
         return self
 
     # When the image is converted to a different type, its mode gets changed
     # It could be still RGB, but with different data type that needs to be reflected
     def set_loader_properties(self):
-        self._mode = self.__file_stream.mode # -- needs to change
+        # self._mode = self.__file_stream.mode # -- needs to change
         self._data_type = self._image.dtype
 
-    def set_initial_loader_properties(self, file_stream: Image.Image):
+    def _set_initial_loader_properties(self, file_stream: Image.Image):
         self._file_extension = file_stream.format
         self.__original_mode = file_stream.mode
         self._mode, self._mode_description  = IMAGE_LOADER_MODES[file_stream.mode]
@@ -103,20 +105,6 @@ class ImageLoader:
     @check_image_exist_internal
     def _get_original_image_mode(self) -> str:
         return self.__original_mode
-
-    def update_image(self):
-        self._image = np.ascontiguousarray(self.__file_stream)
-
-    # This needs to go away
-    def update_file_stream(self):
-        try:
-            self.__file_stream = Image.fromarray(self._image, "I")
-        except Exception as e:
-            raise RuntimeError("Failed to update the file stream") from e
-
-    @check_image_exist_internal
-    def get_mode_description(self) -> str:
-        return self._mode_description
 
     def _set_mode_description(self, mode_desc: str):
         assert isinstance(mode_desc, str), WrongArgumentsValue("Provide mode description does not have the valid type")
@@ -174,6 +162,11 @@ class ImageLoader:
     def mode(self) -> str:
         return self._mode
 
+    @property
+    @check_image_exist_internal
+    def mode_description(self) -> str:
+        return self._mode_description
+    
     @check_image_exist_internal
     def normalize(self):
         """Normalizes the image. Supports only 8-bit, 16-bit and 32-bit encoding"""
