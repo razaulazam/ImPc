@@ -189,7 +189,6 @@ COLOR_REGISTRY = {
     "bayergb2bgr": cv2.COLOR_BayerGB2BGR,
     "bayerrg2bgr": cv2.COLOR_BayerRG2BGR,
     "bayergr2bgr": cv2.COLOR_BayerGR2BGR,
-    "bayerrggb2bgr": cv2.COLOR_BayerRGGB2BGR,
 }
 
 # -------------------------------------------------------------------------

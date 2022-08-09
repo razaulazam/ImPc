@@ -12,7 +12,7 @@ from pathlib import Path
 from functools import singledispatch
 from typing import Mapping, Tuple, List, Optional, Any, BinaryIO, Union
 from image._decorators import check_image_exist_internal
-from commons.exceptions import WrongArgumentsValue, NotSupportedDataType
+from commons.exceptions import WrongArgumentsValue, NotSupportedDataType, NotSupportedMode
 from commons.exceptions import PathDoesNotExist, WrongArgumentsType, LoaderError
 from image.load._interface import BaseImage
 
@@ -73,6 +73,7 @@ class ImageLoader:
         self._mode: str = ""
         self._mode_description: str = ""
         self._data_type: np.dtype = None
+        self.__original_mode: str = ""
         self.closed = False
 
     def __enter__(self):
@@ -91,24 +92,24 @@ class ImageLoader:
     def create_loader(cls):
         return cls()
 
-    def __check_image_mode(self) -> bool:
-        if self.mode not in IMAGE_LOADER_MODES:
+    def __valid_image_mode(self, mode: str) -> bool:
+        if mode not in IMAGE_LOADER_MODES:
             return False
         return True
 
     def _load_image(
         self, path: Union[BinaryIO, str], formats: Optional[Union[List[str], Tuple[str]]] = None
-    ):
+    ): # could we allow loads from multiple methods?
         try:
             file_stream = Image.open(path, formats=formats)
             self._image = np.ascontiguousarray(file_stream)
         except Exception as e:
             raise LoaderError("Failed to load the image file") from e
 
+        if not self.__valid_image_mode(file_stream.mode):
+            raise NotSupportedMode("The provide image can not be loaded by the library")
         self.set_initial_loader_properties(file_stream)
-        if not self.__check_image_mode():
-            raise NotSupportedDataType("The provide image can not be loaded by the library")
-
+        
         return self
 
     # When the image is converted to a different type, its mode gets changed
@@ -119,8 +120,13 @@ class ImageLoader:
 
     def set_initial_loader_properties(self, file_stream: Image.Image):
         self._file_extension = file_stream.format
-        self._mode = file_stream.mode
+        self.__original_mode = file_stream.mode
+        self._mode, self._mode_description  = IMAGE_LOADER_MODES[file_stream.mode]
         self._data_type = self._image.dtype
+
+    @check_image_exist_internal
+    def _get_original_image_mode(self) -> str:
+        return self.__original_mode
 
     def update_image(self):
         self._image = np.ascontiguousarray(self.__file_stream)
@@ -186,11 +192,11 @@ class ImageLoader:
         return self._mode
 
     @check_image_exist_internal
-    def normalize(self): # This needs to change
+    def normalize(self):
         """Normalizes the image. Supports only 8-bit, 16-bit and 32-bit encoding"""
 
         data_type = self.dtype
-        bit_depth = re.search("(?<=uint)\d+|(?<=float)\d+", data_type)
+        bit_depth = re.search("(?<=uint)\d+|(?<=float)\d+", str(data_type))
         if not bit_depth:
             raise NotSupportedDataType("Image has a data-type which is currently not supported")
 
@@ -201,7 +207,7 @@ class ImageLoader:
             )
 
         norm_factor = (2**num_bits) - 1
-        self._image = (self._image / norm_factor).astype(data_type, casting="same_kind", copy=False)
+        self._image = (self._image / norm_factor).astype(data_type, copy=False)
 
         return self
 
@@ -215,7 +221,7 @@ class ImageLoader:
     def show(self):
         self.__file_stream.show()
 
-    @check_image_exist_internal
+    @check_image_exist_internal # needs to change
     def save(self, path_: Union[str, io.BytesIO], format: Optional[str] = None):
         if not isinstance(path_, (str, io.BytesIO)):
             raise WrongArgumentsType(
@@ -288,20 +294,14 @@ class ImageLoader:
 
         return image_bytes
 
-    # This need to get rid of the file stream
     @check_image_exist_internal
     def getbbox(self):
-        try:
-            bbox = self.__file_stream.getbbox()
-        except Exception as e:
-            raise LoaderError("Failed to get the bounding box") from e
-
+        bbox = (0, 0, self.width, self.height)
         return bbox
 
     @check_image_exist_internal
     def close(self):
         try:
-            # self.__file_stream.close()
             del self._image
             self.closed = True
         except Exception as e:
@@ -371,3 +371,24 @@ def _find_path(path: Path) -> Tuple[bool, Union[Path, None]]:
     return (False, None)
 
 # -------------------------------------------------------------------------
+
+if __name__ == "__main__":
+    from pathlib import Path
+    import matplotlib.pyplot as plt
+    image_path = Path(__file__).parent.parent.parent / "sample.jpg"
+    import cv2
+    image = cv2.imread(str(image_path))
+    plt.imshow(image)
+    plt.show()
+    image = image.astype(np.float32)
+    image_new = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+    plt.imshow(image_new)
+    plt.show()
+    image_one = open_image(str(image_path))
+    image_one.normalize()
+    from skimage.io import imread
+    image_two = imread(str(image_path))
+
+    print("hallo")
+
+

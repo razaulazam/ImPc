@@ -50,3 +50,8 @@ class NotSupportedDataType(_BaseException):
     pass
 
 # -------------------------------------------------------------------------
+
+class NotSupportedMode(_BaseException):
+    pass
+
+# -------------------------------------------------------------------------
