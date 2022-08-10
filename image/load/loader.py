@@ -59,12 +59,8 @@ class ImageLoader:
 
     def __exit__(self, *args):
         if self._image is not None:
-            try:
-                self.__file_stream.close()
-                del self._image
-                self.closed = True
-            except Exception as e:
-                raise LoaderError("Failed to close the image on exiting the scope") from e
+            del self._image
+            self.closed = True
 
     @classmethod
     def create_loader(cls):
@@ -77,7 +73,7 @@ class ImageLoader:
 
     def _load_image(
         self, path: Union[BinaryIO, str], formats: Optional[Union[List[str], Tuple[str]]] = None
-    ): # could we allow loads from multiple methods?
+    ):
         try:
             file_stream = Image.open(path, formats=formats)
             self._image = np.ascontiguousarray(file_stream)
@@ -264,15 +260,9 @@ class ImageLoader:
 
         return pixel
 
-    # This needs to get rid of the file stream
     @check_image_exist_internal
     def tobytes(self) -> bytes:
-        try:
-            image_bytes = self.__file_stream.tobytes()
-        except Exception as e:
-            raise LoaderError("Failed to convert the image to bytes") from e
-
-        return image_bytes
+        return self._image.tobytes()
 
     @check_image_exist_internal
     def getbbox(self):
@@ -281,21 +271,8 @@ class ImageLoader:
 
     @check_image_exist_internal
     def close(self):
-        try:
-            del self._image
-            self.closed = True
-        except Exception as e:
-            raise LoaderError("Failed to close the image") from e
-
-    # doesn't work appropriately
-    def __del__(self):
-        if self._image is not None:
-            try:
-                # self.__file_stream.close()
-                del self._image
-                self.closed = True
-            except Exception as e:
-                raise LoaderError("Failed to close the image upon deleting the image") from e
+        del self._image
+        self.closed = True
 
     def __eq__(self, other):
         return (
@@ -359,8 +336,8 @@ if __name__ == "__main__":
     image_path = Path(__file__).parent.parent.parent / "sample.jpg"
     import numpy as np
     a = open_image(str(image_path))
+    b = a
     a.close()
-    print(a)
     print("hallo")
 
 
