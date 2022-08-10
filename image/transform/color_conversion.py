@@ -1,11 +1,11 @@
-# Copyright (C) 2022 FARO Technologies Inc., All Rights Reserved.
+# Copyright (C) Raza Ul Azam, All Rights Reserved.
 # \brief Color conversion methods
 
 import cv2
 
 from commons.exceptions import TransformError, WrongArgumentsValue, WrongArgumentsType
 from image._decorators import check_image_exist_external
-from image.load._interface import PyFaroImage
+from image.load._interface import BaseImage
 from image._helpers import image_array_check_conversion
 
 # -------------------------------------------------------------------------
@@ -189,13 +189,195 @@ COLOR_REGISTRY = {
     "bayergb2bgr": cv2.COLOR_BayerGB2BGR,
     "bayerrg2bgr": cv2.COLOR_BayerRG2BGR,
     "bayergr2bgr": cv2.COLOR_BayerGR2BGR,
-    "bayerrggb2bgr": cv2.COLOR_BayerRGGB2BGR,
+}
+
+# -------------------------------------------------------------------------
+
+INTERNAL_CONVERSION_MODES = {
+    "bgr2bgra": ("BGRA", "BGRA with the native data type as of the original image"),
+    "rgb2rgba": ("RGBA", "RGBA with the native data type as of the original image"),
+    "bgra2bgr": ("BGR", "BGR with the native data type as of the original image"),
+    "rgba2rgb": ("RGB", "RGB with the native data type as of the original image"),
+    "bgr2rgba": ("RGBA", "RGBA with the native data type as of the original image"),
+    "rgb2bgra": ("BGRA", "BGRA with the native data type as of the original image"),
+    "rgba2bgr": ("BGR", "BGR with the native data type as of the original image"),
+    "bgra2rgb": ("RGB", "RGB with the native data type as of the original image"),
+    "bgr2rgb": ("RGB", "RGB with the native data type as of the original image"),
+    "rgb2bgr": ("BGR", "BGR with the native data type as of the original image"),
+    "bgra2rgba": ("RGBA", "RGBA with the native data type as of the original image"),
+    "rgba2bgra": ("BGRA", "BGRA with the native data type as of the original image"),
+    "bgr2gray": ("Gray", "Gray with the native data type as of the original image"),
+    "rgb2gray": ("Gray", "Gray with the native data type as of the original image"),
+    "gray2bgr": ("BGR", "BGR with the native data type as of the original image"),
+    "gray2rgb": ("RGB", "RGB with the native data type as of the original image"),
+    "gray2bgra": ("BGRA", "BGRA with the native data type as of the original image"),
+    "gray2rgba": ("RGBA", "RGBA with the native data type as of the original image"),
+    "bgra2gray": ("Gray", "Gray with the native data type as of the original image"),
+    "rgba2gray": ("Gray", "Gray with the native data type as of the original image"),
+    "bgr2bgr565": ("BGR565", "BGR565 with the native data type as of the original image"),
+    "rgb2bgr565": ("BGR565", "BGR565 with the native data type as of the original image"),
+    "bgr5652bgr": ("BGR", "BGR with the native data type as of the original image"),
+    "bgr5652rgb": ("RGB", "RGB with the native data type as of the original image"),
+    "bgra2bgr565": ("BGR565", "BGR565 with the native data type as of the original image"),
+    "rgba2bgr565": ("BGR565", "BGR565 with the native data type as of the original image"),
+    "bgr5652bgra": ("BGRA", "BGRA with the native data type as of the original image"),
+    "bgr5652rbga": ("RGBA", "RGBA with the native data type as of the original image"),
+    "gray2bgr565": ("BGR565", "BGR565 with the native data type as of the original image"),
+    "bgr5652gray": ("Gray", "Gray with the native data type as of the original image"),
+    "bgr2bgr555": ("BGR555", "BGR555 with the native data type as of the original image"),
+    "rgb2bgr555": ("BGR555", "BGR555 with the native data type as of the original image"),
+    "bgr5552bgr": ("BGR", "BGR with the native data type as of the original image"),
+    "bgr5552rgb": ("RGB", "RGB with the native data type as of the original image"),
+    "bgra2bgr555": ("BGR555", "BGR555 with the native data type as of the original image"),
+    "rgba2bgr555": ("BGR555", "BGR555 with the native data type as of the original image"),
+    "bgr5552bgra": ("BGRA", "BGRA with the native data type as of the original image"),
+    "bgr5552rgba": ("RGBA", "RGBA with the native data type as of the original image"),
+    "gray2bgr555": ("BGR555", "BGR555 with the native data type as of the original image"),
+    "bgr5552gray": ("Gray", "Gray with the native data type as of the original image"),
+    "bgr2xyz": ("XYZ", "XYZ with the native data type as of the original image"),
+    "rgb2xyz": ("XYZ", "XYZ with the native data type as of the original image"),
+    "xyz2bgr": ("BGR", "BGR with the native data type as of the original image"),
+    "xyz2rgb": ("RGB", "RGB with the native data type as of the original image"),
+    "bgr2YCrCb": ("YCbCr", "YCbCr with the native data type as of the original image"),
+    "rgb2YCrCb": ("YCbCr", "YCbCr with the native data type as of the original image"),
+    "YCrCb2bgr": ("BGR", "BGR with the native data type as of the original image"),
+    "YCrCb2rgb": ("RGB", "RGB with the native data type as of the original image"),
+    "bgr2hsv": ("HSV", "HSV with the native data type as of the original image"),
+    "rgb2hsv": ("BGRA", "BGRA with the native data type as of the original image"),
+    "bgr2lab": ("LAB", "LAB with the native data type as of the original image"),
+    "rgb2lab": ("LAB", "LAB with the native data type as of the original image"),
+    "bgr2luv": ("LUV", "LUV with the native data type as of the original image"),
+    "rgb2luv": ("LUV", "LUV with the native data type as of the original image"),
+    "bgr2hls": ("HLS", "HLS with the native data type as of the original image"),
+    "rgb2hls": ("HLS", "HLS with the native data type as of the original image"),
+    "hsv2bgr": ("BGR", "BGR with the native data type as of the original image"),
+    "hsv2rgb": ("RGB", "RGB with the native data type as of the original image"),
+    "lab2bgr": ("BGR", "BGR with the native data type as of the original image"),
+    "lab2rgb": ("RGB", "RGB with the native data type as of the original image"),
+    "luv2bgr": ("BGR", "BGR with the native data type as of the original image"),
+    "luv2rgb": ("RGB", "RGB with the native data type as of the original image"),
+    "hls2bgr": ("BGR", "BGR with the native data type as of the original image"),
+    "hls2rgb": ("RGB", "RGB with the native data type as of the original image"),
+    "bgr2hsvfull": ("HSVFULL", "HSVFULL with the native data type as of the original image"),
+    "rgb2hsvfull": ("HSVFULL", "HSVFULL with the native data type as of the original image"),
+    "bgr2hlsfull": ("HLSFULL", "HLSFULL with the native data type as of the original image"),
+    "rgb2hlsfull": ("HLSFULL", "HLSFULL with the native data type as of the original image"),
+    "hsv2bgrfull": ("BGRFULL", "BGRFULL with the native data type as of the original image"),
+    "hsv2rgbfull": ("RGBFULL", "RGBFULL with the native data type as of the original image"),
+    "hls2bgrfull": ("BGRFULL", "BGRFULL with the native data type as of the original image"),
+    "hls2rgbfull": ("RGBFULL", "RGBFULL with the native data type as of the original image"),
+    "lbgr2lab": ("LAB", "LAB with the native data type as of the original image"),
+    "lrgb2lab": ("LAB", "LAB with the native data type as of the original image"),
+    "lbgr2luv": ("LUV", "LUV with the native data type as of the original image"),
+    "lrgb2luv": ("LUV", "LUV with the native data type as of the original image"),
+    "lab2lbgr": ("BGR", "BGR with the native data type as of the original image"),
+    "lab2lrgb": ("RGB", "RGB with the native data type as of the original image"),
+    "luv2lbgr": ("BGR", "BGR with the native data type as of the original image"),
+    "luv2lrgb": ("RGB", "RGB with the native data type as of the original image"),
+    "bgr2yuv": ("YUV", "YUV with the native data type as of the original image"),
+    "rgb2yuv": ("YUV", "YUV with the native data type as of the original image"),
+    "yuv2bgr": ("BGR", "BGR with the native data type as of the original image"),
+    "yuv2rgb": ("RGB", "RGB with the native data type as of the original image"),
+    "yuv2rgb_nv12": ("RGBNV12", "RGBNV12 with the native data type as of the original image"),
+    "yuv2bgr_nv12": ("BGRNV12", "BGRNV12 with the native data type as of the original image"),
+    "yuv2rgb_nv21": ("RGBNV21", "RGBNV21 with the native data type as of the original image"),
+    "yuv2bgr_nv21": ("RGBNV21", "RGBNV21 with the native data type as of the original image"),
+    "yuv420sp2rgb": ("RGB", "RGB with the native data type as of the original image"),
+    "yuv420sp2bgr": ("BGR", "BGR with the native data type as of the original image"),
+    "yuv2rgba_nv12": ("RGBANV12", "RGBANV12 with the native data type as of the original image"),
+    "yuv2bgra_nv12": ("BGRANV12", "BGRANV12 with the native data type as of the original image"),
+    "yuv2rgba_nv21": ("RGBANV21", "RGBANV21 with the native data type as of the original image"),
+    "yuv2bgranv21": ("BGRANV21", "BGRANV21 with the native data type as of the original image"),
+    "yuv420sp2rgba": ("RGBA", "RGBA with the native data type as of the original image"),
+    "yuv420sp2bgra": ("BGRA", "BGRA with the native data type as of the original image"),
+    "yuv2rgb_yv12": ("RGBYV12", "RGBYV12 with the native data type as of the original image"),
+    "yuv2bgr_yv12": ("BGRYV12", "BGRYV12 with the native data type as of the original image"),
+    "yuv2rgb_iyuv": ("RGBIYUV", "RGBIYUV with the native data type as of the original image"),
+    "yuv2bgr_iyuv": ("BGRIYUV", "BGRIYUV with the native data type as of the original image"),
+    "yuv2rgb_i420": ("RGBI420", "RGBI420 with the native data type as of the original image"),
+    "yuv2bgr_i420": ("BGRI420", "BGRI420 with the native data type as of the original image"),
+    "yuv420p2rgb": ("RGB", "RGB with the native data type as of the original image"),
+    "yuv420p2bgr": ("BGR", "BGR with the native data type as of the original image"),
+    "yuv2rgba_yv12": ("RGBAYV12", "RGBAYV12 with the native data type as of the original image"),
+    "yuv2bgra_yv12": ("BGRAYV12", "BGRAYV12 with the native data type as of the original image"),
+    "yuv2rgba_iyuv": ("RGBAIYUV", "RGBAIYUV with the native data type as of the original image"),
+    "yuv2bgra_iyuv": ("BGRAIYUV", "RGBAIYUV with the native data type as of the original image"),
+    "yuv2rgba_i420": ("RGBAI420", "RGBAI420 with the native data type as of the original image"),
+    "yuv2bgra_i420": ("BGRAI420", "BGRAI420 with the native data type as of the original image"),
+    "yuv420p2rgba": ("RGBA", "RGBA with the native data type as of the original image"),
+    "yuv420p2bgra": ("BGRA", "BGRA with the native data type as of the original image"),
+    "yuv2gray_420": ("Gray420", "Gray420 with the native data type as of the original image"),
+    "yuv2gray_nv21": ("GrayNV21", "GrayNV21 with the native data type as of the original image"),
+    "yuv2gray_nv12": ("GrayNV12", "GrayNV12 with the native data type as of the original image"),
+    "yuv2gray_yv12": ("GrayYV12", "GrayYV12 with the native data type as of the original image"),
+    "yuv2gray_iyuv": ("GrayIYUV", "GrayIYUV with the native data type as of the original image"),
+    "yuv2gray_i420": ("GrayI420", "GrayI420 with the native data type as of the original image"),
+    "yuv420sp2gray": ("Gray", "Gray with the native data type as of the original image"),
+    "yuv420p2gray": ("Gray", "Gray with the native data type as of the original image"),
+    "yuv2rgb_uyvy": ("RGBUYVY", "RGBUYVY with the native data type as of the original image"),
+    "yuv2bgr_uyvy": ("BGRUYVY", "BGRUYVY with the native data type as of the original image"),
+    "yuv2rgb_y422 ": ("RGBY422", "RGBY422 with the native data type as of the original image"),
+    "yuv2bgr_y422 ": ("BGRY422", "BGRY422 with the native data type as of the original image"),
+    "yuv2rgb_uynv": ("RGBUYNV", "RGBUYNV with the native data type as of the original image"),
+    "yuv2bgr_uynv": ("BGRUYNV", "BGRUYNV with the native data type as of the original image"),
+    "yuv2rgba_uyvy": ("RGBAUYVY", "RGBAUYVY with the native data type as of the original image"),
+    "yuv2bgra_uyvy": ("BGRAUYVY", "BGRAUYVY with the native data type as of the original image"),
+    "yuv2rgba_y422": ("RGBAY422", "RGBAY422 with the native data type as of the original image"),
+    "yuv2bgra_y422": ("BGRAY422", "BGRAY422 with the native data type as of the original image"),
+    "yuv2rgba_uynv": ("RGBAUYNV", "RGBAUYNV with the native data type as of the original image"),
+    "yuv2bgra_uynv": ("BGRAUYNV", "BGRAUYNV with the native data type as of the original image"),
+    "yuv2rgb_yuy2": ("RGBYUY2", "RGBYUY2 with the native data type as of the original image"),
+    "yuv2bgr_yuy2": ("BGRYUY2", "BGRYUY2 with the native data type as of the original image"),
+    "yuv2rgb_yvyu": ("RGBYVYU", "RGBYVYU with the native data type as of the original image"),
+    "yuv2bgr_yvyu": ("BGRYVYU", "BGRYVYU with the native data type as of the original image"),
+    "yuv2rgb_yuyv": ("RGBYUYV", "RGBYUYV with the native data type as of the original image"),
+    "yuv2bgr_yuyv": ("BGRYUYV", "BGRYUYV with the native data type as of the original image"),
+    "yuv2rgb_yunv": ("RGBYUNV", "RGBYUNV with the native data type as of the original image"),
+    "yuv2bgr_yunv": ("BGRYUNV", "BGRYUNV with the native data type as of the original image"),
+    "yuv2rgba_yuy2": ("BGRAYUY2", "BGRAYUY2 with the native data type as of the original image"),
+    "yuvbgra_yuy2": ("BGRAYUY2", "BGRAYUY2 with the native data type as of the original image"),
+    "yuv2rgba_yvyu": ("RGBAYVYU", "RGBAYVYU with the native data type as of the original image"),
+    "yuv2bgra_yvyu": ("BGRAYVYU", "BGRAYVYU with the native data type as of the original image"),
+    "yuv2rgba_yuyv": ("RGBAYUYV", "RGBAYUYV with the native data type as of the original image"),
+    "yuv2bgra_yuyv": ("BGRAYUYV", "BGRAYUYV with the native data type as of the original image"),
+    "yuv2rgba_yunv": ("RGBAYUNV", "RGBAYUNV with the native data type as of the original image"),
+    "yuv2bgra_yunv": ("BGRAYUNV", "BGRAYUNV with the native data type as of the original image"),
+    "yuv2gray_uyvy": ("GrayUYVY", "GrayUYVY with the native data type as of the original image"),
+    "yuv2gray_y422": ("GrayY422", "GrayY422 with the native data type as of the original image"),
+    "yuv2gray_uynv": ("GrayUYNV", "GrayUYNV with the native data type as of the original image"),
+    "yuv2gray_yvyu": ("GrayYVYU", "GrayYVYU with the native data type as of the original image"),
+    "yuv2gray_yuyv": ("GrayYUYV", "GrayYUYV with the native data type as of the original image"),
+    "yuv2gray_yunv": ("GrayYUNV", "GrayYUNV with the native data type as of the original image"),
+    "rgba2mrgba": ("MRGBA", "MRGBA with the native data type as of the original image"),
+    "mrgba2rgba": ("RGBA", "RGBA with the native data type as of the original image"),
+    "rgb2yuv_i420": ("YUVI420", "YUVI420 with the native data type as of the original image"),
+    "bgr2yuv_i420": ("YUVI420", "YUVI420 with the native data type as of the original image"),
+    "rgb2yuv_iyuv": ("YUVIYUV", "YUVIYUV with the native data type as of the original image"),
+    "bgr2yuv_iyuv": ("YUVIYUV", "YUVIYUV with the native data type as of the original image"),
+    "rgba2yuv_i420": ("YUVI420", "YUVI420 with the native data type as of the original image"),
+    "bgra2yuv_i420": ("YUVI420", "YUVI420 with the native data type as of the original image"),
+    "rgba2yuv_iyuv": ("YUVIYUV", "YUVIYUV with the native data type as of the original image"),
+    "bgra2yuv_iyuv": ("YUVIYUV", "YUVIYUV with the native data type as of the original image"),
+    "rgb2yuv_yv12": ("YUVYV12", "YUVYV12 with the native data type as of the original image"),
+    "bgr2yuv_yv12": ("YUVYV12", "YUVYV12 with the native data type as of the original image"),
+    "rgba2yuv_yv12": ("YUVYV12", "YUVYV12 with the native data type as of the original image"),
+    "bgra2yuv_yv12": ("YUVYV12", "YUVYV12 with the native data type as of the original image"),
+    "rgba2yuv_iyuv": ("YUVIYUV", "YUVIYUV with the native data type as of the original image"),
+    "bgra2yuv_iyuv": ("YUVIYUV", "YUVIYUV with the native data type as of the original image"),
+    "rgb2yuv_yv12": ("YUVYV12", "YUVYV12 with the native data type as of the original image"),
+    "bgr2yuv_yv12": ("YUVYV12", "YUVYV12 with the native data type as of the original image"),
+    "rgba2yuv_yv12": ("YUVYV12", "YUVYV12 with the native data type as of the original image"),
+    "BGRA2yuv_yv12": ("YUVYV12", "YUVYV12 with the native data type as of the original image"),
+    "bayerbg2bgr": ("BGR", "BGR with the native data type as of the original image"),
+    "bayergb2bgr": ("BGR", "BGR with the native data type as of the original image"),
+    "bayerrg2bgr": ("BGR", "BGR with the native data type as of the original image"),
+    "bayergr2bgr": ("BGR", "BGR with the native data type as of the original image"),
 }
 
 # -------------------------------------------------------------------------
 
 @check_image_exist_external
-def convert(image: PyFaroImage, code: str) -> PyFaroImage:
+def convert(image: BaseImage, code: str) -> BaseImage:
 
     image_array_check_conversion(image, "openCV")
 
@@ -208,11 +390,13 @@ def convert(image: PyFaroImage, code: str) -> PyFaroImage:
     if not opencv_code:
         raise WrongArgumentsValue("Provided conversion code is currently not supported")
 
+    mode, mode_description = INTERNAL_CONVERSION_MODES.get(code.lower())
+
     try:
         new_im = image.copy()
         new_im.image = cv2.cvtColor(new_im.image, opencv_code).astype(image.dtype)
-        new_im.update_file_stream()
-        new_im.set_loader_properties()
+        new_im._set_mode(mode)
+        new_im._set_mode_description(mode_description)
     except Exception as e:
         raise TransformError(f"Conversion to {code} is not possible") from e
 

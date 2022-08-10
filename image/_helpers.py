@@ -1,9 +1,9 @@
-# Copyright (C) 2022 FARO Technologies Inc., All Rights Reserved.
+# Copyright (C) Raza Ul Azam, All Rights Reserved.
 # \brief Internal library helpers
 
 import numpy as np
 
-from image.load._interface import PyFaroImage
+from image.load._interface import BaseImage
 from commons.exceptions import NotSupportedDataType
 from commons.warning import ImageDataTypeConversion
 
@@ -15,64 +15,57 @@ def check_user_provided_ndarray(array_: np.ndarray, strategy: str):
         if not _conversion_type(data_type, strategy):
             raise NotSupportedDataType("Image has a data-type which is currently not supported")
         array_ = _convert_array_dtype(array_)
-    return array_
+    return array_ # need to check on this
 
 # -------------------------------------------------------------------------
 
-def image_array_check_conversion(image: PyFaroImage, strategy: str) -> PyFaroImage:
+def image_array_check_conversion(image: BaseImage, strategy: str) -> BaseImage:
     data_type = image.dtype
     if not _correct_type(data_type, strategy):
         if not _conversion_type(data_type, strategy):
             raise NotSupportedDataType("Image has a data-type which is currently not supported")
-        image = _convert_image_dtype(image)
-    return image
+        _convert_image_dtype(image)
+        image._update_dtype()
 
 # -------------------------------------------------------------------------
 
 def _correct_type(data_type: np.dtype, strategy: str):
-    if strategy == "PIL":
-        flag = data_type in ["uint8", "uint16", "uint32", "float32"]
-    elif strategy == "openCV":
+    if strategy == "openCV":
         flag = data_type in ["uint8", "uint16", "float32"]
     return flag
 
 # -------------------------------------------------------------------------
 
 def _conversion_type(data_type: np.dtype, strategy: str):
-    if strategy == "PIL":
-        flag = data_type == "float16"
-    elif strategy == "openCV":
+    if strategy == "openCV":
         flag = data_type in ["uint32", "float16"]
     return flag
 
 # -------------------------------------------------------------------------
 
-def _convert_image_dtype(image: PyFaroImage):
+def _convert_image_dtype(image: BaseImage):
     data_type = image.dtype
     stored_image = image.image
     if data_type == "float16":
         ImageDataTypeConversion(
             "Converting the data type from float16 to float32 which is supported by the library"
         )
-        image.image = stored_image.astype(np.float32)
+        image._set_image(stored_image.astype(np.float32, copy=False))
 
     elif data_type == "float64":
         ImageDataTypeConversion(
             "Converting the data type from float64 to float32 which this method supports. This can possibly result in loss of precision/data"
         )
-        image.image = stored_image.astype(np.float32)
+        image._set_image(stored_image.astype(np.float32, copy=False))
 
     elif data_type == "uint32":
         ImageDataTypeConversion(
             "Converting the data type from uint32 to uint16 which this method supports. This can possibly result in loss of precision/data"
         )
-        image.image = stored_image.astype(np.uint16)
+        image._set_image(stored_image.astype(np.uint16, copy=False))
 
     else:
         raise NotSupportedDataType("Image has a data-type which is currently not supported")
-
-    image.update_file_stream()
-    return image
 
 # -------------------------------------------------------------------------
 
@@ -99,6 +92,6 @@ def _convert_array_dtype(array_: np.ndarray) -> np.ndarray:
     else:
         raise NotSupportedDataType("Image has a data-type which is currently not supported")
 
-    return array_
+    return array_ # need to check on this
 
 # -------------------------------------------------------------------------

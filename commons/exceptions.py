@@ -1,4 +1,4 @@
-# Copyright (C) 2022 FARO Technologies Inc., All Rights Reserved.
+# Copyright (C) Raza Ul Azam, All Rights Reserved.
 # \brief Internal library exceptions
 
 class _BaseException(Exception):
@@ -47,6 +47,11 @@ class ImageAlreadyClosed(_BaseException):
 # -------------------------------------------------------------------------
 
 class NotSupportedDataType(_BaseException):
+    pass
+
+# -------------------------------------------------------------------------
+
+class NotSupportedMode(_BaseException):
     pass
 
 # -------------------------------------------------------------------------

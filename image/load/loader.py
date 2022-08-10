@@ -1,4 +1,4 @@
-# Copyright (C) 2022 FARO Technologies Inc., All Rights Reserved.
+# Copyright (C) Raza Ul Azam, All Rights Reserved.
 # \brief Image loader for 2D images
 
 import os
@@ -9,13 +9,12 @@ import numpy as np
 
 from PIL import Image
 from pathlib import Path
-from functools import cached_property, singledispatch
+from functools import singledispatch
 from typing import Mapping, Tuple, List, Optional, Any, BinaryIO, Union
 from image._decorators import check_image_exist_internal
-from commons.warning import ImageAlreadyOpen
-from commons.exceptions import WrongArgumentsValue, NotSupportedDataType
+from commons.exceptions import WrongArgumentsValue, NotSupportedDataType, NotSupportedMode
 from commons.exceptions import PathDoesNotExist, WrongArgumentsType, LoaderError
-from image.load._interface import PyFaroImage
+from image.load._interface import BaseImage
 
 # -------------------------------------------------------------------------
 
@@ -23,45 +22,36 @@ Image.MAX_IMAGE_PIXELS = 15000000000
 
 # -------------------------------------------------------------------------
 
-IMAGE_MODES_DESCRIPTION = {
-    "1": "1-bit pixels, black and white, stored with one pixel per byte",
-    "L": "8-bit pixels, black and white (grayscale)",
-    "P": "8-bit pixels, mapped to any other mode using a color palette",
-    "RGB": "3x8-bit pixels, true color",
-    "RGBA": "4x8-bit pixels, true color with transparency mask",
-    "CMYK": "4x8-bit pixels, color separation",
-    "YCbCr": "3x8-bit pixels, color video format (refers to the JPEG)",
-    "LAB": "3x8-bit pixels, the L*a*b color space",
-    "HSV": "3x8-bit pixels, Hue, Saturation, Value color space",
-    "I": "32-bit signed integer pixels",
-    "F": "32-bit floating point pixels",
-    "LA": "L with alpha",
-    "PA": "P with alpha",
-    "RGBX": "True color with padding",
-    "RGBa": "True color with premultiplied alpha",
-    "La": "L with premultiplied alpha",
-    "I;16": "16 bit unsigned integer pixels",
-    "I;16L": "16 bit little endian unsigned integer pixels",
-    "I;16B": "16 bit big endian unsigned integer pixels",
-    "I;16N": "16 bit native endian unsigned integer pixels",
-    "BGR;15": "15 bit reversed true color",
-    "BGR;16": "16 bit reversed true color",
-    "BGR;24": "24 bit reversed true color",
-    "BGR;32": "32 bit reversed true color"
-}
+IMAGE_LOADER_MODES = {
+    "L": ("Gray", "8-bit pixels, black and white (grayscale)"),
+    "RGB": ("RGB", "3x8-bit pixels, true color"),
+    "RGBA": ("RGBA", "4x8-bit pixels, true color with transparency mask"),
+    "CMYK": ("CMYK", "4x8-bit pixels, color separation"),
+    "YCbCr": ("YCbCr", "3x8-bit pixels, color video format (refers to the JPEG)"),
+    "LAB": ("LAB", "3x8-bit pixels, the L*a*b color space"),
+    "HSV": ("HSV", "3x8-bit pixels, Hue, Saturation, Value color space"),
+    "F": ("Float32", "32-bit floating point pixels"),
+    "I;16": ("Uint16", "16 bit unsigned integer pixels"),
+    "I;16L": ("Uint16LE", "16 bit little endian unsigned integer pixels"),
+    "I;16B": ("Uint16BE", "16 bit big endian unsigned integer pixels"),
+} # allows uint8, uint16 and float32
+
+# Error handling needs to be more explicit. Very short errors might not prove to be that descriptive
+# mode would need to change as well as the mode description
+# data type might need to change as well
 
 # -------------------------------------------------------------------------
 
-@PyFaroImage.register
+@BaseImage.register
 class ImageLoader:
 
     def __init__(self):
-        self.__file_stream = None
         self._image: np.ndarray = None
         self._file_extension: str = ""
         self._mode: str = ""
+        self._mode_description: str = ""
         self._data_type: np.dtype = None
-        self._info: Any = None
+        self.__original_mode: str = ""
         self.closed = False
 
     def __enter__(self):
@@ -69,116 +59,117 @@ class ImageLoader:
 
     def __exit__(self, *args):
         if self._image is not None:
-            try:
-                self.__file_stream.close()
-                del self._image
-                self.closed = True
-            except Exception as e:
-                raise LoaderError("Failed to close the image on exiting the scope") from e
+            del self._image
+            self.closed = True
 
     @classmethod
     def create_loader(cls):
         return cls()
 
+    def __valid_image_mode(self, mode: str) -> bool:
+        if mode not in IMAGE_LOADER_MODES:
+            return False
+        return True
+
     def _load_image(
         self, path: Union[BinaryIO, str], formats: Optional[Union[List[str], Tuple[str]]] = None
     ):
-        if self._image is None:
-            try:
-                self.__file_stream = Image.open(path, formats=formats)
-                self._image = np.ascontiguousarray(self.__file_stream)
-                self.set_loader_properties()
-            except Exception as e:
-                raise LoaderError("Failed to load the image file") from e
-        else:
-            ImageAlreadyOpen("This image is already open!")
+        try:
+            file_stream = Image.open(path, formats=formats)
+            self._image = np.ascontiguousarray(file_stream)
+        except Exception as e:
+            raise LoaderError("Failed to load the image file") from e
+
+        if not self.__valid_image_mode(file_stream.mode):
+            raise NotSupportedMode("The provide image can not be loaded by the library")
+        self._set_initial_loader_properties(file_stream)
+
         return self
 
-    def set_loader_properties(self):
-        self._file_extension = self.__file_stream.format
-        self._info = self.__file_stream.info
-        self._mode = self.__file_stream.mode
+    def _set_initial_loader_properties(self, file_stream: Image.Image):
+        self._file_extension = file_stream.format
+        self.__original_mode = file_stream.mode
+        self._mode, self._mode_description = IMAGE_LOADER_MODES[file_stream.mode]
         self._data_type = self._image.dtype
 
-    def update_image(self):
-        self._image = np.ascontiguousarray(self.__file_stream)
+    @check_image_exist_internal
+    def _get_original_image_mode(self) -> str:
+        return self.__original_mode
 
-    def update_file_stream(self):
-        try:
-            self.__file_stream = Image.fromarray(self._image)
-        except Exception as e:
-            raise RuntimeError("Failed to update the file stream") from e
+    def _set_mode_description(self, mode_desc: str):
+        assert isinstance(
+            mode_desc, str
+        ), WrongArgumentsValue("Provide mode description does not have the valid type")
+        self._mode_description = mode_desc
 
-    def get_mode_description(self) -> str:
-        return IMAGE_MODES_DESCRIPTION.get(self._mode, "")
+    def _set_mode(self, mode: str):
+        assert isinstance(mode, str
+                          ), WrongArgumentsValue("Provided mode does not have the accurate type")
+        self._mode = mode
 
     def _image_conversion_helper(self, desired_type: np.dtype):
-        self._image = self._image.astype(desired_type)
+        self._image = self._image.astype(desired_type, casting="same_kind", copy=False)
 
-    @property
     @check_image_exist_internal
-    def file_stream(self) -> Image.Image:
-        return self.__file_stream
+    def _update_dtype(self):
+        self.dtype = self._image.dtype
 
-    @file_stream.setter
-    def file_stream(self, file_stream: Image.Image):
-        assert isinstance(
-            file_stream, Image.Image
-        ), WrongArgumentsValue("Trying to set the wrong file stream instance plugin")
-        self.__file_stream = file_stream
+    def _set_image(self, image: np.ndarray):
+        assert isinstance(image, np.ndarray
+                          ), WrongArgumentsValue("Trying to set the wrong image instance type")
+        self._image = image
 
     @property
     @check_image_exist_internal
     def image(self) -> np.ndarray:
         return self._image
 
-    @image.setter
-    def image(self, image: np.ndarray):
-        assert isinstance(image, np.ndarray
-                          ), WrongArgumentsValue("Trying to set the wrong image instance type")
-        self._image = image
-
-    @cached_property
+    @property
     @check_image_exist_internal
     def height(self) -> int:
         return self._image.shape[0]
 
-    @cached_property
+    @property
     @check_image_exist_internal
     def width(self) -> int:
         return self._image.shape[1]
 
-    @cached_property
+    @property
     @check_image_exist_internal
     def dims(self) -> Tuple[int, int]:
         return (self.height, self.width)
 
-    @cached_property
+    @property
+    @check_image_exist_internal
+    def channels(self) -> int:
+        return self._image.shape[-1]
+
+    @property
     @check_image_exist_internal
     def extension(self) -> str:
         return self._file_extension
 
-    @cached_property
-    @check_image_exist_internal
-    def info(self) -> Mapping[str, Any]:
-        return self._info
-
-    @cached_property
+    @property
     @check_image_exist_internal
     def dtype(self) -> np.dtype:
         return self._data_type
 
-    @cached_property
+    @property
     @check_image_exist_internal
     def mode(self) -> str:
         return self._mode
+
+    @property
+    @check_image_exist_internal
+    def mode_description(self) -> str:
+        return self._mode_description
 
     @check_image_exist_internal
     def normalize(self):
         """Normalizes the image. Supports only 8-bit, 16-bit and 32-bit encoding"""
 
         data_type = self.dtype
-        bit_depth = re.search("(?<=uint)\d+|(?<=float)\d+", data_type)
+        bit_depth = re.search("(?<=uint)\d+|(?<=float)\d+", str(data_type))
         if not bit_depth:
             raise NotSupportedDataType("Image has a data-type which is currently not supported")
 
@@ -189,7 +180,7 @@ class ImageLoader:
             )
 
         norm_factor = (2**num_bits) - 1
-        self._image = (self._image / norm_factor).astype(data_type)
+        self._image = (self._image / norm_factor).astype(data_type, copy=False)
 
         return self
 
@@ -198,11 +189,12 @@ class ImageLoader:
         new_im = copy.deepcopy(self)
         return new_im
 
+    # This needs to go away since we would get rid of the file stream
     @check_image_exist_internal
     def show(self):
         self.__file_stream.show()
 
-    @check_image_exist_internal
+    @check_image_exist_internal # needs to change
     def save(self, path_: Union[str, io.BytesIO], format: Optional[str] = None):
         if not isinstance(path_, (str, io.BytesIO)):
             raise WrongArgumentsType(
@@ -267,45 +259,22 @@ class ImageLoader:
 
     @check_image_exist_internal
     def tobytes(self) -> bytes:
-        try:
-            image_bytes = self.__file_stream.tobytes()
-        except Exception as e:
-            raise LoaderError("Failed to convert the image to bytes") from e
-
-        return image_bytes
+        return self._image.tobytes()
 
     @check_image_exist_internal
     def getbbox(self):
-        try:
-            bbox = self.__file_stream.getbbox()
-        except Exception as e:
-            raise LoaderError("Failed to get the bounding box") from e
-
+        bbox = (0, 0, self.width, self.height)
         return bbox
 
     @check_image_exist_internal
     def close(self):
-        try:
-            self.__file_stream.close()
-            del self._image
-            self.closed = True
-        except Exception as e:
-            raise LoaderError("Failed to close the image") from e
-
-    def __del__(self):
-        if self._image is not None:
-            try:
-                self.__file_stream.close()
-                del self._image
-                self.closed = True
-            except Exception as e:
-                raise LoaderError("Failed to close the image upon deleting the image") from e
+        del self._image
+        self.closed = True
 
     def __eq__(self, other):
         return (
             self.__class__ == other.__class__ and self.mode == other.mode
-            and self.dims == other.dims and self.info == other.info
-            and self.tobytes() == other.tobytes()
+            and self.dims == other.dims and self.tobytes() == other.tobytes()
         )
 
     def __repr__(self):
@@ -314,13 +283,13 @@ class ImageLoader:
 # -------------------------------------------------------------------------
 
 @singledispatch
-def open_image() -> PyFaroImage:
+def open_image() -> BaseImage:
     ...
 
 # -------------------------------------------------------------------------
 
 @open_image.register(str)
-def _(path, formats: Optional[Union[List[str], Tuple[str], str]] = None) -> PyFaroImage:
+def _(path, formats: Optional[Union[List[str], Tuple[str]]] = None) -> BaseImage:
     if formats and not isinstance(formats, (list, tuple)):
         raise WrongArgumentsType("Please check the type of the formats argument")
 
@@ -339,7 +308,7 @@ def _(path, formats: Optional[Union[List[str], Tuple[str], str]] = None) -> PyFa
 # -------------------------------------------------------------------------
 
 @open_image.register(BinaryIO)
-def _(path, formats: Optional[Union[List[str], Tuple[str]]] = None) -> PyFaroImage:
+def _(path, formats: Optional[Union[List[str], Tuple[str]]] = None) -> BaseImage:
     if formats and not isinstance(formats, (list, tuple)):
         raise WrongArgumentsType("Please check the type of the formats argument")
 
@@ -357,3 +326,13 @@ def _find_path(path: Path) -> Tuple[bool, Union[Path, None]]:
     return (False, None)
 
 # -------------------------------------------------------------------------
+
+if __name__ == "__main__":
+    from pathlib import Path
+    import matplotlib.pyplot as plt
+    image_path = Path(__file__).parent.parent.parent / "sample.jpg"
+    import numpy as np
+    a = open_image(str(image_path))
+    b = a
+    a.close()
+    print("hallo")

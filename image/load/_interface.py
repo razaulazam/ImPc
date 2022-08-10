@@ -1,26 +1,14 @@
-# Copyright (C) 2022 FARO Technologies Inc., All Rights Reserved.
+# Copyright (C) Raza Ul Azam, All Rights Reserved.
 # \brief Abstract base class for Image loader
 
 from abc import ABC, abstractclassmethod, abstractmethod, abstractproperty
 
 # -------------------------------------------------------------------------
 
-class PyFaroImage(ABC):
+class BaseImage(ABC):
 
     @abstractclassmethod
     def create_loader(cls):
-        ...
-
-    @abstractmethod
-    def set_loader_properties(self):
-        ...
-
-    @abstractmethod
-    def update_image(self):
-        ...
-
-    @abstractmethod
-    def update_file_stream(self):
         ...
 
     @abstractmethod
@@ -86,5 +74,37 @@ class PyFaroImage(ABC):
     @abstractmethod
     def close(self):
         ...
+    
+    @abstractmethod
+    def _load_image(self):
+        ...
 
+    @abstractmethod
+    def _set_initial_loader_properties(self):
+        ...
+
+    @abstractmethod
+    def _get_original_image_mode(self):
+        ...
+
+    @abstractmethod
+    def _set_mode_description(self):
+        ...
+
+    @abstractmethod
+    def _set_mode(self):
+        ...
+
+    @abstractmethod
+    def _image_conversion_helper(self):
+        ...
+    
+    @abstractmethod
+    def _update_dtype(self):
+        ...
+
+    @abstractmethod
+    def _set_image(self):
+        ...
+    
 # -------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-# Copyright (C) 2022 FARO Technologies Inc., All Rights Reserved.
+# Copyright (C) Raza Ul Azam, All Rights Reserved.
 # \brief Image filters based on convolutions
 
 import cv2
@@ -8,7 +8,7 @@ from typing import Union, Optional, Tuple, List
 from collections import namedtuple
 from commons.exceptions import FilteringError, WrongArgumentsType, WrongArgumentsValue
 from commons.warning import DefaultSetting, ImageDataTypeConversion
-from image.load._interface import PyFaroImage
+from image.load._interface import BaseImage
 from image._decorators import check_image_exist_external
 from image._helpers import image_array_check_conversion, check_user_provided_ndarray
 
@@ -27,15 +27,16 @@ BORDER_INTERPOLATION = {
 
 @check_image_exist_external
 def corr2d(
-    image: PyFaroImage,
+    image: BaseImage,
     kernel: Union[namedtuple, np.ndarray],
     delta: Optional[Union[float, int]] = 0,
     border: Optional[str] = "default",
-) -> PyFaroImage:
+) -> BaseImage:
     """Outputs the image with the same depth. Places the computed/filtered value in the center of the area covered by the kernel.
        Note: Kernel windows are not variable sized here. They have a constant size over each pixel neighborhood."""
 
-    image_array_check_conversion(image, "openCV")
+    new_im = image.copy()
+    image_array_check_conversion(new_im, "openCV")
 
     if not isinstance(kernel, (np.ndarray, namedtuple)):
         raise WrongArgumentsType(
@@ -61,11 +62,10 @@ def corr2d(
         border_actual = BORDER_INTERPOLATION["default"]
 
     try:
-        new_im = image.copy()
-        new_im.image = cv2.filter2D(
+        image = cv2.filter2D(
             new_im.image, -1, kernel, delta=float(delta), borderType=border_actual
         )
-        new_im.update_file_stream()
+        new_im._set_image(image) # this needs to be applied to all the methods
         new_im.set_loader_properties()
     except Exception as e:
         raise FilteringError("Failed to filter the image") from e
@@ -76,11 +76,11 @@ def corr2d(
 
 @check_image_exist_external
 def average_blur(
-    image: PyFaroImage,
+    image: BaseImage,
     kernel_size: Union[List[int], Tuple[int, int]],
     normalize: Optional[bool] = True,
     border: Optional[str] = "default"
-) -> PyFaroImage:
+) -> BaseImage:
     """Wrap border is not supported here. Normalize = False can be used to extract useful image chracteristics e.g. covariance matrix of the image gradients
     can help with extracting images demonstrating optical flow for object tracking."""
 
@@ -132,12 +132,12 @@ def average_blur(
 
 @check_image_exist_external
 def gaussian_blur(
-    image: PyFaroImage,
+    image: BaseImage,
     kernel_size: Union[List[int], Tuple[int, int]],
     sigma_x: float,
     sigma_y: Optional[float] = 0.0,
     border: Optional[str] = "default"
-) -> PyFaroImage:
+) -> BaseImage:
     """Warp border is not supported here. It is better to supply both the kernel size and the sigma_x. If the kernel size is zero
     then it is computed from the sigma's provided by the user. If sigma_y is zero, it is computed from sigma_x. If both sigma_x and sigma_y is 
     zero then it is computed from the kernel_size."""
@@ -195,16 +195,17 @@ def gaussian_blur(
         new_im.set_loader_properties()
     except Exception as e:
         raise FilteringError("Failed to filter the image") from e
-
+    np.uint32
     return new_im
 
 # -------------------------------------------------------------------------
 
 @check_image_exist_external
-def median_blur(image: PyFaroImage, kernel_size: Union[List[int], Tuple[int, int]]) -> PyFaroImage:
+def median_blur(image: BaseImage, kernel_size: Union[List[int], Tuple[int, int]]) -> BaseImage:
     """Kernel size has to be odd. Different data types for different kernel size"""
 
-    image_array_check_conversion(image, "openCV")
+    new_im = image.copy()
+    image_array_check_conversion(new_im, "openCV")
 
     if not isinstance(kernel_size, (tuple, list)):
         raise WrongArgumentsType("Kernel size can only be defined as either tuple or list")
@@ -225,12 +226,11 @@ def median_blur(image: PyFaroImage, kernel_size: Union[List[int], Tuple[int, int
         ImageDataTypeConversion(
             "Converting the image type to uint8 since for kernel sizes > 5 only this type is supported"
         )
-        image._image_conversion_helper(np.uint8)
-        image.update_file_stream()
-        image.set_loader_properties()
+        new_im._image_conversion_helper(np.uint8)
+        new_im.update_file_stream()
+        new_im.set_loader_properties()
 
     try:
-        new_im = image.copy()
         new_im.image = cv2.medianBlur(new_im.image, int(kernel_size[0]))
         new_im.update_file_stream()
         new_im.set_loader_properties()
@@ -243,24 +243,30 @@ def median_blur(image: PyFaroImage, kernel_size: Union[List[int], Tuple[int, int
 
 @check_image_exist_external
 def bilateral_filter(
-    image: PyFaroImage,
+    image: BaseImage,
     kernel_diameter: int,
     color_sigma: float,
     spatial_sigma: float,
     border: Optional[str] = "default"
-) -> PyFaroImage:
+) -> BaseImage:
     """Only 8-bit and 32-bit floating point images are supported"""
-    """These fail idk why"""
+    """Does not work with RGBA images"""
 
+    if image.channels > 3:
+        raise FilteringError(
+            "This filter cannot operate on images that have color channels more than 3"
+        )
+
+    new_im = image.copy()
     image_array_check_conversion(image, "openCV")
 
     if image.dtype == "uint16":
         ImageDataTypeConversion(
             "Converting the image from 16 bits to 8 bits per channel since this is what is only supported for this filter"
         )
-        image._image_conversion_helper(np.uint8)
-        image.update_file_stream()
-        image.set_loader_properties()
+        new_im._image_conversion_helper(np.uint8)
+        new_im.update_file_stream()
+        new_im.set_loader_properties()
 
     if not isinstance(kernel_diameter, (float, int)):
         raise WrongArgumentsType("Diameter value can only be either an integer or float value")
@@ -285,7 +291,6 @@ def bilateral_filter(
         border_actual = BORDER_INTERPOLATION["default"]
 
     try:
-        new_im = image.copy()
         new_im.image = cv2.bilateralFilter(
             new_im.image, int(kernel_diameter), float(color_sigma), float(spatial_sigma),
             border_actual
@@ -298,3 +303,32 @@ def bilateral_filter(
     return new_im
 
 # -------------------------------------------------------------------------
+
+if __name__ == "__main__":
+
+    from image.load.loader import open_image
+    import cv2
+    from pathlib import Path
+    path_image = Path(__file__).parent.parent.parent / "sample.jpg"
+    image_ = open_image(str(path_image))
+    image_._image_conversion_helper(np.uint16)
+
+    cv2.imwrite("./file_check.png", image_.image)
+
+    # Why don't we get the accurate mode here?
+    image_new = open_image("./file_check.png")
+
+    image_.update_file_stream()
+    image_.set_loader_properties()
+    print(image_.mode)
+    print(image_.dtype)
+    print(id(image_.dtype))
+    im_new = median_blur(image_, [7, 7])
+    print(image_.dtype)
+    print(im_new.dtype)
+    print(id(image_.dtype))
+    print("hallo")
+    # Do we want to return the same data types for the input images?
+    # Or, do we accept the converted types?
+    import warnings
+    warnings.warn("hello")

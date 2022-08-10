@@ -1,10 +1,10 @@
-# Copyright (C) 2022 FARO Technologies Inc., All Rights Reserved.
+# Copyright (C) Raza Ul Azam., All Rights Reserved.
 # \brief Image transforms
 
 from PIL import Image
 from typing import Any, Tuple, Optional, Union, List
 from image._decorators import check_image_exist_external
-from image.load._interface import PyFaroImage
+from image.load._interface import BaseImage
 from commons.warning import DefaultSetting
 from commons.exceptions import WrongArgumentsType, TransformError, WrongArgumentsValue
 from image._helpers import image_array_check_conversion
@@ -48,12 +48,12 @@ QUANTIZE_REGISTRY = {
 
 @check_image_exist_external
 def resize(
-    image: PyFaroImage,
+    image: BaseImage,
     size: Union[Tuple[int, int], List[int]],
     resample: str = None,
     box: Union[Tuple[int, int, int, int], List[int]] = None,
     reducing_gap: int = None,
-) -> PyFaroImage:
+) -> BaseImage:
 
     image = image_array_check_conversion(image, "PIL")
 
@@ -104,14 +104,14 @@ def resize(
 
 @check_image_exist_external
 def rotate(
-    image: PyFaroImage,
+    image: BaseImage,
     angle: float,
     resample: Optional[str] = "nearest",
     expand: Optional[int] = 0,
     center: Optional[Union[Tuple[int, int], List[int]]] = None,
     translate: Optional[Union[Tuple[int, int], List[int]]] = None,
     fill_color: Optional[Any] = None,
-) -> PyFaroImage:
+) -> BaseImage:
 
     image = image_array_check_conversion(image, "PIL")
 
@@ -156,9 +156,9 @@ def rotate(
 
 @check_image_exist_external
 def transpose(
-    image: PyFaroImage,
+    image: BaseImage,
     method: str,
-) -> PyFaroImage:
+) -> BaseImage:
 
     image = image_array_check_conversion(image, "PIL")
 
@@ -183,10 +183,10 @@ def transpose(
 
 @check_image_exist_external
 def reduce(
-    image: PyFaroImage,
+    image: BaseImage,
     factor: Union[int, Union[Tuple[int, int], List[int]]],
     box: Optional[Union[Tuple[int, int, int, int], List[int]]] = None,
-) -> PyFaroImage:
+) -> BaseImage:
 
     image = image_array_check_conversion(image, "PIL")
 
@@ -228,13 +228,13 @@ def reduce(
 
 @check_image_exist_external
 def transform(
-    image: PyFaroImage,
+    image: BaseImage,
     size: Union[Tuple[int, int], List[int]],
     method: str,
     data: Optional[Union[Tuple[int, int, int, int], List[int]]] = None,
     resample: Optional[str] = "nearest",
     fill_color: Optional[Any] = None
-) -> PyFaroImage:
+) -> BaseImage:
 
     image = image_array_check_conversion(image, "PIL")
 
@@ -289,12 +289,12 @@ def transform(
 
 @check_image_exist_external
 def quantize(
-    image: PyFaroImage,
+    image: BaseImage,
     colors: int = 256,
     method: str = None,
     kmeans: int = 0,
     dither: str = None
-) -> PyFaroImage:
+) -> BaseImage:
 
     image = image_array_check_conversion(image, "PIL")
 
