@@ -2,6 +2,7 @@
 # \brief Image processing methods
 
 import cv2
+import numpy as np
 
 from PIL import Image
 from image.load._interface import BaseImage
@@ -13,10 +14,10 @@ from commons.exceptions import ProcessingError, ImageAlreadyClosed
 # -------------------------------------------------------------------------
 
 def blend(image_one: BaseImage, image_two: BaseImage, alpha: float) -> BaseImage:
-    
+
     image_array_check_conversion(image_one, "openCV")
     image_array_check_conversion(image_two, "openCV")
-    
+
     if not isinstance(image_one, BaseImage):
         raise WrongArgumentsType("Please check the type of the image_one argument")
 
@@ -41,9 +42,14 @@ def blend(image_one: BaseImage, image_two: BaseImage, alpha: float) -> BaseImage
     if image_one.mode != image_two.mode:
         raise WrongArgumentsValue("Mode should be similar for both the images")
 
+    if image_one.dtype != image_two.dtype:
+        raise WrongArgumentsValue("Provided images should have the same data type")
+
     try:
         new_im = image_one.copy()
-        new_im._set_image(cv2.addWeighted(image_one.image, alpha, image_two.image, float(1.0 - alpha)))
+        new_im._set_image(
+            cv2.addWeighted(image_one.image, alpha, image_two.image, float(1.0 - alpha))
+        )
         new_im._update_dtype()
     except Exception as e:
         raise ProcessingError("Failed to alpha blend the image") from e
@@ -52,11 +58,7 @@ def blend(image_one: BaseImage, image_two: BaseImage, alpha: float) -> BaseImage
 
 # -------------------------------------------------------------------------
 
-def composite(image_one: BaseImage, image_two: BaseImage, mask: BaseImage) -> BaseImage:
-
-    image_one = image_array_check_conversion(image_one, "PIL")
-    image_two = image_array_check_conversion(image_two, "PIL")
-    mask = image_array_check_conversion(mask, "PIL")
+def composite(image_one: BaseImage, image_two: BaseImage, mask: np.ndarray) -> BaseImage:
 
     if not isinstance(image_one, BaseImage):
         raise WrongArgumentsType("Please check the type of the image_one argument")
@@ -64,21 +66,19 @@ def composite(image_one: BaseImage, image_two: BaseImage, mask: BaseImage) -> Ba
     if not isinstance(image_two, BaseImage):
         raise WrongArgumentsType("Please check the type of the image_two argument")
 
-    if not isinstance(mask, BaseImage):
-        raise WrongArgumentsType("Please check the type of the mask argument")
-
     if image_one.closed:
         raise ImageAlreadyClosed("Provided first image is already closed")
 
     if image_two.closed:
         raise ImageAlreadyClosed("Provided second image is already closed")
 
-    if mask.closed:
-        raise ImageAlreadyClosed("Provided mask image is already closed")
+    mask_dims = mask.shape[:-1]
 
-    assert image_one.dims == image_two.dims == mask.dims, RuntimeError(
-        "Dimensions of the images do not match"
-    )
+    # check the mask based on the type provided and different logic would be applied
+    # based on different number of channels
+
+    if image_one.dims == image_two.dims:
+        raRuntimeError("Dimensions of the images do not match")
 
     try:
         new_im = ImageLoader.create_loader()
