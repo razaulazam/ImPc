@@ -83,19 +83,13 @@ class ImageLoader:
         if not self.__valid_image_mode(file_stream.mode):
             raise NotSupportedMode("The provide image can not be loaded by the library")
         self._set_initial_loader_properties(file_stream)
-        
-        return self
 
-    # When the image is converted to a different type, its mode gets changed
-    # It could be still RGB, but with different data type that needs to be reflected
-    def set_loader_properties(self):
-        # self._mode = self.__file_stream.mode # -- needs to change
-        self._data_type = self._image.dtype
+        return self
 
     def _set_initial_loader_properties(self, file_stream: Image.Image):
         self._file_extension = file_stream.format
         self.__original_mode = file_stream.mode
-        self._mode, self._mode_description  = IMAGE_LOADER_MODES[file_stream.mode]
+        self._mode, self._mode_description = IMAGE_LOADER_MODES[file_stream.mode]
         self._data_type = self._image.dtype
 
     @check_image_exist_internal
@@ -103,12 +97,15 @@ class ImageLoader:
         return self.__original_mode
 
     def _set_mode_description(self, mode_desc: str):
-        assert isinstance(mode_desc, str), WrongArgumentsValue("Provide mode description does not have the valid type")
+        assert isinstance(
+            mode_desc, str
+        ), WrongArgumentsValue("Provide mode description does not have the valid type")
         self._mode_description = mode_desc
-    
-    def _set_mode(self, mode: str): 
-        assert isinstance(mode, str), WrongArgumentsValue("Provided mode does not have the accurate type")
-        self._mode = mode  
+
+    def _set_mode(self, mode: str):
+        assert isinstance(mode, str
+                          ), WrongArgumentsValue("Provided mode does not have the accurate type")
+        self._mode = mode
 
     def _image_conversion_helper(self, desired_type: np.dtype):
         self._image = self._image.astype(desired_type, casting="same_kind", copy=False)
@@ -166,7 +163,7 @@ class ImageLoader:
     @check_image_exist_internal
     def mode_description(self) -> str:
         return self._mode_description
-    
+
     @check_image_exist_internal
     def normalize(self):
         """Normalizes the image. Supports only 8-bit, 16-bit and 32-bit encoding"""
@@ -192,7 +189,7 @@ class ImageLoader:
         new_im = copy.deepcopy(self)
         return new_im
 
-    # This needs to go away since we would get rid of the file stream 
+    # This needs to go away since we would get rid of the file stream
     @check_image_exist_internal
     def show(self):
         self.__file_stream.show()
@@ -339,5 +336,3 @@ if __name__ == "__main__":
     b = a
     a.close()
     print("hallo")
-
-

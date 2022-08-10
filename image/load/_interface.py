@@ -98,6 +98,10 @@ class BaseImage(ABC):
     @abstractmethod
     def _image_conversion_helper(self):
         ...
+    
+    @abstractmethod
+    def _update_dtype(self):
+        ...
 
     @abstractmethod
     def _set_image(self):

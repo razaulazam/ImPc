@@ -25,6 +25,7 @@ def image_array_check_conversion(image: BaseImage, strategy: str) -> BaseImage:
         if not _conversion_type(data_type, strategy):
             raise NotSupportedDataType("Image has a data-type which is currently not supported")
         _convert_image_dtype(image)
+        image._update_dtype()
 
 # -------------------------------------------------------------------------
 
@@ -49,24 +50,22 @@ def _convert_image_dtype(image: BaseImage):
         ImageDataTypeConversion(
             "Converting the data type from float16 to float32 which is supported by the library"
         )
-        image.image = stored_image.astype(np.float32)
+        image._set_image(stored_image.astype(np.float32, copy=False))
 
     elif data_type == "float64":
         ImageDataTypeConversion(
             "Converting the data type from float64 to float32 which this method supports. This can possibly result in loss of precision/data"
         )
-        image.image = stored_image.astype(np.float32)
+        image._set_image(stored_image.astype(np.float32, copy=False))
 
     elif data_type == "uint32":
         ImageDataTypeConversion(
             "Converting the data type from uint32 to uint16 which this method supports. This can possibly result in loss of precision/data"
         )
-        image.image = stored_image.astype(np.uint16)
+        image._set_image(stored_image.astype(np.uint16, copy=False))
 
     else:
         raise NotSupportedDataType("Image has a data-type which is currently not supported")
-
-    image.set_loader_properties()
 
 # -------------------------------------------------------------------------
 
@@ -93,6 +92,6 @@ def _convert_array_dtype(array_: np.ndarray) -> np.ndarray:
     else:
         raise NotSupportedDataType("Image has a data-type which is currently not supported")
 
-    return array_
+    return array_ # need to check on this
 
 # -------------------------------------------------------------------------
