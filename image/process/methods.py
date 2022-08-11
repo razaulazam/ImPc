@@ -2,13 +2,10 @@
 # \brief Image processing methods
 
 import cv2
-import re
 import numpy as np
 
-from PIL import Image
 from typing import Union, Tuple
 from image.load._interface import BaseImage
-from image.load.loader import ImageLoader
 from commons.exceptions import WrongArgumentsType, WrongArgumentsValue
 from image._helpers import image_array_check_conversion
 from commons.exceptions import ProcessingError, ImageAlreadyClosed
@@ -94,7 +91,7 @@ def composite(image_one: BaseImage, image_two: BaseImage, mask: np.ndarray) -> B
 
     mask = _adjust_mask_dtype(mask, np.uint8)
     mask = _normalize_mask(mask)
-    
+
     checked_image_one = image_array_check_conversion(image_one, "openCV")
     checked_image_two = image_array_check_conversion(image_two, "openCV")
 
@@ -141,10 +138,3 @@ def _normalize_mask(mask: np.ndarray) -> np.ndarray:
     return mask.astype(mask_data_type)
 
 # -------------------------------------------------------------------------
-
-if __name__ == "__main__":
-    a = np.ones((1, 2), dtype=np.uint8) * 2
-    data_type = a.dtype
-    _normalize_mask(a)
-
-    print("hallo")
