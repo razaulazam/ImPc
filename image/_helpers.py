@@ -24,8 +24,11 @@ def image_array_check_conversion(image: BaseImage, strategy: str) -> BaseImage:
     if not _correct_type(data_type, strategy):
         if not _conversion_type(data_type, strategy):
             raise NotSupportedDataType("Image has a data-type which is currently not supported")
-        _convert_image_dtype(image)
-        image._update_dtype()
+        image_new = image.copy()
+        _convert_image_dtype(image_new)
+        image_new._update_dtype()
+        return image_new
+    return image
 
 # -------------------------------------------------------------------------
 
@@ -43,26 +46,26 @@ def _conversion_type(data_type: np.dtype, strategy: str):
 
 # -------------------------------------------------------------------------
 
-def _convert_image_dtype(image: BaseImage):
-    data_type = image.dtype
-    stored_image = image.image
+def _convert_image_dtype(image_new: BaseImage):
+    data_type = image_new.dtype
+    stored_image = image_new.image
     if data_type == "float16":
         ImageDataTypeConversion(
             "Converting the data type from float16 to float32 which is supported by the library"
         )
-        image._set_image(stored_image.astype(np.float32, copy=False))
+        image_new._set_image(stored_image.astype(np.float32, copy=False))
 
     elif data_type == "float64":
         ImageDataTypeConversion(
             "Converting the data type from float64 to float32 which this method supports. This can possibly result in loss of precision/data"
         )
-        image._set_image(stored_image.astype(np.float32, copy=False))
+        image_new._set_image(stored_image.astype(np.float32, copy=False))
 
     elif data_type == "uint32":
         ImageDataTypeConversion(
             "Converting the data type from uint32 to uint16 which this method supports. This can possibly result in loss of precision/data"
         )
-        image._set_image(stored_image.astype(np.uint16, copy=False))
+        image_new._set_image(stored_image.astype(np.uint16, copy=False))
 
     else:
         raise NotSupportedDataType("Image has a data-type which is currently not supported")
