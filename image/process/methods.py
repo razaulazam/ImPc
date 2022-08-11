@@ -2,6 +2,7 @@
 # \brief Image processing methods
 
 import cv2
+import re
 import numpy as np
 
 from PIL import Image
@@ -12,15 +13,9 @@ from commons.exceptions import WrongArgumentsType, WrongArgumentsValue
 from image._helpers import image_array_check_conversion
 from commons.exceptions import ProcessingError, ImageAlreadyClosed
 
-# original image should not be affected. Make copies where essential for processing
-
 # -------------------------------------------------------------------------
 
 def blend(image_one: BaseImage, image_two: BaseImage, alpha: float) -> BaseImage:
-
-    image_array_check_conversion(image_one, "openCV")
-    image_array_check_conversion(image_two, "openCV")
-
     if not isinstance(image_one, BaseImage):
         raise WrongArgumentsType("Please check the type of the image_one argument")
 
@@ -48,10 +43,15 @@ def blend(image_one: BaseImage, image_two: BaseImage, alpha: float) -> BaseImage
     if image_one.dtype != image_two.dtype:
         raise WrongArgumentsValue("Provided images should have the same data type")
 
+    checked_image_one = image_array_check_conversion(image_one, "openCV")
+    checked_image_two = image_array_check_conversion(image_two, "openCV")
+
     try:
-        new_im = image_one.copy()
+        new_im = checked_image_one.copy()
         new_im._set_image(
-            cv2.addWeighted(image_one.image, alpha, image_two.image, float(1.0 - alpha))
+            cv2.addWeighted(
+                checked_image_one.image, alpha, checked_image_two.image, float(1.0 - alpha)
+            )
         )
         new_im._update_dtype()
     except Exception as e:
@@ -87,34 +87,33 @@ def composite(image_one: BaseImage, image_two: BaseImage, mask: np.ndarray) -> B
     try:
         mask_dims = _compute_mask_dims(mask)
     except Exception as e:
-        raise RuntimeError("Provide mask image does not have the accurate dimensions")
+        raise RuntimeError("Provide mask image does not have the accurate dimensions") from e
 
     if image_one.dims == image_two.dims == mask_dims:
         raise WrongArgumentsValue("Dimensions of the provided images do not match")
 
-    if mask.dtype != image_one.dtype:
-        mask = _adjust_mask_dtype(mask, image_one.dtype)
+    mask = _adjust_mask_dtype(mask, np.uint8)
+    mask = _normalize_mask(mask)
+    
+    checked_image_one = image_array_check_conversion(image_one, "openCV")
+    checked_image_two = image_array_check_conversion(image_two, "openCV")
 
-    new_im = image_one.copy()
-    composed_image = 
-    
-    
-    
-    
-    
-    
-    
-    
-    new_im.file_stream = Image.composite(
-        image_one.file_stream, image_two.file_stream, mask.file_stream
-    )
-    except Exception as e:
-        raise ProcessingError("Failed to perform the composite operation") from e
+    new_im = checked_image_one.copy()
+    raw_image_one = checked_image_one.image
+    raw_image_two = checked_image_two.image
+    raw_image_one[mask == 1] = raw_image_two
+
+    new_im._set_image(raw_image_one)
+    new_im._update_dtype()
 
     return new_im
 
+# -------------------------------------------------------------------------
+
 def _adjust_mask_dtype(mask: np.ndarray, desired_type: np.dtype):
     return mask.astype(desired_type, copy=False)
+
+# -------------------------------------------------------------------------
 
 def _compute_mask_dims(mask: np.ndarray) -> Union[Tuple[int, int, int], Tuple[int, int]]:
     """Computes the shape of the mask"""
@@ -133,5 +132,19 @@ def _compute_mask_dims(mask: np.ndarray) -> Union[Tuple[int, int, int], Tuple[in
 
 # -------------------------------------------------------------------------
 
+def _normalize_mask(mask: np.ndarray) -> np.ndarray:
+    mask_data_type = str(mask.dtype)
+    max_val = np.max(mask)
+
+    if max_val != float(1) if "float" in mask_data_type else 1:
+        mask = mask / max_val
+    return mask.astype(mask_data_type)
+
+# -------------------------------------------------------------------------
+
 if __name__ == "__main__":
-    a = np.ones((1, 2), dtype=np.uint8)
+    a = np.ones((1, 2), dtype=np.uint8) * 2
+    data_type = a.dtype
+    _normalize_mask(a)
+
+    print("hallo")
