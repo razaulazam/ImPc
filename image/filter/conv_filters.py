@@ -37,6 +37,8 @@ def corr2d(
 
     new_im = image.copy()
     image_array_check_conversion(new_im, "openCV")
+    
+    # Base image check has to be added here
 
     if not isinstance(kernel, (np.ndarray, namedtuple)):
         raise WrongArgumentsType(

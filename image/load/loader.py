@@ -112,7 +112,7 @@ class ImageLoader:
 
     @check_image_exist_internal
     def _update_dtype(self):
-        self.dtype = self._image.dtype
+        self._data_type = self._image.dtype
 
     def _set_image(self, image: np.ndarray):
         assert isinstance(image, np.ndarray
@@ -141,6 +141,7 @@ class ImageLoader:
 
     @property
     @check_image_exist_internal
+    # What happens for the grayscale and rgb images as well as for float?
     def channels(self) -> int:
         return self._image.shape[-1]
 
