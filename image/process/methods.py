@@ -9,6 +9,7 @@ from image.load._interface import BaseImage
 from commons.exceptions import WrongArgumentsType, WrongArgumentsValue
 from image._helpers import image_array_check_conversion
 from commons.exceptions import ProcessingError, ImageAlreadyClosed
+from image.transform.transforms import resize
 
 # -------------------------------------------------------------------------
 
@@ -138,8 +139,24 @@ def gaussian_pyramid(image: BaseImage, level: int) -> List[BaseImage]:
 # -------------------------------------------------------------------------
 
 # Dimension mismatches between different levels can very well occur. We need resize function first for this
-def laplacian_pyramid(gauss_pyramid: List[BaseImage]) -> List[BaseImage]:
-    ...
+def laplacian_pyramid(image: BaseImage, level: int) -> List[BaseImage]:
+    """Computes the laplacian pyramid from the gaussian pyramid"""
+
+    gauss_pyramid = gaussian_pyramid(image, level)
+    laplacian_pyramid = []
+    
+    for i in range(gauss_pyramid, 0, -1):
+        pyr_level = cv2.pyrUp(gauss_pyramid[i].image)
+        pyr_level_down = gauss_pyramid[i - 1].image
+        if pyr_level.shape[:-1] != pyr_level_down.dims:
+            ...
+        
+        
+        
+        laplacian_pyramid.append(cv2.subtract())
+    
+    
+    
 
 def _adjust_mask_dtype(mask: np.ndarray, desired_type: np.dtype):
     return mask.astype(desired_type, copy=False)

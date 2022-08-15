@@ -141,7 +141,7 @@ class ImageLoader:
 
     @property
     @check_image_exist_internal
-    # What happens for the grayscale and rgb images as well as for float?
+    # What happens for the grayscale and rgb images as well as for float? Can we add methods like isRGB etc.?
     def channels(self) -> int:
         return self._image.shape[-1]
 
