@@ -108,7 +108,7 @@ def composite(image_one: BaseImage, image_two: BaseImage, mask: np.ndarray) -> B
 # -------------------------------------------------------------------------
 
 def gaussian_pyramid(image: BaseImage, level: int) -> List[BaseImage]:
-    """Computes the gaussian pyramid"""
+    """Computes the gaussian pyramid where the first image is always the original image itself"""
 
     if not isinstance(image, BaseImage):
         raise WrongArgumentsType(
@@ -123,17 +123,22 @@ def gaussian_pyramid(image: BaseImage, level: int) -> List[BaseImage]:
 
     check_image = image_array_check_conversion(image, "openCV")
     pyramid = []
+    pyr_level_first = check_image.copy()
+    pyramid.append(pyr_level_first)
 
     for _ in range(level):
-        pyr_level = check_image.copy()
+        pyr_level = pyr_level_first
         pyr_level._set_image(cv2.pyrDown(pyr_level.image))
         pyr_level._update_dtype()
         pyramid.append(pyr_level)
-        check_image = pyr_level
+        pyr_level_first = pyr_level.copy()
 
     return pyramid
 
 # -------------------------------------------------------------------------
+
+def laplacian_pyramid(gauss_pyramid: List[BaseImage]) -> List[BaseImage]:
+    ...
 
 def _adjust_mask_dtype(mask: np.ndarray, desired_type: np.dtype):
     return mask.astype(desired_type, copy=False)
@@ -173,7 +178,17 @@ if __name__ == "__main__":
     import cv2
     from image.load.loader import open_image
     path_image = "C:\\dev\\ImProcMagic\\sample.jpg"
-    image = open_image(path_image)
+    image = cv2.imread(path_image)
+    G = image.copy()
+    gpB = [G]
+    for i in range(6):
+        G = cv2.pyrDown(G)
+        gpB.append(G)
 
-    b = gaussian_pyramid(image, 2)
+    lpB = [gpB[5]]
+    for i in range(5,0,-1):
+        GE = cv2.pyrUp(gpB[i])
+        L = cv2.subtract(gpB[i-1],GE)
+        lpB.append(L)
+    # = gaussian_pyramid(image, 2)
     print("hallo")
