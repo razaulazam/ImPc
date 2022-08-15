@@ -137,6 +137,7 @@ def gaussian_pyramid(image: BaseImage, level: int) -> List[BaseImage]:
 
 # -------------------------------------------------------------------------
 
+# Dimension mismatches between different levels can very well occur. We need resize function first for this
 def laplacian_pyramid(gauss_pyramid: List[BaseImage]) -> List[BaseImage]:
     ...
 
@@ -186,9 +187,9 @@ if __name__ == "__main__":
         gpB.append(G)
 
     lpB = [gpB[5]]
-    for i in range(5,0,-1):
+    for i in range(5, 0, -1):
         GE = cv2.pyrUp(gpB[i])
-        L = cv2.subtract(gpB[i-1],GE)
+        L = cv2.subtract(gpB[i - 1], GE)
         lpB.append(L)
     # = gaussian_pyramid(image, 2)
     print("hallo")
