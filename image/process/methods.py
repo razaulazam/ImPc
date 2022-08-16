@@ -53,7 +53,7 @@ def blend(image_one: BaseImage, image_two: BaseImage, alpha: float) -> BaseImage
         )
         new_im._update_dtype()
     except Exception as e:
-        raise ProcessingError("Failed to alpha blend the image") from e
+        raise ProcessingError("Failed to blend the image") from e
 
     return new_im
 

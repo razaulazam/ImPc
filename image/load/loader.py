@@ -156,10 +156,16 @@ class ImageLoader:
 
     @property
     @check_image_exist_internal
-    # What happens for the grayscale and rgb images as well as for float? Can we add methods like isRGB etc.?
     def channels(self) -> int:
-        return self._image.shape[-1]
-
+        channels = 0
+        if self.is_rgb():
+            channels = 3
+        elif self.is_rgba():
+            channels = 4
+        elif self.is_gray():
+            channels = 1
+        return channels
+                
     @property
     @check_image_exist_internal
     def extension(self) -> str:
@@ -179,6 +185,27 @@ class ImageLoader:
     @check_image_exist_internal
     def mode_description(self) -> str:
         return self._mode_description
+    
+    @check_image_exist_internal
+    def is_rgb(self) -> bool:
+        image_dims = self.image.shape
+        if len(image_dims) == 3 and image_dims[:-1] == 3 and self.mode == "RGB":
+            return True
+        return False
+    
+    @check_image_exist_internal
+    def is_gray(self) -> bool:
+        image_dims = self.image.shape
+        if len(image_dims) == 2 and self.mode == "Gray":
+            return True
+        return False
+    
+    @check_image_exist_internal
+    def is_rgba(self) -> bool:
+        image_dims = self.image.shape
+        if len(image_dims) == 3 and image_dims[:-1] == 4 and self.mode == "RGBA":
+            return True
+        return False
 
     @check_image_exist_internal
     def normalize(self):
