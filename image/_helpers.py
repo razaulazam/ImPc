@@ -3,9 +3,17 @@
 
 import numpy as np
 
+from enum import Enum, unique
 from image.load._interface import BaseImage
 from commons.exceptions import NotSupportedDataType
 from commons.warning import ImageDataTypeConversion
+from image._common_datastructs import DataType, ConversionDataType, AllowedDataType
+
+# -------------------------------------------------------------------------
+
+@unique
+class ConversionMode(Enum):
+    OpenCV = 1,
 
 # -------------------------------------------------------------------------
 
@@ -19,7 +27,7 @@ def check_user_provided_ndarray(array_: np.ndarray, strategy: str):
 
 # -------------------------------------------------------------------------
 
-def image_array_check_conversion(image: BaseImage, strategy: str) -> BaseImage:
+def image_array_check_conversion(image: BaseImage, strategy: ConversionMode) -> BaseImage:
     data_type = image.dtype
     if not _correct_type(data_type, strategy):
         if not _conversion_type(data_type, strategy):
@@ -32,16 +40,16 @@ def image_array_check_conversion(image: BaseImage, strategy: str) -> BaseImage:
 
 # -------------------------------------------------------------------------
 
-def _correct_type(data_type: np.dtype, strategy: str):
-    if strategy == "openCV":
-        flag = data_type in ["uint8", "uint16", "float32"]
+def _correct_type(data_type: DataType, strategy: ConversionMode):
+    if strategy is ConversionMode.OpenCV:
+        flag = data_type in list(AllowedDataType.__members__.keys())
     return flag
 
 # -------------------------------------------------------------------------
 
-def _conversion_type(data_type: np.dtype, strategy: str):
-    if strategy == "openCV":
-        flag = data_type in ["uint32", "float16"]
+def _conversion_type(data_type: DataType, strategy: ConversionMode):
+    if strategy is ConversionMode.OpenCV:
+        flag = data_type in list(ConversionDataType.__members__.keys())
     return flag
 
 # -------------------------------------------------------------------------
@@ -49,29 +57,30 @@ def _conversion_type(data_type: np.dtype, strategy: str):
 def _convert_image_dtype(image_new: BaseImage):
     data_type = image_new.dtype
     stored_image = image_new.image
-    if data_type == "float16":
+    if data_type is ConversionDataType.Float16:
         ImageDataTypeConversion(
             "Converting the data type from float16 to float32 which is supported by the library"
         )
-        image_new._set_image(stored_image.astype(np.float32, copy=False))
+        image_new._set_image(stored_image.astype(AllowedDataType.Float32, copy=False))
 
-    elif data_type == "float64":
+    elif data_type == ConversionDataType.Float64:
         ImageDataTypeConversion(
             "Converting the data type from float64 to float32 which this method supports. This can possibly result in loss of precision/data"
         )
-        image_new._set_image(stored_image.astype(np.float32, copy=False))
+        image_new._set_image(stored_image.astype(AllowedDataType.Float32, copy=False))
 
-    elif data_type == "uint32":
+    elif data_type == ConversionDataType.Uint32:
         ImageDataTypeConversion(
             "Converting the data type from uint32 to uint16 which this method supports. This can possibly result in loss of precision/data"
         )
-        image_new._set_image(stored_image.astype(np.uint16, copy=False))
+        image_new._set_image(stored_image.astype(AllowedDataType.Uint16, copy=False))
 
     else:
         raise NotSupportedDataType("Image has a data-type which is currently not supported")
 
 # -------------------------------------------------------------------------
 
+# needs revision
 def _convert_array_dtype(array_: np.ndarray) -> np.ndarray:
     data_type = array_.dtype
     if data_type == "float16":

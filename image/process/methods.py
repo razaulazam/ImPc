@@ -7,7 +7,7 @@ import numpy as np
 from typing import Union, Tuple, List
 from image.load._interface import BaseImage
 from commons.exceptions import WrongArgumentsType, WrongArgumentsValue
-from image._helpers import image_array_check_conversion
+from image._helpers import image_array_check_conversion, ConversionMode
 from commons.exceptions import ProcessingError, ImageAlreadyClosed
 from image.transform.transforms import resize
 
@@ -41,8 +41,8 @@ def blend(image_one: BaseImage, image_two: BaseImage, alpha: float) -> BaseImage
     if image_one.dtype != image_two.dtype:
         raise WrongArgumentsValue("Provided images should have the same data type")
 
-    checked_image_one = image_array_check_conversion(image_one, "openCV")
-    checked_image_two = image_array_check_conversion(image_two, "openCV")
+    checked_image_one = image_array_check_conversion(image_one, ConversionMode.OpenCV)
+    checked_image_two = image_array_check_conversion(image_two, ConversionMode.OpenCV)
 
     try:
         new_im = checked_image_one.copy()
@@ -93,8 +93,8 @@ def composite(image_one: BaseImage, image_two: BaseImage, mask: np.ndarray) -> B
     mask = _adjust_mask_dtype(mask, np.uint8)
     mask = _normalize_mask(mask)
 
-    checked_image_one = image_array_check_conversion(image_one, "openCV")
-    checked_image_two = image_array_check_conversion(image_two, "openCV")
+    checked_image_one = image_array_check_conversion(image_one, ConversionMode.OpenCV)
+    checked_image_two = image_array_check_conversion(image_two, ConversionMode.OpenCV)
 
     new_im = checked_image_one.copy()
     raw_image_one = checked_image_one.image
@@ -122,7 +122,7 @@ def gaussian_pyramid(image: BaseImage, level: int) -> List[BaseImage]:
     if level <= 0:
         raise WrongArgumentsValue("Level cannot be zero or less than zero")
 
-    check_image = image_array_check_conversion(image, "openCV")
+    check_image = image_array_check_conversion(image, ConversionMode.OpenCV)
     pyramid = []
     pyr_level_first = check_image.copy()
     pyramid.append(pyr_level_first)
