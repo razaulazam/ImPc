@@ -42,15 +42,16 @@ def image_array_check_conversion(image: BaseImage, strategy: ConversionMode) -> 
 
 def _correct_type(data_type: DataType, strategy: ConversionMode):
     if strategy is ConversionMode.OpenCV:
-        allowed_types = [key.value for _]
-        flag = data_type in list(AllowedDataType.__members__.keys())
+        allowed_type = [val.value for val in AllowedDataType.__members__.values()]
+        flag = data_type.value in allowed_type
     return flag
 
 # -------------------------------------------------------------------------
 
 def _conversion_type(data_type: DataType, strategy: ConversionMode):
     if strategy is ConversionMode.OpenCV:
-        flag = data_type in list(ConversionDataType.__members__.keys())
+        conversion_type = [val.value for val in ConversionDataType.__members__.values()]
+        flag = data_type.value in conversion_type
     return flag
 
 # -------------------------------------------------------------------------

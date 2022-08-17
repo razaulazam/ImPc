@@ -106,6 +106,7 @@ def composite(image_one: BaseImage, image_two: BaseImage, mask: np.ndarray) -> B
 
 # -------------------------------------------------------------------------
 
+# types are conflicting. Debug and find the problem
 def gaussian_pyramid(image: BaseImage, level: int) -> List[BaseImage]:
     """Computes the gaussian pyramid where the first image is always the original image itself"""
 
@@ -191,6 +192,7 @@ def _normalize_mask(mask: np.ndarray) -> np.ndarray:
 if __name__ == "__main__":
     import cv2
     from image.load.loader import open_image
+    from enum import Enum
     path_image = "C:\\dev\\ImProcMagic\\sample.jpg"
     image = open_image(path_image)
     pyr = laplacian_pyramid(image, 3)
