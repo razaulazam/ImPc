@@ -10,7 +10,7 @@ from image._decorators import check_image_exist_external
 from image.load._interface import BaseImage
 from commons.warning import DefaultSetting
 from commons.exceptions import WrongArgumentsType, TransformError, WrongArgumentsValue
-from image._helpers import image_array_check_conversion
+from image._helpers import image_array_check_conversion, ConversionMode
 
 # -------------------------------------------------------------------------
 
@@ -77,16 +77,15 @@ def resize(
             "Using default sampling strategy (nearest) since the provided filter type is not supported"
         )
         
-    check_image = image_array_check_conversion(image, "openCV")
+    check_image = image_array_check_conversion(image, ConversionMode.OpenCV)
 
     try:
-        new_im = image.copy()
-        new_im._set_image(cv2.resize(new_im.image, size, sample_arg))
-        new_im._update_dtype()
+        check_image._set_image(cv2.resize(check_image.image, size, sample_arg))
+        check_image._update_dtype()
     except Exception as e:
         raise TransformError("Failed to resize the image") from e
 
-    return new_im
+    return check_image
 
 # -------------------------------------------------------------------------
 

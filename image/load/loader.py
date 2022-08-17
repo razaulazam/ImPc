@@ -42,9 +42,9 @@ IMAGE_LOADER_MODES = {
 # data type might need to change as well
 
 ALLOWED_DATA_TYPES = {
-    np.uint8: AllowedDataType.Uint8,
-    np.uint16: AllowedDataType.Uint16,
-    np.float32: AllowedDataType.Float32,
+    "uint8": AllowedDataType.Uint8,
+    "uint16": AllowedDataType.Uint16,
+    "float32": AllowedDataType.Float32,
 }
 
 # -------------------------------------------------------------------------
@@ -97,7 +97,7 @@ class ImageLoader:
         self._file_extension = file_stream.format
         self.__original_mode = file_stream.mode
         self._mode, self._mode_description = IMAGE_LOADER_MODES[file_stream.mode]
-        self._data_type = ALLOWED_DATA_TYPES.get(self._image.dtype, None)
+        self._data_type = ALLOWED_DATA_TYPES.get(str(self._image.dtype), None)
         if not self._data_type:
             raise NotSupportedDataType(
                 "The data type of this image is currently not supported by the library"
@@ -165,7 +165,7 @@ class ImageLoader:
         elif self.is_gray():
             channels = 1
         return channels
-                
+
     @property
     @check_image_exist_internal
     def extension(self) -> str:
@@ -185,21 +185,21 @@ class ImageLoader:
     @check_image_exist_internal
     def mode_description(self) -> str:
         return self._mode_description
-    
+
     @check_image_exist_internal
     def is_rgb(self) -> bool:
         image_dims = self.image.shape
         if len(image_dims) == 3 and image_dims[:-1] == 3 and self.mode == "RGB":
             return True
         return False
-    
+
     @check_image_exist_internal
     def is_gray(self) -> bool:
         image_dims = self.image.shape
         if len(image_dims) == 2 and self.mode == "Gray":
             return True
         return False
-    
+
     @check_image_exist_internal
     def is_rgba(self) -> bool:
         image_dims = self.image.shape

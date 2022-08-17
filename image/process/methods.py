@@ -45,17 +45,16 @@ def blend(image_one: BaseImage, image_two: BaseImage, alpha: float) -> BaseImage
     checked_image_two = image_array_check_conversion(image_two, ConversionMode.OpenCV)
 
     try:
-        new_im = checked_image_one.copy()
-        new_im._set_image(
+        checked_image_one._set_image(
             cv2.addWeighted(
                 checked_image_one.image, alpha, checked_image_two.image, float(1.0 - alpha)
             )
         )
-        new_im._update_dtype()
+        checked_image_one._update_dtype()
     except Exception as e:
         raise ProcessingError("Failed to blend the image") from e
 
-    return new_im
+    return checked_image_one
 
 # -------------------------------------------------------------------------
 
@@ -96,15 +95,14 @@ def composite(image_one: BaseImage, image_two: BaseImage, mask: np.ndarray) -> B
     checked_image_one = image_array_check_conversion(image_one, ConversionMode.OpenCV)
     checked_image_two = image_array_check_conversion(image_two, ConversionMode.OpenCV)
 
-    new_im = checked_image_one.copy()
     raw_image_one = checked_image_one.image
     raw_image_two = checked_image_two.image
     raw_image_one[mask == 1] = raw_image_two
 
-    new_im._set_image(raw_image_one)
-    new_im._update_dtype()
+    checked_image_one._set_image(raw_image_one)
+    checked_image_one._update_dtype()
 
-    return new_im
+    return checked_image_one
 
 # -------------------------------------------------------------------------
 
@@ -124,39 +122,37 @@ def gaussian_pyramid(image: BaseImage, level: int) -> List[BaseImage]:
 
     check_image = image_array_check_conversion(image, ConversionMode.OpenCV)
     pyramid = []
-    pyr_level_first = check_image.copy()
-    pyramid.append(pyr_level_first)
+    pyramid.append(check_image)
 
     for _ in range(level):
-        pyr_level = pyr_level_first
+        pyr_level = check_image
         pyr_level._set_image(cv2.pyrDown(pyr_level.image))
         pyr_level._update_dtype()
         pyramid.append(pyr_level)
-        pyr_level_first = pyr_level.copy()
+        check_image = pyr_level.copy()
 
     return pyramid
 
 # -------------------------------------------------------------------------
 
-# Dimension mismatches between different levels can very well occur. We need resize function first for this
 def laplacian_pyramid(image: BaseImage, level: int) -> List[BaseImage]:
     """Computes the laplacian pyramid from the gaussian pyramid"""
 
     gauss_pyramid = gaussian_pyramid(image, level)
     laplacian_pyramid = []
-    
+
     for i in range(gauss_pyramid, 0, -1):
-        pyr_level = cv2.pyrUp(gauss_pyramid[i].image)
-        pyr_level_down = gauss_pyramid[i - 1].image
-        if pyr_level.shape[:-1] != pyr_level_down.dims:
-            ...
-        
-        
-        
-        laplacian_pyramid.append(cv2.subtract())
-    
-    
-    
+        pyr_level = gauss_pyramid[i]
+        pyr_level._set_image(cv2.pyrUp(pyr_level.image))
+        pyr_level_down = gauss_pyramid[i - 1]
+        if pyr_level.dims != pyr_level_down.dims:
+            pyr_level_down = resize(pyr_level_down, pyr_level.dims)
+        pyr_level._set_image(cv2.subtract(pyr_level_down.image, pyr_level.image))
+        laplacian_pyramid.append(pyr_level)
+
+    return laplacian_pyramid
+
+# -------------------------------------------------------------------------
 
 def _adjust_mask_dtype(mask: np.ndarray, desired_type: np.dtype):
     return mask.astype(desired_type, copy=False)
@@ -196,17 +192,7 @@ if __name__ == "__main__":
     import cv2
     from image.load.loader import open_image
     path_image = "C:\\dev\\ImProcMagic\\sample.jpg"
-    image = cv2.imread(path_image)
-    G = image.copy()
-    gpB = [G]
-    for i in range(6):
-        G = cv2.pyrDown(G)
-        gpB.append(G)
+    image = open_image(path_image)
+    pyr = laplacian_pyramid(image, 3)
 
-    lpB = [gpB[5]]
-    for i in range(5, 0, -1):
-        GE = cv2.pyrUp(gpB[i])
-        L = cv2.subtract(gpB[i - 1], GE)
-        lpB.append(L)
-    # = gaussian_pyramid(image, 2)
     print("hallo")
