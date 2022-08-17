@@ -13,7 +13,7 @@ from image._common_datastructs import DataType, ConversionDataType, AllowedDataT
 
 @unique
 class ConversionMode(Enum):
-    OpenCV = 1,
+    OpenCV = 1
 
 # -------------------------------------------------------------------------
 
@@ -36,12 +36,13 @@ def image_array_check_conversion(image: BaseImage, strategy: ConversionMode) -> 
         _convert_image_dtype(image_new)
         image_new._update_dtype()
         return image_new
-    return image # Should we return a copy from here?
+    return image
 
 # -------------------------------------------------------------------------
 
 def _correct_type(data_type: DataType, strategy: ConversionMode):
     if strategy is ConversionMode.OpenCV:
+        allowed_types = [key.value for _]
         flag = data_type in list(AllowedDataType.__members__.keys())
     return flag
 
@@ -63,13 +64,13 @@ def _convert_image_dtype(image_new: BaseImage):
         )
         image_new._set_image(stored_image.astype(AllowedDataType.Float32, copy=False))
 
-    elif data_type == ConversionDataType.Float64:
+    elif data_type is ConversionDataType.Float64:
         ImageDataTypeConversion(
             "Converting the data type from float64 to float32 which this method supports. This can possibly result in loss of precision/data"
         )
         image_new._set_image(stored_image.astype(AllowedDataType.Float32, copy=False))
 
-    elif data_type == ConversionDataType.Uint32:
+    elif data_type is ConversionDataType.Uint32:
         ImageDataTypeConversion(
             "Converting the data type from uint32 to uint16 which this method supports. This can possibly result in loss of precision/data"
         )
