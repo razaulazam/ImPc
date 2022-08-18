@@ -9,7 +9,7 @@ from typing import Any, Tuple, Optional, Union, List
 from image._decorators import check_image_exist_external
 from image.load._interface import BaseImage
 from commons.warning import DefaultSetting
-from commons.exceptions import WrongArgumentsType, TransformError, WrongArgumentsValue
+from commons.exceptions import WrongArgumentsType, TransformError, WrongArgumentsValue, ImageAlreadyClosed
 from image._helpers import image_array_check_conversion, ConversionMode
 
 # -------------------------------------------------------------------------
@@ -59,6 +59,12 @@ def resize(
     resample: Optional[str] = "bilinear",
 ) -> BaseImage:
 
+    if not isinstance(image, BaseImage):
+        raise WrongArgumentsType("Provided image is not a ImageLoader instance")
+    
+    if image.closed:
+        raise ImageAlreadyClosed("Processing cannot be performed on closed images")
+    
     if not isinstance(size, (tuple, list)):
         raise WrongArgumentsType("Please check the type of the size argument")
 

@@ -15,7 +15,7 @@ from image.transform.transforms import resize
 
 def blend(image_one: BaseImage, image_two: BaseImage, alpha: float) -> BaseImage:
     """Functionality for alpha blending two images"""
-    
+
     if not isinstance(image_one, BaseImage):
         raise WrongArgumentsType("Please check the type of the image_one argument")
 
@@ -62,7 +62,7 @@ def blend(image_one: BaseImage, image_two: BaseImage, alpha: float) -> BaseImage
 
 def composite(image_one: BaseImage, image_two: BaseImage, mask: np.ndarray) -> BaseImage:
     """Composes two images based on a mask"""
-    
+
     if not isinstance(image_one, BaseImage):
         raise WrongArgumentsType("Please check the type of the image_one argument")
 
@@ -74,6 +74,9 @@ def composite(image_one: BaseImage, image_two: BaseImage, mask: np.ndarray) -> B
 
     if image_two.closed:
         raise ImageAlreadyClosed("Provided second image is already closed")
+
+    if image_one.dims != image_two.dims:
+        raise WrongArgumentsValue("Dimensions of the images are not the same")
 
     if image_one.channels != image_two.channels:
         raise WrongArgumentsValue("Number of channels should be same for both the images")
@@ -109,13 +112,16 @@ def composite(image_one: BaseImage, image_two: BaseImage, mask: np.ndarray) -> B
 
 # -------------------------------------------------------------------------
 
-def gaussian_pyramid(image: BaseImage, level: int) -> List[BaseImage]:
+def gaussian_pyramid(image: BaseImage, level: Union[int, float]) -> List[BaseImage]:
     """Computes the gaussian pyramid where the first image is always the original image itself"""
 
     if not isinstance(image, BaseImage):
         raise WrongArgumentsType(
             "Provided image should be opened by the open_image() function first"
         )
+
+    if image.closed:
+        raise ImageAlreadyClosed("Processing cannot be performed on closed images")
 
     if not isinstance(level, (int, float)):
         raise WrongArgumentsType("Provided level value does not have the accurate type")
@@ -127,24 +133,28 @@ def gaussian_pyramid(image: BaseImage, level: int) -> List[BaseImage]:
     pyramid = []
     pyramid.append(check_image)
 
-    for _ in range(level):
+    for _ in range(int(level)):
         pyr_level = check_image
         pyr_level._set_image(cv2.pyrDown(pyr_level.image))
         pyr_level._update_dtype()
         pyramid.append(pyr_level)
         check_image = pyr_level.copy()
 
+    assert len(pyramid) == int(level) + 1, ProcessingError(
+        "Failed to compute the gaussian pyramid with accurate number of levels"
+    )
+
     return pyramid
 
 # -------------------------------------------------------------------------
 
-def laplacian_pyramid(image: BaseImage, level: int) -> List[BaseImage]:
+def laplacian_pyramid(image: BaseImage, level: Union[int, float]) -> List[BaseImage]:
     """Computes the laplacian pyramid from the gaussian pyramid"""
 
     gauss_pyramid = gaussian_pyramid(image, level)
     laplacian_pyramid = []
 
-    for i in range(len(gauss_pyramid) - 1 , 0, -1):
+    for i in range(len(gauss_pyramid) - 1, 0, -1):
         pyr_level = gauss_pyramid[i]
         pyr_level._set_image(cv2.pyrUp(pyr_level.image))
         pyr_level_down = gauss_pyramid[i - 1]
@@ -153,9 +163,74 @@ def laplacian_pyramid(image: BaseImage, level: int) -> List[BaseImage]:
         pyr_level._set_image(cv2.subtract(pyr_level_down.image, pyr_level.image))
         laplacian_pyramid.append(pyr_level)
 
+    assert len(laplacian_pyramid) == int(level), ProcessingError(
+        "Failed to compute the laplacian pyramid with accurate number of levels"
+    )
+
     return laplacian_pyramid
 
 # -------------------------------------------------------------------------
+
+def pyramid_blend(
+    image_one: BaseImage, image_two: BaseImage, level: Union[int, float]
+) -> BaseImage:
+    """Blends two images after computing their laplacian pyramids"""
+
+    if not isinstance(image_one, BaseImage):
+        raise WrongArgumentsType("Provided image is not a ImageLoader instance")
+
+    if not isinstance(image_two, BaseImage):
+        raise WrongArgumentsType("Provided image is not a ImageLoader instance")
+
+    if image_one.closed:
+        raise ImageAlreadyClosed("Processing cannot be performed on closed images")
+
+    if image_two.closed:
+        raise ImageAlreadyClosed("Processing cannot be performed on closed images")
+
+    if image_one.dims != image_two.dims:
+        raise WrongArgumentsValue("Dimensions of the images are not the same")
+
+    if image_one.channels != image_two.channels:
+        raise WrongArgumentsValue("Number of channels should be same for both the images")
+
+    if image_one.mode != image_two.mode:
+        raise WrongArgumentsValue("Mode should be similar for both the images")
+
+    if image_one.dtype != image_two.dtype:
+        raise WrongArgumentsValue("Provided images should have the same data type")
+
+    lap_pyr_one = laplacian_pyramid(image_one, level)
+    lap_pyr_two = laplacian_pyramid(image_two, level)
+
+    combined_pyr = []
+
+    # Blend the halves
+    for i in range(int(level)):
+        lap_image_one = lap_pyr_one[i].image
+        lap_image_two = lap_pyr_two[i].image
+
+        image_dims = lap_pyr_one[i].dims
+        combined_image = np.hstack(
+            (
+                lap_image_one[:, :image_dims[1] // 2, ...], lap_image_two[:, image_dims[1] // 2:,
+                                                                          ...]
+            )
+        )
+
+        lap_pyr_one[i]._set_image(combined_image)
+        lap_pyr_one[i]._update_dtype()
+        combined_pyr.append(lap_pyr_one[i])
+
+    assert len(combined_pyr) == int(level), ProcessingError("Failed to perform pyramid blending")
+
+    # Reconstruction
+    for i in range(len(combined_pyr) - 1):
+        level_one = combined_pyr[i]
+        level_two = combined_pyr[i + 1]
+
+        level_one._set_image(cv2.pyrUp(level_one.image))
+        level_
 
 def _adjust_mask_dtype(mask: np.ndarray, desired_type: np.dtype):
     return mask.astype(desired_type, copy=False)
