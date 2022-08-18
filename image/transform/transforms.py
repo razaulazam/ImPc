@@ -20,7 +20,7 @@ SAMPLING_REGISTRY = {
     "area": cv2.INTER_AREA,
     "bicubic": cv2.INTER_CUBIC,
     "lanczos": cv2.INTER_LANCZOS4,
-    "linear_exact": cv2.INTER_LINEAR_EXACT,
+    "bilinear_exact": cv2.INTER_LINEAR_EXACT,
     "max": cv2.INTER_MAX,
     "fill_outliers": cv2.WARP_FILL_OUTLIERS,
     "inverse_map": cv2.WARP_INVERSE_MAP
@@ -56,7 +56,7 @@ QUANTIZE_REGISTRY = {
 def resize(
     image: BaseImage,
     size: Union[Tuple[int, int], List[int]],
-    resample: str = None,
+    resample: Optional[str] = "bilinear",
 ) -> BaseImage:
 
     if not isinstance(size, (tuple, list)):
@@ -68,7 +68,7 @@ def resize(
     if not all(i > 0 for i in size):
         raise WrongArgumentsValue("Arguments in the size tuple cannot be negative")
 
-    if resample and not isinstance(resample, str):
+    if not isinstance(resample, str):
         raise WrongArgumentsType("Please check the type of the resample argument")
 
     sample_arg = SAMPLING_REGISTRY.get(resample.lower(), None)
@@ -80,7 +80,7 @@ def resize(
     check_image = image_array_check_conversion(image, ConversionMode.OpenCV)
 
     try:
-        check_image._set_image(cv2.resize(check_image.image, size, sample_arg))
+        check_image._set_image(cv2.resize(check_image.image, size[::-1], sample_arg))
         check_image._update_dtype()
     except Exception as e:
         raise TransformError("Failed to resize the image") from e

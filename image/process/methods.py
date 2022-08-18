@@ -14,6 +14,8 @@ from image.transform.transforms import resize
 # -------------------------------------------------------------------------
 
 def blend(image_one: BaseImage, image_two: BaseImage, alpha: float) -> BaseImage:
+    """Functionality for alpha blending two images"""
+    
     if not isinstance(image_one, BaseImage):
         raise WrongArgumentsType("Please check the type of the image_one argument")
 
@@ -59,7 +61,8 @@ def blend(image_one: BaseImage, image_two: BaseImage, alpha: float) -> BaseImage
 # -------------------------------------------------------------------------
 
 def composite(image_one: BaseImage, image_two: BaseImage, mask: np.ndarray) -> BaseImage:
-
+    """Composes two images based on a mask"""
+    
     if not isinstance(image_one, BaseImage):
         raise WrongArgumentsType("Please check the type of the image_one argument")
 
@@ -106,7 +109,6 @@ def composite(image_one: BaseImage, image_two: BaseImage, mask: np.ndarray) -> B
 
 # -------------------------------------------------------------------------
 
-# types are conflicting. Debug and find the problem
 def gaussian_pyramid(image: BaseImage, level: int) -> List[BaseImage]:
     """Computes the gaussian pyramid where the first image is always the original image itself"""
 
@@ -142,7 +144,7 @@ def laplacian_pyramid(image: BaseImage, level: int) -> List[BaseImage]:
     gauss_pyramid = gaussian_pyramid(image, level)
     laplacian_pyramid = []
 
-    for i in range(gauss_pyramid, 0, -1):
+    for i in range(len(gauss_pyramid) - 1 , 0, -1):
         pyr_level = gauss_pyramid[i]
         pyr_level._set_image(cv2.pyrUp(pyr_level.image))
         pyr_level_down = gauss_pyramid[i - 1]

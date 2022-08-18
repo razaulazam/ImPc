@@ -123,7 +123,7 @@ class ImageLoader:
 
     @check_image_exist_internal
     def _update_dtype(self):
-        self._data_type = ALLOWED_DATA_TYPES.get(self._image.dtype, None)
+        self._data_type = ALLOWED_DATA_TYPES.get(str(self._image.dtype), None)
         if not self._data_type:
             raise NotSupportedDataType(
                 "The data type of this image is currently not supported by the library"
