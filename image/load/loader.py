@@ -15,6 +15,7 @@ from image._decorators import check_image_exist_internal
 from commons.exceptions import WrongArgumentsValue, NotSupportedDataType, NotSupportedMode
 from commons.exceptions import PathDoesNotExist, WrongArgumentsType, LoaderError
 from image.load._interface import BaseImage
+from image._common_datastructs import AllowedDataType
 
 # -------------------------------------------------------------------------
 
@@ -40,6 +41,12 @@ IMAGE_LOADER_MODES = {
 # mode would need to change as well as the mode description
 # data type might need to change as well
 
+ALLOWED_DATA_TYPES = {
+    "uint8": AllowedDataType.Uint8,
+    "uint16": AllowedDataType.Uint16,
+    "float32": AllowedDataType.Float32,
+}
+
 # -------------------------------------------------------------------------
 
 @BaseImage.register
@@ -50,7 +57,7 @@ class ImageLoader:
         self._file_extension: str = ""
         self._mode: str = ""
         self._mode_description: str = ""
-        self._data_type: np.dtype = None
+        self._data_type: AllowedDataType = None
         self.__original_mode: str = ""
         self.closed = False
 
@@ -90,7 +97,11 @@ class ImageLoader:
         self._file_extension = file_stream.format
         self.__original_mode = file_stream.mode
         self._mode, self._mode_description = IMAGE_LOADER_MODES[file_stream.mode]
-        self._data_type = self._image.dtype
+        self._data_type = ALLOWED_DATA_TYPES.get(str(self._image.dtype), None)
+        if not self._data_type:
+            raise NotSupportedDataType(
+                "The data type of this image is currently not supported by the library"
+            )
 
     @check_image_exist_internal
     def _get_original_image_mode(self) -> str:
@@ -112,7 +123,11 @@ class ImageLoader:
 
     @check_image_exist_internal
     def _update_dtype(self):
-        self.dtype = self._image.dtype
+        self._data_type = ALLOWED_DATA_TYPES.get(str(self._image.dtype), None)
+        if not self._data_type:
+            raise NotSupportedDataType(
+                "The data type of this image is currently not supported by the library"
+            )
 
     def _set_image(self, image: np.ndarray):
         assert isinstance(image, np.ndarray
@@ -142,7 +157,14 @@ class ImageLoader:
     @property
     @check_image_exist_internal
     def channels(self) -> int:
-        return self._image.shape[-1]
+        channels = 0
+        if self.is_rgb():
+            channels = 3
+        elif self.is_rgba():
+            channels = 4
+        elif self.is_gray():
+            channels = 1
+        return channels
 
     @property
     @check_image_exist_internal
@@ -163,6 +185,27 @@ class ImageLoader:
     @check_image_exist_internal
     def mode_description(self) -> str:
         return self._mode_description
+
+    @check_image_exist_internal
+    def is_rgb(self) -> bool:
+        image_dims = self.image.shape
+        if len(image_dims) == 3 and image_dims[:-1] == 3 and self.mode == "RGB":
+            return True
+        return False
+
+    @check_image_exist_internal
+    def is_gray(self) -> bool:
+        image_dims = self.image.shape
+        if len(image_dims) == 2 and self.mode == "Gray":
+            return True
+        return False
+
+    @check_image_exist_internal
+    def is_rgba(self) -> bool:
+        image_dims = self.image.shape
+        if len(image_dims) == 3 and image_dims[:-1] == 4 and self.mode == "RGBA":
+            return True
+        return False
 
     @check_image_exist_internal
     def normalize(self):

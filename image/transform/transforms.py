@@ -1,23 +1,29 @@
 # Copyright (C) Raza Ul Azam., All Rights Reserved.
 # \brief Image transforms
 
+import cv2
+
+
 from PIL import Image
 from typing import Any, Tuple, Optional, Union, List
 from image._decorators import check_image_exist_external
 from image.load._interface import BaseImage
 from commons.warning import DefaultSetting
 from commons.exceptions import WrongArgumentsType, TransformError, WrongArgumentsValue
-from image._helpers import image_array_check_conversion
+from image._helpers import image_array_check_conversion, ConversionMode
 
 # -------------------------------------------------------------------------
 
 SAMPLING_REGISTRY = {
-    "nearest": Image.Resampling.NEAREST,
-    "box": Image.Resampling.BOX,
-    "bilinear": Image.Resampling.BILINEAR,
-    "hamming": Image.Resampling.HAMMING,
-    "bicubic": Image.Resampling.BICUBIC,
-    "lanczos": Image.Resampling.LANCZOS,
+    "nearest": cv2.INTER_NEAREST,
+    "bilinear": cv2.INTER_LINEAR,
+    "area": cv2.INTER_AREA,
+    "bicubic": cv2.INTER_CUBIC,
+    "lanczos": cv2.INTER_LANCZOS4,
+    "bilinear_exact": cv2.INTER_LINEAR_EXACT,
+    "max": cv2.INTER_MAX,
+    "fill_outliers": cv2.WARP_FILL_OUTLIERS,
+    "inverse_map": cv2.WARP_INVERSE_MAP
 }
 
 TRANSPOSE_REGISTRY = {
@@ -50,12 +56,8 @@ QUANTIZE_REGISTRY = {
 def resize(
     image: BaseImage,
     size: Union[Tuple[int, int], List[int]],
-    resample: str = None,
-    box: Union[Tuple[int, int, int, int], List[int]] = None,
-    reducing_gap: int = None,
+    resample: Optional[str] = "bilinear",
 ) -> BaseImage:
-
-    image = image_array_check_conversion(image, "PIL")
 
     if not isinstance(size, (tuple, list)):
         raise WrongArgumentsType("Please check the type of the size argument")
@@ -66,39 +68,24 @@ def resize(
     if not all(i > 0 for i in size):
         raise WrongArgumentsValue("Arguments in the size tuple cannot be negative")
 
-    if resample and not isinstance(resample, str):
+    if not isinstance(resample, str):
         raise WrongArgumentsType("Please check the type of the resample argument")
-
-    if box:
-        if not isinstance(box, (tuple, list)):
-            raise WrongArgumentsType("Please check the type of the box argument")
-        if len(box) != int(4):
-            raise WrongArgumentsValue("Insufficient arguments in the bounding box tuple")
-        if not all(i > 0 for i in box):
-            raise WrongArgumentsValue("The arguments of the bounding box tuple cannot be negative")
-        if box[2] > image.width:
-            raise WrongArgumentsValue("Bounding box width cannot be greater than the image width")
-        if box[3] > image.height:
-            raise WrongArgumentsValue("Bounding box height cannot be greater than the image height")
-
-    if reducing_gap and not isinstance(reducing_gap, int):
-        raise WrongArgumentsType("Please check the type of the reducing_gap argument")
 
     sample_arg = SAMPLING_REGISTRY.get(resample.lower(), None)
     if not sample_arg:
         DefaultSetting(
             "Using default sampling strategy (nearest) since the provided filter type is not supported"
         )
+        
+    check_image = image_array_check_conversion(image, ConversionMode.OpenCV)
 
     try:
-        new_im = image.copy()
-        new_im.file_stream = new_im.file_stream.resize(size, sample_arg, box, reducing_gap)
-        new_im.update_image()
-        new_im.set_loader_properties()
+        check_image._set_image(cv2.resize(check_image.image, size[::-1], sample_arg))
+        check_image._update_dtype()
     except Exception as e:
         raise TransformError("Failed to resize the image") from e
 
-    return new_im
+    return check_image
 
 # -------------------------------------------------------------------------
 

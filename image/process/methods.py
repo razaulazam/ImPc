@@ -2,20 +2,20 @@
 # \brief Image processing methods
 
 import cv2
-import re
 import numpy as np
 
-from PIL import Image
-from typing import Union, Tuple
+from typing import Union, Tuple, List
 from image.load._interface import BaseImage
-from image.load.loader import ImageLoader
 from commons.exceptions import WrongArgumentsType, WrongArgumentsValue
-from image._helpers import image_array_check_conversion
+from image._helpers import image_array_check_conversion, ConversionMode
 from commons.exceptions import ProcessingError, ImageAlreadyClosed
+from image.transform.transforms import resize
 
 # -------------------------------------------------------------------------
 
 def blend(image_one: BaseImage, image_two: BaseImage, alpha: float) -> BaseImage:
+    """Functionality for alpha blending two images"""
+    
     if not isinstance(image_one, BaseImage):
         raise WrongArgumentsType("Please check the type of the image_one argument")
 
@@ -43,26 +43,26 @@ def blend(image_one: BaseImage, image_two: BaseImage, alpha: float) -> BaseImage
     if image_one.dtype != image_two.dtype:
         raise WrongArgumentsValue("Provided images should have the same data type")
 
-    checked_image_one = image_array_check_conversion(image_one, "openCV")
-    checked_image_two = image_array_check_conversion(image_two, "openCV")
+    checked_image_one = image_array_check_conversion(image_one, ConversionMode.OpenCV)
+    checked_image_two = image_array_check_conversion(image_two, ConversionMode.OpenCV)
 
     try:
-        new_im = checked_image_one.copy()
-        new_im._set_image(
+        checked_image_one._set_image(
             cv2.addWeighted(
                 checked_image_one.image, alpha, checked_image_two.image, float(1.0 - alpha)
             )
         )
-        new_im._update_dtype()
+        checked_image_one._update_dtype()
     except Exception as e:
-        raise ProcessingError("Failed to alpha blend the image") from e
+        raise ProcessingError("Failed to blend the image") from e
 
-    return new_im
+    return checked_image_one
 
 # -------------------------------------------------------------------------
 
 def composite(image_one: BaseImage, image_two: BaseImage, mask: np.ndarray) -> BaseImage:
-
+    """Composes two images based on a mask"""
+    
     if not isinstance(image_one, BaseImage):
         raise WrongArgumentsType("Please check the type of the image_one argument")
 
@@ -94,19 +94,66 @@ def composite(image_one: BaseImage, image_two: BaseImage, mask: np.ndarray) -> B
 
     mask = _adjust_mask_dtype(mask, np.uint8)
     mask = _normalize_mask(mask)
-    
-    checked_image_one = image_array_check_conversion(image_one, "openCV")
-    checked_image_two = image_array_check_conversion(image_two, "openCV")
 
-    new_im = checked_image_one.copy()
+    checked_image_one = image_array_check_conversion(image_one, ConversionMode.OpenCV)
+    checked_image_two = image_array_check_conversion(image_two, ConversionMode.OpenCV)
+
     raw_image_one = checked_image_one.image
     raw_image_two = checked_image_two.image
     raw_image_one[mask == 1] = raw_image_two
 
-    new_im._set_image(raw_image_one)
-    new_im._update_dtype()
+    checked_image_one._set_image(raw_image_one)
+    checked_image_one._update_dtype()
 
-    return new_im
+    return checked_image_one
+
+# -------------------------------------------------------------------------
+
+def gaussian_pyramid(image: BaseImage, level: int) -> List[BaseImage]:
+    """Computes the gaussian pyramid where the first image is always the original image itself"""
+
+    if not isinstance(image, BaseImage):
+        raise WrongArgumentsType(
+            "Provided image should be opened by the open_image() function first"
+        )
+
+    if not isinstance(level, (int, float)):
+        raise WrongArgumentsType("Provided level value does not have the accurate type")
+
+    if level <= 0:
+        raise WrongArgumentsValue("Level cannot be zero or less than zero")
+
+    check_image = image_array_check_conversion(image, ConversionMode.OpenCV)
+    pyramid = []
+    pyramid.append(check_image)
+
+    for _ in range(level):
+        pyr_level = check_image
+        pyr_level._set_image(cv2.pyrDown(pyr_level.image))
+        pyr_level._update_dtype()
+        pyramid.append(pyr_level)
+        check_image = pyr_level.copy()
+
+    return pyramid
+
+# -------------------------------------------------------------------------
+
+def laplacian_pyramid(image: BaseImage, level: int) -> List[BaseImage]:
+    """Computes the laplacian pyramid from the gaussian pyramid"""
+
+    gauss_pyramid = gaussian_pyramid(image, level)
+    laplacian_pyramid = []
+
+    for i in range(len(gauss_pyramid) - 1 , 0, -1):
+        pyr_level = gauss_pyramid[i]
+        pyr_level._set_image(cv2.pyrUp(pyr_level.image))
+        pyr_level_down = gauss_pyramid[i - 1]
+        if pyr_level.dims != pyr_level_down.dims:
+            pyr_level_down = resize(pyr_level_down, pyr_level.dims)
+        pyr_level._set_image(cv2.subtract(pyr_level_down.image, pyr_level.image))
+        laplacian_pyramid.append(pyr_level)
+
+    return laplacian_pyramid
 
 # -------------------------------------------------------------------------
 
@@ -133,6 +180,8 @@ def _compute_mask_dims(mask: np.ndarray) -> Union[Tuple[int, int, int], Tuple[in
 # -------------------------------------------------------------------------
 
 def _normalize_mask(mask: np.ndarray) -> np.ndarray:
+    """Normalizes the mask"""
+
     mask_data_type = str(mask.dtype)
     max_val = np.max(mask)
 
@@ -143,8 +192,11 @@ def _normalize_mask(mask: np.ndarray) -> np.ndarray:
 # -------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    a = np.ones((1, 2), dtype=np.uint8) * 2
-    data_type = a.dtype
-    _normalize_mask(a)
+    import cv2
+    from image.load.loader import open_image
+    from enum import Enum
+    path_image = "C:\\dev\\ImProcMagic\\sample.jpg"
+    image = open_image(path_image)
+    pyr = laplacian_pyramid(image, 3)
 
     print("hallo")
