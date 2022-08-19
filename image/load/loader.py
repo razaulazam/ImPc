@@ -5,6 +5,7 @@ import os
 import copy
 import re
 import io
+import cv2
 import numpy as np
 
 from PIL import Image
@@ -238,7 +239,7 @@ class ImageLoader:
         self.__file_stream.show()
 
     @check_image_exist_internal
-    def save(self, path_: Union[str, io.BytesIO], format: Optional[str] = None):
+    def save(self, path_: Union[str, io.BytesIO], format: Optional[str] = None): # needs to change
         if not isinstance(path_, (str, io.BytesIO)):
             raise WrongArgumentsType(
                 "Please check the type of the first argument. It should either be a string or a bytesIO object"
@@ -248,6 +249,9 @@ class ImageLoader:
         if format and not isinstance(format, str):
             raise WrongArgumentsType("Please check the type of the format argument")
         try:
+            if isinstance(path_, str):
+                cv2.imwrite(path, self._image)
+
             self.__file_stream.save(path_, format=format)
         except Exception as e:
             raise LoaderError("Failed to save the image") from e
