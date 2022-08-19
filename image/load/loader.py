@@ -173,7 +173,7 @@ class ImageLoader:
 
     @property
     @check_image_exist_internal
-    def dtype(self) -> np.dtype:
+    def dtype(self) -> AllowedDataType:
         return self._data_type
 
     @property
@@ -237,7 +237,7 @@ class ImageLoader:
     def show(self):
         self.__file_stream.show()
 
-    @check_image_exist_internal # needs to change
+    @check_image_exist_internal
     def save(self, path_: Union[str, io.BytesIO], format: Optional[str] = None):
         if not isinstance(path_, (str, io.BytesIO)):
             raise WrongArgumentsType(
@@ -369,13 +369,3 @@ def _find_path(path: Path) -> Tuple[bool, Union[Path, None]]:
     return (False, None)
 
 # -------------------------------------------------------------------------
-
-if __name__ == "__main__":
-    from pathlib import Path
-    import matplotlib.pyplot as plt
-    image_path = Path(__file__).parent.parent.parent / "sample.jpg"
-    import numpy as np
-    a = open_image(str(image_path))
-    b = a
-    a.close()
-    print("hallo")

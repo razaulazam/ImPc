@@ -63,19 +63,19 @@ def _convert_image_dtype(image_new: BaseImage):
         ImageDataTypeConversion(
             "Converting the data type from float16 to float32 which is supported by the library"
         )
-        image_new._set_image(stored_image.astype(AllowedDataType.Float32, copy=False))
+        image_new._set_image(stored_image.astype(AllowedDataType.Float32.value, copy=False))
 
     elif data_type is ConversionDataType.Float64:
         ImageDataTypeConversion(
             "Converting the data type from float64 to float32 which this method supports. This can possibly result in loss of precision/data"
         )
-        image_new._set_image(stored_image.astype(AllowedDataType.Float32, copy=False))
+        image_new._set_image(stored_image.astype(AllowedDataType.Float32.value, copy=False))
 
     elif data_type is ConversionDataType.Uint32:
         ImageDataTypeConversion(
             "Converting the data type from uint32 to uint16 which this method supports. This can possibly result in loss of precision/data"
         )
-        image_new._set_image(stored_image.astype(AllowedDataType.Uint16, copy=False))
+        image_new._set_image(stored_image.astype(AllowedDataType.Uint16.value, copy=False))
 
     else:
         raise NotSupportedDataType("Image has a data-type which is currently not supported")

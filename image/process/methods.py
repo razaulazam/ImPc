@@ -10,6 +10,7 @@ from commons.exceptions import WrongArgumentsType, WrongArgumentsValue
 from image._helpers import image_array_check_conversion, ConversionMode
 from commons.exceptions import ProcessingError, ImageAlreadyClosed
 from image.transform.transforms import resize
+from image._decorators import check_image_exist_external
 
 # -------------------------------------------------------------------------
 
@@ -112,6 +113,7 @@ def composite(image_one: BaseImage, image_two: BaseImage, mask: np.ndarray) -> B
 
 # -------------------------------------------------------------------------
 
+@check_image_exist_external
 def gaussian_pyramid(image: BaseImage, level: Union[int, float]) -> List[BaseImage]:
     """Computes the gaussian pyramid where the first image is always the original image itself"""
 
@@ -119,9 +121,6 @@ def gaussian_pyramid(image: BaseImage, level: Union[int, float]) -> List[BaseIma
         raise WrongArgumentsType(
             "Provided image should be opened by the open_image() function first"
         )
-
-    if image.closed:
-        raise ImageAlreadyClosed("Processing cannot be performed on closed images")
 
     if not isinstance(level, (int, float)):
         raise WrongArgumentsType("Provided level value does not have the accurate type")
@@ -161,6 +160,7 @@ def laplacian_pyramid(image: BaseImage, level: Union[int, float]) -> List[BaseIm
         if pyr_level.dims != pyr_level_down.dims:
             pyr_level_down = resize(pyr_level_down, pyr_level.dims)
         pyr_level._set_image(cv2.subtract(pyr_level_down.image, pyr_level.image))
+        pyr_level._update_dtype()
         laplacian_pyramid.append(pyr_level)
 
     assert len(laplacian_pyramid) == int(level), ProcessingError(
@@ -225,12 +225,18 @@ def pyramid_blend(
     assert len(combined_pyr) == int(level), ProcessingError("Failed to perform pyramid blending")
 
     # Reconstruction
-    for i in range(len(combined_pyr) - 1):
-        level_one = combined_pyr[i]
-        level_two = combined_pyr[i + 1]
+    start_level = combined_pyr[0]
+    for i in range(1, len(combined_pyr)):
+        level = combined_pyr[i]
+        start_level._set_image(cv2.pyrUp(start_level.image))
+        start_level._update_dtype()
+        combined_image = cv2.add(level.image, start_level.image)
+        start_level._set_image(combined_image)
+        start_level._update_dtype()
 
-        level_one._set_image(cv2.pyrUp(level_one.image))
-        level_
+    return start_level
+
+# -------------------------------------------------------------------------
 
 def _adjust_mask_dtype(mask: np.ndarray, desired_type: np.dtype):
     return mask.astype(desired_type, copy=False)
@@ -271,7 +277,12 @@ if __name__ == "__main__":
     from image.load.loader import open_image
     from enum import Enum
     path_image = "C:\\dev\\ImProcMagic\\sample.jpg"
+    path_image_one = "C:\\dev\\ImProcMagic\\sample1.jpg"
     image = open_image(path_image)
+    image_one = open_image(path_image_one)
+
+    blend_image = pyramid_blend(image, image_one, 3)
+
     pyr = laplacian_pyramid(image, 3)
 
     print("hallo")
