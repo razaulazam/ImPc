@@ -285,7 +285,7 @@ if __name__ == "__main__":
     image = open_image(path_image)
     d = "C:\\dev\\ImProcMagic\\test.jpg"
     e = io.BytesIO()
-    image.save(e, "png")
+    image.save(e, "jpg")
 
     raw_image = image.tobytes()
     d = io.BytesIO(raw_image)

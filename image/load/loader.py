@@ -7,11 +7,12 @@ import re
 import io
 import cv2
 import numpy as np
+import matplotlib.pyplot as plt
 
 from PIL import Image
 from pathlib import Path
 from functools import singledispatch
-from typing import Mapping, Tuple, List, Optional, Any, BinaryIO, Union
+from typing import Tuple, List, Optional, Any, Union
 from image._decorators import check_image_exist_internal
 from commons.exceptions import WrongArgumentsValue, NotSupportedDataType, NotSupportedMode
 from commons.exceptions import PathDoesNotExist, WrongArgumentsType, LoaderError
@@ -36,11 +37,7 @@ IMAGE_LOADER_MODES = {
     "I;16": ("Uint16", "16 bit unsigned integer pixels"),
     "I;16L": ("Uint16LE", "16 bit little endian unsigned integer pixels"),
     "I;16B": ("Uint16BE", "16 bit big endian unsigned integer pixels"),
-} # allows uint8, uint16 and float32
-
-# Error handling needs to be more explicit. Very short errors might not prove to be that descriptive
-# mode would need to change as well as the mode description
-# data type might need to change as well
+}
 
 ALLOWED_DATA_TYPES = {
     "uint8": AllowedDataType.Uint8,
@@ -80,7 +77,7 @@ class ImageLoader:
         return True
 
     def _load_image(
-        self, path: Union[BinaryIO, str], formats: Optional[Union[List[str], Tuple[str]]] = None
+        self, path: Union[io.BytesIO, str], formats: Optional[Union[List[str], Tuple[str]]] = None
     ):
         try:
             file_stream = Image.open(path, formats=formats)
@@ -190,7 +187,7 @@ class ImageLoader:
     @check_image_exist_internal
     def is_rgb(self) -> bool:
         image_dims = self.image.shape
-        if len(image_dims) == 3 and image_dims[:-1] == 3 and self.mode == "RGB":
+        if len(image_dims) == 3 and image_dims[-1] == 3 and self.mode == "RGB":
             return True
         return False
 
@@ -204,7 +201,7 @@ class ImageLoader:
     @check_image_exist_internal
     def is_rgba(self) -> bool:
         image_dims = self.image.shape
-        if len(image_dims) == 3 and image_dims[:-1] == 4 and self.mode == "RGBA":
+        if len(image_dims) == 3 and image_dims[-1] == 4 and self.mode == "RGBA":
             return True
         return False
 
@@ -212,7 +209,7 @@ class ImageLoader:
     def normalize(self):
         """Normalizes the image. Supports only 8-bit, 16-bit and 32-bit encoding"""
 
-        data_type = self.dtype
+        data_type = self.dtype.value
         bit_depth = re.search("(?<=uint)\d+|(?<=float)\d+", str(data_type))
         if not bit_depth:
             raise NotSupportedDataType("Image has a data-type which is currently not supported")
@@ -233,10 +230,11 @@ class ImageLoader:
         new_im = copy.deepcopy(self)
         return new_im
 
-    # This needs to go away since we would get rid of the file stream
-    @check_image_exist_internal
-    def show(self):
-        self.__file_stream.show()
+    def show(self, normalize: Optional[bool] = False):
+        if normalize:
+            self.normalize()
+        plt.imshow(self._image)
+        plt.show()
 
     @check_image_exist_internal
     def save(self, path_: Union[str, io.BytesIO], extension: Optional[str] = "png"):
