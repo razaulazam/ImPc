@@ -275,10 +275,21 @@ def _normalize_mask(mask: np.ndarray) -> np.ndarray:
 if __name__ == "__main__":
     import cv2
     from image.load.loader import open_image
+    from PIL import Image
     from enum import Enum
+    import io
+
     path_image = "C:\\dev\\ImProcMagic\\sample.jpg"
     path_image_one = "C:\\dev\\ImProcMagic\\sample1.jpg"
+
     image = open_image(path_image)
+    d = "C:\\dev\\ImProcMagic\\test.jpg"
+    e = io.BytesIO()
+    image.save(e, "png")
+
+    raw_image = image.tobytes()
+    d = io.BytesIO(raw_image)
+
     image_one = open_image(path_image_one)
 
     blend_image = pyramid_blend(image, image_one, 3)

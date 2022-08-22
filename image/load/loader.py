@@ -239,20 +239,20 @@ class ImageLoader:
         self.__file_stream.show()
 
     @check_image_exist_internal
-    def save(self, path_: Union[str, io.BytesIO], format: Optional[str] = None): # needs to change
+    def save(self, path_: Union[str, io.BytesIO], extension: Optional[str] = "png"):
         if not isinstance(path_, (str, io.BytesIO)):
             raise WrongArgumentsType(
                 "Please check the type of the first argument. It should either be a string or a bytesIO object"
             )
-        if isinstance(path_, str) and not os.path.exists(path_):
+        if isinstance(path_, str) and not os.path.exists(os.path.dirname(path_)):
             raise PathDoesNotExist("Path does not exist. Please check the path again")
-        if format and not isinstance(format, str):
-            raise WrongArgumentsType("Please check the type of the format argument")
+
         try:
             if isinstance(path_, str):
-                cv2.imwrite(path, self._image)
-
-            self.__file_stream.save(path_, format=format)
+                cv2.imwrite(path_, self._image)
+            elif isinstance(path_, io.BytesIO):
+                file_stream = Image.fromarray(self._image)
+                file_stream.save(path_, extension)
         except Exception as e:
             raise LoaderError("Failed to save the image") from e
 
@@ -354,7 +354,7 @@ def _(path, formats: Optional[Union[List[str], Tuple[str]]] = None) -> BaseImage
 
 # -------------------------------------------------------------------------
 
-@open_image.register(BinaryIO)
+@open_image.register(io.BytesIO)
 def _(path, formats: Optional[Union[List[str], Tuple[str]]] = None) -> BaseImage:
     if formats and not isinstance(formats, (list, tuple)):
         raise WrongArgumentsType("Please check the type of the formats argument")
