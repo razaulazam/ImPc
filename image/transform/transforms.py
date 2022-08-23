@@ -61,10 +61,7 @@ def resize(
 
     if not isinstance(image, BaseImage):
         raise WrongArgumentsType("Provided image is not a ImageLoader instance")
-    
-    if image.closed:
-        raise ImageAlreadyClosed("Processing cannot be performed on closed images")
-    
+
     if not isinstance(size, (tuple, list)):
         raise WrongArgumentsType("Please check the type of the size argument")
 
@@ -86,8 +83,7 @@ def resize(
     check_image = image_array_check_conversion(image, ConversionMode.OpenCV)
 
     try:
-        check_image._set_image(cv2.resize(check_image.image, size[::-1], sample_arg))
-        check_image._update_dtype()
+        check_image._set_image(cv2.resize(check_image.image, size[::-1], sample_arg).astype(check_image.dtype.value, copy=False))
     except Exception as e:
         raise TransformError("Failed to resize the image") from e
 
@@ -340,3 +336,20 @@ def quantize(
     return new_im
 
 # -------------------------------------------------------------------------
+
+if __name__ == "__main__":
+    from pathlib import Path
+    path_image = Path(__file__).parent.parent.parent / "sample.jpg"
+    import cv2
+    import time
+    im = cv2.imread(str(path_image))
+    from scipy.ndimage import rotate as rotate1
+    from skimage.transform import rotate as rotate2
+
+    start_time = time.time()
+    rotate1(im, 45, (1, 0))
+    print(time.time() - start_time)
+
+    start_time = time.time()
+    rotate2(im, 45)
+    print(time.time() - start_time)
