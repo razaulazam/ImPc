@@ -11,6 +11,7 @@ from image._helpers import image_array_check_conversion, ConversionMode
 from commons.exceptions import ProcessingError, ImageAlreadyClosed
 from image.transform.transforms import resize
 from image._decorators import check_image_exist_external
+from image._common_datastructs import AllowedDataType
 
 # -------------------------------------------------------------------------
 
@@ -51,9 +52,8 @@ def blend(image_one: BaseImage, image_two: BaseImage, alpha: float) -> BaseImage
         checked_image_one._set_image(
             cv2.addWeighted(
                 checked_image_one.image, alpha, checked_image_two.image, float(1.0 - alpha)
-            )
+            ).astype(checked_image_one.dtype.value, copy=False)
         )
-        checked_image_one._update_dtype()
     except Exception as e:
         raise ProcessingError("Failed to blend the image") from e
 
@@ -96,7 +96,7 @@ def composite(image_one: BaseImage, image_two: BaseImage, mask: np.ndarray) -> B
     if image_one.dims == image_two.dims == mask_dims:
         raise WrongArgumentsValue("Dimensions of the provided images do not match")
 
-    mask = _adjust_mask_dtype(mask, np.uint8)
+    mask = _adjust_mask_dtype(mask, AllowedDataType.Uint8)
     mask = _normalize_mask(mask)
 
     checked_image_one = image_array_check_conversion(image_one, ConversionMode.OpenCV)
@@ -107,7 +107,6 @@ def composite(image_one: BaseImage, image_two: BaseImage, mask: np.ndarray) -> B
     raw_image_one[mask == 1] = raw_image_two
 
     checked_image_one._set_image(raw_image_one)
-    checked_image_one._update_dtype()
 
     return checked_image_one
 
@@ -134,8 +133,7 @@ def gaussian_pyramid(image: BaseImage, level: Union[int, float]) -> List[BaseIma
 
     for _ in range(int(level)):
         pyr_level = check_image
-        pyr_level._set_image(cv2.pyrDown(pyr_level.image))
-        pyr_level._update_dtype()
+        pyr_level._set_image(cv2.pyrDown(pyr_level.image).astype(pyr_level.dtype.value, copy=False))
         pyramid.append(pyr_level)
         check_image = pyr_level.copy()
 
@@ -155,12 +153,11 @@ def laplacian_pyramid(image: BaseImage, level: Union[int, float]) -> List[BaseIm
 
     for i in range(len(gauss_pyramid) - 1, 0, -1):
         pyr_level = gauss_pyramid[i]
-        pyr_level._set_image(cv2.pyrUp(pyr_level.image))
+        pyr_level._set_image(cv2.pyrUp(pyr_level.image).astype(pyr_level.dtype.value, copy=False))
         pyr_level_down = gauss_pyramid[i - 1]
         if pyr_level.dims != pyr_level_down.dims:
             pyr_level_down = resize(pyr_level_down, pyr_level.dims)
-        pyr_level._set_image(cv2.subtract(pyr_level_down.image, pyr_level.image))
-        pyr_level._update_dtype()
+        pyr_level._set_image(cv2.subtract(pyr_level_down.image, pyr_level.image).astype(pyr_level.dtype.value, copy=False))
         laplacian_pyramid.append(pyr_level)
 
     assert len(laplacian_pyramid) == int(level), ProcessingError(
@@ -219,7 +216,6 @@ def pyramid_blend(
         )
 
         lap_pyr_one[i]._set_image(combined_image)
-        lap_pyr_one[i]._update_dtype()
         combined_pyr.append(lap_pyr_one[i])
 
     assert len(combined_pyr) == int(level), ProcessingError("Failed to perform pyramid blending")
@@ -228,18 +224,16 @@ def pyramid_blend(
     start_level = combined_pyr[0]
     for i in range(1, len(combined_pyr)):
         level = combined_pyr[i]
-        start_level._set_image(cv2.pyrUp(start_level.image))
-        start_level._update_dtype()
-        combined_image = cv2.add(level.image, start_level.image)
+        start_level._set_image(cv2.pyrUp(start_level.image).astype(start_level.dtype.value, copy=False))
+        combined_image = cv2.add(level.image, start_level.image).astype(start_level.dtype.value, copy=False)
         start_level._set_image(combined_image)
-        start_level._update_dtype()
 
     return start_level
 
 # -------------------------------------------------------------------------
 
-def _adjust_mask_dtype(mask: np.ndarray, desired_type: np.dtype):
-    return mask.astype(desired_type, copy=False)
+def _adjust_mask_dtype(mask: np.ndarray, desired_type: AllowedDataType):
+    return mask.astype(desired_type.value, copy=False)
 
 # -------------------------------------------------------------------------
 
