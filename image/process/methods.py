@@ -7,7 +7,7 @@ import numpy as np
 from typing import Union, Tuple, List
 from image.load._interface import BaseImage
 from commons.exceptions import WrongArgumentsType, WrongArgumentsValue
-from image._helpers import image_array_check_conversion, ConversionMode
+from image._helpers import image_array_check_conversion
 from commons.exceptions import ProcessingError, ImageAlreadyClosed
 from image.transform.transforms import resize
 from image._decorators import check_image_exist_external
@@ -45,8 +45,8 @@ def blend(image_one: BaseImage, image_two: BaseImage, alpha: float) -> BaseImage
     if image_one.dtype != image_two.dtype:
         raise WrongArgumentsValue("Provided images should have the same data type")
 
-    checked_image_one = image_array_check_conversion(image_one, ConversionMode.OpenCV)
-    checked_image_two = image_array_check_conversion(image_two, ConversionMode.OpenCV)
+    checked_image_one = image_array_check_conversion(image_one)
+    checked_image_two = image_array_check_conversion(image_two)
 
     try:
         checked_image_one._set_image(
@@ -99,8 +99,8 @@ def composite(image_one: BaseImage, image_two: BaseImage, mask: np.ndarray) -> B
     mask = _adjust_mask_dtype(mask, AllowedDataType.Uint8)
     mask = _normalize_mask(mask)
 
-    checked_image_one = image_array_check_conversion(image_one, ConversionMode.OpenCV)
-    checked_image_two = image_array_check_conversion(image_two, ConversionMode.OpenCV)
+    checked_image_one = image_array_check_conversion(image_one)
+    checked_image_two = image_array_check_conversion(image_two)
 
     raw_image_one = checked_image_one.image
     raw_image_two = checked_image_two.image
@@ -115,19 +115,14 @@ def composite(image_one: BaseImage, image_two: BaseImage, mask: np.ndarray) -> B
 @check_image_exist_external
 def gaussian_pyramid(image: BaseImage, level: Union[int, float]) -> List[BaseImage]:
     """Computes the gaussian pyramid where the first image is always the original image itself"""
-
-    if not isinstance(image, BaseImage):
-        raise WrongArgumentsType(
-            "Provided image should be opened by the open_image() function first"
-        )
-
+    
     if not isinstance(level, (int, float)):
         raise WrongArgumentsType("Provided level value does not have the accurate type")
 
     if level <= 0:
         raise WrongArgumentsValue("Level cannot be zero or less than zero")
 
-    check_image = image_array_check_conversion(image, ConversionMode.OpenCV)
+    check_image = image_array_check_conversion(image)
     pyramid = []
     pyramid.append(check_image)
 

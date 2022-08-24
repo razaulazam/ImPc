@@ -378,16 +378,14 @@ INTERNAL_CONVERSION_MODES = {
 
 @check_image_exist_external
 def convert(image: BaseImage, code: str) -> BaseImage:
+    """Converts the image to different color spaces"""
         
-    if not isinstance(image, BaseImage):
-        raise WrongArgumentsType("Please check the type of the image_one argument")
-    
     if not isinstance(code, str):
         raise WrongArgumentsType(
             "Please check the type of the provided code. Only strings are accepted"
         )
     
-    check_image = image_array_check_conversion(image, "openCV")
+    check_image = image_array_check_conversion(image)
     
     opencv_code = COLOR_REGISTRY.get(code.lower())
     if not opencv_code:

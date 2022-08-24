@@ -3,18 +3,18 @@
 
 import cv2
 
-
 from PIL import Image
+from skimage.transform import rotate
 from typing import Any, Tuple, Optional, Union, List
 from image._decorators import check_image_exist_external
 from image.load._interface import BaseImage
 from commons.warning import DefaultSetting
 from commons.exceptions import WrongArgumentsType, TransformError, WrongArgumentsValue, ImageAlreadyClosed
-from image._helpers import image_array_check_conversion, ConversionMode
+from image._helpers import image_array_check_conversion
 
 # -------------------------------------------------------------------------
 
-SAMPLING_REGISTRY = {
+CV2_SAMPLING_REGISTRY = {
     "nearest": cv2.INTER_NEAREST,
     "bilinear": cv2.INTER_LINEAR,
     "area": cv2.INTER_AREA,
@@ -24,6 +24,14 @@ SAMPLING_REGISTRY = {
     "max": cv2.INTER_MAX,
     "fill_outliers": cv2.WARP_FILL_OUTLIERS,
     "inverse_map": cv2.WARP_INVERSE_MAP
+}
+
+SKIMAGE_SAMPLING_REGISTRY = {
+    "constant": "constant",
+    "edge": "edge",
+    "symmetric": "symmetric",
+    "reflect": "reflect",
+    "wrap": "wrap"
 }
 
 TRANSPOSE_REGISTRY = {
@@ -58,9 +66,7 @@ def resize(
     size: Union[Tuple[int, int], List[int]],
     resample: Optional[str] = "bilinear",
 ) -> BaseImage:
-
-    if not isinstance(image, BaseImage):
-        raise WrongArgumentsType("Provided image is not a ImageLoader instance")
+    """Resizes the image"""
 
     if not isinstance(size, (tuple, list)):
         raise WrongArgumentsType("Please check the type of the size argument")
@@ -74,16 +80,19 @@ def resize(
     if not isinstance(resample, str):
         raise WrongArgumentsType("Please check the type of the resample argument")
 
-    sample_arg = SAMPLING_REGISTRY.get(resample.lower(), None)
+    sample_arg = CV2_SAMPLING_REGISTRY.get(resample.lower(), None)
     if not sample_arg:
         DefaultSetting(
             "Using default sampling strategy (nearest) since the provided filter type is not supported"
         )
-        
-    check_image = image_array_check_conversion(image, ConversionMode.OpenCV)
+
+    check_image = image_array_check_conversion(image)
 
     try:
-        check_image._set_image(cv2.resize(check_image.image, size[::-1], sample_arg).astype(check_image.dtype.value, copy=False))
+        check_image._set_image(
+            cv2.resize(check_image.image, size[::-1],
+                       sample_arg).astype(check_image.dtype.value, copy=False)
+        )
     except Exception as e:
         raise TransformError("Failed to resize the image") from e
 
@@ -94,46 +103,40 @@ def resize(
 @check_image_exist_external
 def rotate(
     image: BaseImage,
-    angle: float,
-    resample: Optional[str] = "nearest",
-    expand: Optional[int] = 0,
+    angle: Union[int, float],
+    resize: Optional[bool] = False,
     center: Optional[Union[Tuple[int, int], List[int]]] = None,
-    translate: Optional[Union[Tuple[int, int], List[int]]] = None,
-    fill_color: Optional[Any] = None,
+    resample: Optional[str] = "constant",
 ) -> BaseImage:
-
-    image = image_array_check_conversion(image, "PIL")
-
-    if resample and not isinstance(resample, str):
+    """Rotates the image"""
+    
+    if not isinstance(angle, (float, int)):
+        raise WrongArgumentsType("Please check the type of the angle argument. It should be either float or int")
+    
+    if not isinstance(resample, str):
         raise WrongArgumentsType("Please check the type of the resample argument")
 
-    if expand and not isinstance(expand, int):
-        raise WrongArgumentsType("Please check the type of the expand argument")
+    if not isinstance(resize, bool):
+        raise WrongArgumentsType("Please check the type of the resize argument")
 
-    if center:
+    if center: # provided like (height, width)
         if not isinstance(center, (tuple, list)):
             raise WrongArgumentsType("Please check the type of the center argument")
         if len(center) != int(2):
             raise WrongArgumentsValue("Invalid number of arguments for the center")
-
-    if translate:
-        if not isinstance(translate, (tuple, list)):
-            raise WrongArgumentsType("Please check the type of the translate argument")
-        if len(translate) != 2:
-            raise WrongArgumentsValue("Invalid number of arguments for the translate")
-
-    sample_arg = SAMPLING_REGISTRY.get(resample.lower(), None)
+        
+    sample_arg = SKIMAGE_SAMPLING_REGISTRY.get(resample.lower(), None)
     if not sample_arg:
-        sample_arg = Image.Resampling.NEAREST
+        sample_arg = SKIMAGE_SAMPLING_REGISTRY["constant"]
         DefaultSetting(
-            "Using default sampling strategy (nearest) since the provided filter type is not supported"
+            "Using default sampling strategy (constant) since the provided filter type is not supported"
         )
 
+    check_image = image_array_check_conversion(image)
+    
     try:
-        new_im = image.copy()
-        new_im.file_stream = new_im.file_stream.rotate(
-            angle, sample_arg, expand, center, translate, fill_color
-        )
+        new_im.file_stream = rotate(
+            check_image.image, float(angle), resize, center, mode=resample)
         new_im.update_image()
         new_im.set_loader_properties()
     except Exception as e:
@@ -342,14 +345,16 @@ if __name__ == "__main__":
     path_image = Path(__file__).parent.parent.parent / "sample.jpg"
     import cv2
     import time
+    import numpy as np
     im = cv2.imread(str(path_image))
+    im = im.astype(np.float32, copy=False)
     from scipy.ndimage import rotate as rotate1
     from skimage.transform import rotate as rotate2
 
     start_time = time.time()
-    rotate1(im, 45, (1, 0))
+    im1 = rotate1(im, 45, (1, 0))
     print(time.time() - start_time)
 
     start_time = time.time()
-    rotate2(im, 45)
+    im2 = rotate2(im, 45)
     print(time.time() - start_time)

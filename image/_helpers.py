@@ -3,20 +3,13 @@
 
 import numpy as np
 
-from enum import Enum, unique
 from image.load._interface import BaseImage
 from commons.exceptions import NotSupportedDataType
 from commons.warning import ImageDataTypeConversion
 from image._common_datastructs import DataType, ConversionDataType, AllowedDataType
 
 # -------------------------------------------------------------------------
-
-@unique
-class ConversionMode(Enum):
-    OpenCV = 1
-
-# -------------------------------------------------------------------------
-
+# needs rrevision
 def check_user_provided_ndarray(array_: np.ndarray, strategy: str):
     data_type = array_.dtype
     if not _correct_type(data_type, strategy):
@@ -27,10 +20,10 @@ def check_user_provided_ndarray(array_: np.ndarray, strategy: str):
 
 # -------------------------------------------------------------------------
 
-def image_array_check_conversion(image: BaseImage, strategy: ConversionMode) -> BaseImage:
+def image_array_check_conversion(image: BaseImage) -> BaseImage:
     data_type = image.dtype
-    if not _correct_type(data_type, strategy):
-        if not _conversion_type(data_type, strategy):
+    if not _correct_type(data_type):
+        if not _conversion_type(data_type):
             raise NotSupportedDataType("Image has a data-type which is currently not supported")
         image_new = image.copy()
         _convert_image_dtype(image_new)
@@ -40,19 +33,15 @@ def image_array_check_conversion(image: BaseImage, strategy: ConversionMode) -> 
 
 # -------------------------------------------------------------------------
 
-def _correct_type(data_type: DataType, strategy: ConversionMode):
-    if strategy is ConversionMode.OpenCV:
-        allowed_type = [val.value for val in AllowedDataType.__members__.values()]
-        flag = data_type.value in allowed_type
-    return flag
+def _correct_type(data_type: DataType):
+    allowed_type = [val.value for val in AllowedDataType.__members__.values()]
+    return data_type.value in allowed_type
 
 # -------------------------------------------------------------------------
 
-def _conversion_type(data_type: DataType, strategy: ConversionMode):
-    if strategy is ConversionMode.OpenCV:
-        conversion_type = [val.value for val in ConversionDataType.__members__.values()]
-        flag = data_type.value in conversion_type
-    return flag
+def _conversion_type(data_type: DataType):
+    conversion_type = [val.value for val in ConversionDataType.__members__.values()]
+    return data_type.value in conversion_type
 
 # -------------------------------------------------------------------------
 
