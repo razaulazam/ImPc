@@ -358,4 +358,5 @@ if __name__ == "__main__":
 
     start_time = time.time()
     im2 = rotate(im, 45)
+    im2.show(normalize=True)
     print(time.time() - start_time)

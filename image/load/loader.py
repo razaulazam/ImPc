@@ -209,7 +209,15 @@ class ImageLoader:
     def normalize(self):
         """Normalizes the image. Supports only 8-bit, 16-bit and 32-bit encoding"""
 
-        data_type = self.dtype.value
+        self._image = ImageLoader.normalize_image(self._image, self.dtype)
+
+        return self
+
+    @staticmethod
+    def normalize_image(image: np.ndarray, dtype: AllowedDataType):
+        """Internal helper for normalizing the image"""
+
+        data_type = dtype.value
         bit_depth = re.search("(?<=uint)\d+|(?<=float)\d+", str(data_type))
         if not bit_depth:
             raise NotSupportedDataType("Image has a data-type which is currently not supported")
@@ -221,9 +229,9 @@ class ImageLoader:
             )
 
         norm_factor = (2**num_bits) - 1
-        self._image = (self._image / norm_factor).astype(data_type, copy=False)
+        image = (image / norm_factor).astype(data_type, copy=False)
 
-        return self
+        return image
 
     @check_image_exist_internal
     def copy(self) -> Any:
@@ -231,9 +239,12 @@ class ImageLoader:
         return new_im
 
     def show(self, normalize: Optional[bool] = False):
+        show_image: np.ndarray = None
         if normalize:
-            self.normalize()
-        plt.imshow(self._image)
+            show_image = ImageLoader.normalize_image(self._image, self.dtype)
+        else:
+            show_image = self._image
+        plt.imshow(show_image)
         plt.show()
 
     @check_image_exist_internal
