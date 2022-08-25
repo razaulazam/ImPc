@@ -4,13 +4,14 @@
 import cv2
 
 from PIL import Image
-from skimage.transform import rotate
+from skimage.transform import rotate as sk_rotate
 from typing import Any, Tuple, Optional, Union, List
 from image._decorators import check_image_exist_external
 from image.load._interface import BaseImage
 from commons.warning import DefaultSetting
 from commons.exceptions import WrongArgumentsType, TransformError, WrongArgumentsValue, ImageAlreadyClosed
 from image._helpers import image_array_check_conversion
+from image._common_datastructs import AllowedDataType
 
 # -------------------------------------------------------------------------
 
@@ -68,6 +69,8 @@ def resize(
 ) -> BaseImage:
     """Resizes the image"""
 
+    from cv2 import resize as cv_resize
+
     if not isinstance(size, (tuple, list)):
         raise WrongArgumentsType("Please check the type of the size argument")
 
@@ -90,8 +93,8 @@ def resize(
 
     try:
         check_image._set_image(
-            cv2.resize(check_image.image, size[::-1],
-                       sample_arg).astype(check_image.dtype.value, copy=False)
+            cv_resize(check_image.image, size[::-1],
+                      sample_arg).astype(check_image.dtype.value, copy=False)
         )
     except Exception as e:
         raise TransformError("Failed to resize the image") from e
@@ -108,11 +111,13 @@ def rotate(
     center: Optional[Union[Tuple[int, int], List[int]]] = None,
     resample: Optional[str] = "constant",
 ) -> BaseImage:
-    """Rotates the image"""
-    
+    """Rotates the image. For the constant mode, the image is padded with zeros"""
+
     if not isinstance(angle, (float, int)):
-        raise WrongArgumentsType("Please check the type of the angle argument. It should be either float or int")
-    
+        raise WrongArgumentsType(
+            "Please check the type of the angle argument. It should be either float or int"
+        )
+
     if not isinstance(resample, str):
         raise WrongArgumentsType("Please check the type of the resample argument")
 
@@ -124,7 +129,7 @@ def rotate(
             raise WrongArgumentsType("Please check the type of the center argument")
         if len(center) != int(2):
             raise WrongArgumentsValue("Invalid number of arguments for the center")
-        
+
     sample_arg = SKIMAGE_SAMPLING_REGISTRY.get(resample.lower(), None)
     if not sample_arg:
         sample_arg = SKIMAGE_SAMPLING_REGISTRY["constant"]
@@ -133,16 +138,18 @@ def rotate(
         )
 
     check_image = image_array_check_conversion(image)
-    
+
     try:
-        new_im.file_stream = rotate(
-            check_image.image, float(angle), resize, center, mode=resample)
-        new_im.update_image()
-        new_im.set_loader_properties()
+        check_image._set_image(
+            sk_rotate(
+                check_image.image, float(angle), resize, center, mode=resample, preserve_range=True
+            ).astype(AllowedDataType.Float32.value, copy=False)
+        )
+        check_image._update_dtype()
     except Exception as e:
         raise TransformError("Failed to rotate the image") from e
 
-    return new_im
+    return check_image
 
 # -------------------------------------------------------------------------
 
@@ -342,19 +349,13 @@ def quantize(
 
 if __name__ == "__main__":
     from pathlib import Path
+    from image.load.loader import open_image
     path_image = Path(__file__).parent.parent.parent / "sample.jpg"
     import cv2
     import time
     import numpy as np
-    im = cv2.imread(str(path_image))
-    im = im.astype(np.float32, copy=False)
-    from scipy.ndimage import rotate as rotate1
-    from skimage.transform import rotate as rotate2
+    im = open_image(str(path_image))
 
     start_time = time.time()
-    im1 = rotate1(im, 45, (1, 0))
-    print(time.time() - start_time)
-
-    start_time = time.time()
-    im2 = rotate2(im, 45)
+    im2 = rotate(im, 45)
     print(time.time() - start_time)
