@@ -29,7 +29,7 @@ def image_array_check_conversion(image: BaseImage) -> BaseImage:
         _convert_image_dtype(image_new)
         image_new._update_dtype()
         return image_new
-    return image
+    return image.copy()
 
 # -------------------------------------------------------------------------
 

@@ -5,13 +5,16 @@ import cv2
 
 from PIL import Image
 from skimage.transform import rotate as sk_rotate
-from typing import Any, Tuple, Optional, Union, List
+from typing import Tuple, Optional, Union, List
+
+from sklearn import cluster
 from image._decorators import check_image_exist_external
 from image.load._interface import BaseImage
 from commons.warning import DefaultSetting
-from commons.exceptions import WrongArgumentsType, TransformError, WrongArgumentsValue, ImageAlreadyClosed
+from commons.exceptions import WrongArgumentsType, TransformError, WrongArgumentsValue
 from image._helpers import image_array_check_conversion
 from image._common_datastructs import AllowedDataType
+from image.transform.color_conversion import convert
 
 # -------------------------------------------------------------------------
 
@@ -33,30 +36,6 @@ SKIMAGE_SAMPLING_REGISTRY = {
     "symmetric": "symmetric",
     "reflect": "reflect",
     "wrap": "wrap"
-}
-
-TRANSPOSE_REGISTRY = {
-    "flip_left_right": Image.Transpose.FLIP_LEFT_RIGHT,
-    "rotate_90": Image.Transpose.ROTATE_90,
-    "flip_top_bottom": Image.Transpose.FLIP_TOP_BOTTOM,
-    "rotate_180": Image.Transpose.ROTATE_180,
-    "rotate_270": Image.Transpose.ROTATE_270,
-    "transpose": Image.Transpose.TRANSPOSE,
-    "transverse": Image.Transpose.TRANSVERSE,
-}
-
-TRANSFORM_REGISTRY = {
-    "extent": Image.Transform.EXTENT,
-    "affine": Image.Transform.AFFINE,
-    "perspective": Image.Transform.PERSPECTIVE,
-    "quad": Image.Transform.QUAD,
-    "mesh": Image.Transform.MESH,
-}
-
-QUANTIZE_REGISTRY = {
-    "mediancut": Image.Quantize.MEDIANCUT,
-    "maxcoverage": Image.Quantize.MAXCOVERAGE,
-    "fastoctree": Image.Quantize.FASTOCTREE,
 }
 
 # -------------------------------------------------------------------------
@@ -142,7 +121,12 @@ def rotate(
     try:
         check_image._set_image(
             sk_rotate(
-                check_image.image, float(angle), resize, center, mode=resample, preserve_range=True
+                check_image.image,
+                float(angle),
+                resize,
+                center[::-1],
+                mode=resample,
+                preserve_range=True
             ).astype(AllowedDataType.Float32.value, copy=False)
         )
         check_image._update_dtype()
@@ -154,187 +138,58 @@ def rotate(
 # -------------------------------------------------------------------------
 
 @check_image_exist_external
-def transpose(
-    image: BaseImage,
-    method: str,
-) -> BaseImage:
+def transpose(image: BaseImage,) -> BaseImage:
 
-    image = image_array_check_conversion(image, "PIL")
-
-    if not isinstance(method, str):
-        raise WrongArgumentsType("Please check the type of the method argument")
-
-    method_arg = TRANSPOSE_REGISTRY.get(method.lower(), None)
-    if not method_arg:
-        raise WrongArgumentsValue("Defined method is not supported currently")
+    check_image = image_array_check_conversion(image)
 
     try:
-        new_im = image.copy()
-        new_im.file_stream = new_im.file_stream.transpose(method_arg)
-        new_im.update_image()
-        new_im.set_loader_properties()
+        check_image._set_image(
+            cv2.transpose(check_image.image).astype(check_image.dtype.value, copy=False)
+        )
     except Exception as e:
         raise TransformError("Failed to transpose the image") from e
 
-    return new_im
+    return check_image
 
 # -------------------------------------------------------------------------
 
 @check_image_exist_external
-def reduce(
+def kmeans_quantize(
     image: BaseImage,
-    factor: Union[int, Union[Tuple[int, int], List[int]]],
-    box: Optional[Union[Tuple[int, int, int, int], List[int]]] = None,
+    clusters: Optional[Union[int, float]] = 8,
 ) -> BaseImage:
+    """Reduces the color space of the image. This method only applies to images with either of these modes: RGB or LAB"""
 
-    image = image_array_check_conversion(image, "PIL")
+    from sklearn.cluster import MiniBatchKMeans
 
-    if not (isinstance(factor, int) or isinstance(factor, tuple)):
-        raise WrongArgumentsType("Please check the type of the factor argument")
-
-    if isinstance(factor, int) and factor < 0:
-        raise WrongArgumentsValue("Value of the factor can not be less than 0")
-
-    if isinstance(factor, (tuple, list)):
-        if len(factor) != int(2):
-            raise WrongArgumentsValue("Factor tuple can not have more than four values")
-        if not all(i > 0 for i in factor):
-            raise WrongArgumentsValue("The arguments of the bouding box tuple cannot be negative")
-
-    if box:
-        if not isinstance(box, (tuple, list)):
-            raise WrongArgumentsType("Please check the type of the box argument")
-        if len(box) != int(4):
-            raise WrongArgumentsValue("Insufficient arguments in the bounding box tuple")
-        if not all(i > 0 for i in box):
-            raise WrongArgumentsValue("The arguments of the bounding box tuple cannot be negative")
-        if box[2] > image.width:
-            raise WrongArgumentsValue("Bounding box width cannot be greater than the image width")
-        if box[3] > image.height:
-            raise WrongArgumentsValue("Bounding box height cannot be greater than the image height")
-
-    try:
-        new_im = image.copy()
-        new_im.file_stream = new_im.file_stream.reduce(factor, box)
-        new_im.update_image()
-        new_im.set_loader_properties()
-    except Exception as e:
-        raise TransformError("Failed to reduce the image") from e
-
-    return new_im
-
-# -------------------------------------------------------------------------
-
-@check_image_exist_external
-def transform(
-    image: BaseImage,
-    size: Union[Tuple[int, int], List[int]],
-    method: str,
-    data: Optional[Union[Tuple[int, int, int, int], List[int]]] = None,
-    resample: Optional[str] = "nearest",
-    fill_color: Optional[Any] = None
-) -> BaseImage:
-
-    image = image_array_check_conversion(image, "PIL")
-
-    if not isinstance(size, (tuple, list)):
-        raise WrongArgumentsType("Please check the type of the size argument")
-
-    if len(size) != 2:
-        raise WrongArgumentsValue("Insufficient arguments in the size tuple")
-
-    if not all(i > 0 for i in size):
-        raise WrongArgumentsValue("Arguments in the size tuple cannot be negative")
-
-    if method and not isinstance(method, str):
-        raise WrongArgumentsType("Please check the type of the method argument")
-
-    if data:
-        if not isinstance(data, (tuple, list)):
-            raise WrongArgumentsType("Please check the type of the data argument")
-        if len(data) != int(4):
-            raise WrongArgumentsValue("Insufficient arguments in the data tuple")
-        if not all(i > 0 for i in data):
-            raise WrongArgumentsValue("The arguments of the data tuple cannot be negative")
-        if data[2] > image.width:
-            raise WrongArgumentsValue("Data width cannot be greater than the image width")
-        if data[3] > image.height:
-            raise WrongArgumentsValue("Data height cannot be greater than the image height")
-
-    method_arg = TRANSFORM_REGISTRY.get(method.lower(), None)
-    if not method_arg:
-        raise WrongArgumentsValue("Defined method is not supported currently")
-
-    resample_arg = SAMPLING_REGISTRY.get(resample.lower(), None)
-    if not resample_arg:
-        resample_arg = Image.Resampling.NEAREST
-        DefaultSetting(
-            "Using default sampling strategy (nearest) since the provided filter type is not supported"
+    allowed_modes = ["RGB", "LAB"]
+    if image.mode not in allowed_modes:
+        raise WrongArgumentsValue(
+            "This method only works with images with either of these modes: RGB or LAB"
         )
 
-    try:
-        new_im = image.copy()
-        new_im.file_stream = new_im.file_stream.transform(
-            size, method=method_arg, data=data, resample=resample_arg, fillcolor=fill_color
-        )
-        new_im.update_image()
-        new_im.set_loader_properties()
-    except Exception as e:
-        raise TransformError("Failed to transform the image") from e
-
-    return new_im
-
-# -------------------------------------------------------------------------
-
-@check_image_exist_external
-def quantize(
-    image: BaseImage,
-    colors: int = 256,
-    method: str = None,
-    kmeans: int = 0,
-    dither: str = None
-) -> BaseImage:
-
-    image = image_array_check_conversion(image, "PIL")
-
-    if not isinstance(colors, int):
+    if not isinstance(clusters, (int, float)):
         raise WrongArgumentsType("Please check the type of the colors argument")
-    if colors > 256:
-        raise WrongArgumentsValue("Value of the colors arguments should be <= 256")
 
-    if method and not isinstance(method, str):
-        raise WrongArgumentsType("Please check the type of the method argument")
+    if clusters <= 0:
+        raise WrongArgumentsValue("Value of the clusters arguments should be > 0")
 
-    if not isinstance(kmeans, int):
-        raise WrongArgumentsType("Please check the type of the kmeans argument")
+    check_image = image_array_check_conversion(image)
+    quantize_image = None
 
-    if kmeans < int(0):
-        raise WrongArgumentsValue("Value of kmeans cannot be less than 0")
-
-    if dither and not isinstance(dither, str):
-        raise WrongArgumentsType("Please check the type of the dither argument")
-
-    if image.mode == "RGBA" or image.mode == "PA":
-        method_arg = Image.Quantize.FASTOCTREE # Silently uses this as default for RGBA
-    else:
-        method_arg = QUANTIZE_REGISTRY.get(method.lower(), None)
-        if not method_arg:
-            DefaultSetting(
-                "Using default method (fastoctree) since the provided method is not supported"
-            )
-            method_arg = Image.Quantize.MEDIANCUT
-
-    dither = dither.lower()
-    if dither == "floydsteinburg":
-        dither_arg = Image.Dither.FLOYDSTEINBURG
-    else:
-        DefaultSetting(
-            "Using default dithering strategy (None) since the provided strategy is not supported"
-        )
-        dither_arg = Image.Dither.NONE
+    if check_image.mode == "LAB":
+        quantize_image = check_image
+    elif check_image.mode == "RGB":
+        quantize_image = convert(check_image, "rgb2lab")
 
     try:
-        new_im = image.copy()
+        quantize_image_flatten = quantize_image.image.reshape(
+            (np.prod(quantize_image.dims), quantize_image.channels)
+        )
+        kmeans_manager = MiniBatchKMeans(n_clusters=int(clusters))
+        compute_clusters = kmeans_manager.fit_predict(quantize_image_flatten)
+        # final_result = kmeans_manager.cluster_centers_.astype() - Look at this type stuff and how it needs to be adjusted
+
         new_im.file_stream = new_im.file_stream.quantize(
             colors, method=method_arg, kmeans=kmeans, dither=dither_arg
         )
@@ -354,8 +209,8 @@ if __name__ == "__main__":
     import cv2
     import time
     import numpy as np
-    im = open_image(str(path_image))
-
+    im = cv2.imread(str(path_image))
+    im1 = cv2.resize(im, (100, 100))
     start_time = time.time()
     im2 = rotate(im, 45)
     im2.show(normalize=True)
