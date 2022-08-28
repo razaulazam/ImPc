@@ -188,30 +188,14 @@ def kmeans_quantize(
         )
         kmeans_manager = MiniBatchKMeans(n_clusters=int(clusters))
         compute_clusters = kmeans_manager.fit_predict(quantize_image_flatten)
-        # final_result = kmeans_manager.cluster_centers_.astype() - Look at this type stuff and how it needs to be adjusted
-
-        new_im.file_stream = new_im.file_stream.quantize(
-            colors, method=method_arg, kmeans=kmeans, dither=dither_arg
-        )
-        new_im.update_image()
-        new_im.set_loader_properties()
+        final_result = kmeans_manager.cluster_centers_.astype(quantize_image.dtype.value, copy=False)[compute_clusters]
+        final_result = final_result.reshape(*quantize_image.dims, quantize_image.channels,)
+        quantize_image._set_image(final_result)
+        if quantize_image.mode == "LAB":
+            quantize_image = convert(quantize_image, "lab2rgb")
     except Exception as e:
         raise TransformError("Failed to transform the image") from e
 
-    return new_im
+    return quantize_image
 
 # -------------------------------------------------------------------------
-
-if __name__ == "__main__":
-    from pathlib import Path
-    from image.load.loader import open_image
-    path_image = Path(__file__).parent.parent.parent / "sample.jpg"
-    import cv2
-    import time
-    import numpy as np
-    im = cv2.imread(str(path_image))
-    im1 = cv2.resize(im, (100, 100))
-    start_time = time.time()
-    im2 = rotate(im, 45)
-    im2.show(normalize=True)
-    print(time.time() - start_time)

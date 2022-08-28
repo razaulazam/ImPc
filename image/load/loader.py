@@ -156,12 +156,9 @@ class ImageLoader:
     @check_image_exist_internal
     def channels(self) -> int:
         channels = 0
-        if self.is_rgb():
-            channels = 3
-        elif self.is_rgba():
-            channels = 4
-        elif self.is_gray():
-            channels = 1
+        image_dims = self.image.shape
+        if len(image_dims) == 3:
+            channels = image_dims[-1]
         return channels
 
     @property
@@ -204,7 +201,28 @@ class ImageLoader:
         if len(image_dims) == 3 and image_dims[-1] == 4 and self.mode == "RGBA":
             return True
         return False
+    
+    @check_image_exist_internal
+    def is_lab(self) -> bool:
+        image_dims = self.image.shape
+        if len(image_dims) == 3 and image_dims[-1] == 3 and self.mode == "LAB":
+            return True
+        return False
 
+    @check_image_exist_internal
+    def is_hsv(self) -> bool:
+        image_dims = self.image.shape
+        if len(image_dims) == 3 and image_dims[-1] == 3 and self.mode == "HSV":
+            return True
+        return False
+
+    @check_image_exist_internal
+    def is_ycbcr(self) -> bool:
+        image_dims = self.image.shape
+        if len(image_dims) == 3 and image_dims[-1] == 3 and self.mode == "YCbCr":
+            return True
+        return False
+    
     @check_image_exist_internal
     def normalize(self):
         """Normalizes the image. Supports only 8-bit, 16-bit and 32-bit encoding"""
