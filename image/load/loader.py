@@ -5,12 +5,14 @@ import os
 import copy
 import re
 import io
+import cv2
 import numpy as np
+import matplotlib.pyplot as plt
 
 from PIL import Image
 from pathlib import Path
 from functools import singledispatch
-from typing import Mapping, Tuple, List, Optional, Any, BinaryIO, Union
+from typing import Tuple, List, Optional, Any, Union
 from image._decorators import check_image_exist_internal
 from commons.exceptions import WrongArgumentsValue, NotSupportedDataType, NotSupportedMode
 from commons.exceptions import PathDoesNotExist, WrongArgumentsType, LoaderError
@@ -35,11 +37,7 @@ IMAGE_LOADER_MODES = {
     "I;16": ("Uint16", "16 bit unsigned integer pixels"),
     "I;16L": ("Uint16LE", "16 bit little endian unsigned integer pixels"),
     "I;16B": ("Uint16BE", "16 bit big endian unsigned integer pixels"),
-} # allows uint8, uint16 and float32
-
-# Error handling needs to be more explicit. Very short errors might not prove to be that descriptive
-# mode would need to change as well as the mode description
-# data type might need to change as well
+}
 
 ALLOWED_DATA_TYPES = {
     "uint8": AllowedDataType.Uint8,
@@ -79,7 +77,7 @@ class ImageLoader:
         return True
 
     def _load_image(
-        self, path: Union[BinaryIO, str], formats: Optional[Union[List[str], Tuple[str]]] = None
+        self, path: Union[io.BytesIO, str], formats: Optional[Union[List[str], Tuple[str]]] = None
     ):
         try:
             file_stream = Image.open(path, formats=formats)
@@ -158,12 +156,9 @@ class ImageLoader:
     @check_image_exist_internal
     def channels(self) -> int:
         channels = 0
-        if self.is_rgb():
-            channels = 3
-        elif self.is_rgba():
-            channels = 4
-        elif self.is_gray():
-            channels = 1
+        image_dims = self.image.shape
+        if len(image_dims) == 3:
+            channels = image_dims[-1]
         return channels
 
     @property
@@ -173,7 +168,7 @@ class ImageLoader:
 
     @property
     @check_image_exist_internal
-    def dtype(self) -> np.dtype:
+    def dtype(self) -> AllowedDataType:
         return self._data_type
 
     @property
@@ -189,7 +184,7 @@ class ImageLoader:
     @check_image_exist_internal
     def is_rgb(self) -> bool:
         image_dims = self.image.shape
-        if len(image_dims) == 3 and image_dims[:-1] == 3 and self.mode == "RGB":
+        if len(image_dims) == 3 and image_dims[-1] == 3 and self.mode == "RGB":
             return True
         return False
 
@@ -203,15 +198,44 @@ class ImageLoader:
     @check_image_exist_internal
     def is_rgba(self) -> bool:
         image_dims = self.image.shape
-        if len(image_dims) == 3 and image_dims[:-1] == 4 and self.mode == "RGBA":
+        if len(image_dims) == 3 and image_dims[-1] == 4 and self.mode == "RGBA":
+            return True
+        return False
+    
+    @check_image_exist_internal
+    def is_lab(self) -> bool:
+        image_dims = self.image.shape
+        if len(image_dims) == 3 and image_dims[-1] == 3 and self.mode == "LAB":
             return True
         return False
 
     @check_image_exist_internal
+    def is_hsv(self) -> bool:
+        image_dims = self.image.shape
+        if len(image_dims) == 3 and image_dims[-1] == 3 and self.mode == "HSV":
+            return True
+        return False
+
+    @check_image_exist_internal
+    def is_ycbcr(self) -> bool:
+        image_dims = self.image.shape
+        if len(image_dims) == 3 and image_dims[-1] == 3 and self.mode == "YCbCr":
+            return True
+        return False
+    
+    @check_image_exist_internal
     def normalize(self):
         """Normalizes the image. Supports only 8-bit, 16-bit and 32-bit encoding"""
 
-        data_type = self.dtype
+        self._image = ImageLoader.normalize_image(self._image, self.dtype)
+
+        return self
+
+    @staticmethod
+    def normalize_image(image: np.ndarray, dtype: AllowedDataType):
+        """Internal helper for normalizing the image"""
+
+        data_type = dtype.value
         bit_depth = re.search("(?<=uint)\d+|(?<=float)\d+", str(data_type))
         if not bit_depth:
             raise NotSupportedDataType("Image has a data-type which is currently not supported")
@@ -223,32 +247,39 @@ class ImageLoader:
             )
 
         norm_factor = (2**num_bits) - 1
-        self._image = (self._image / norm_factor).astype(data_type, copy=False)
+        image = (image / norm_factor).astype(data_type, copy=False)
 
-        return self
+        return image
 
     @check_image_exist_internal
     def copy(self) -> Any:
         new_im = copy.deepcopy(self)
         return new_im
 
-    # This needs to go away since we would get rid of the file stream
-    @check_image_exist_internal
-    def show(self):
-        self.__file_stream.show()
+    def show(self, normalize: Optional[bool] = False):
+        show_image: np.ndarray = None
+        if normalize:
+            show_image = ImageLoader.normalize_image(self._image, self.dtype)
+        else:
+            show_image = self._image
+        plt.imshow(show_image)
+        plt.show()
 
-    @check_image_exist_internal # needs to change
-    def save(self, path_: Union[str, io.BytesIO], format: Optional[str] = None):
+    @check_image_exist_internal
+    def save(self, path_: Union[str, io.BytesIO], extension: Optional[str] = "png"):
         if not isinstance(path_, (str, io.BytesIO)):
             raise WrongArgumentsType(
                 "Please check the type of the first argument. It should either be a string or a bytesIO object"
             )
-        if isinstance(path_, str) and not os.path.exists(path_):
+        if isinstance(path_, str) and not os.path.exists(os.path.dirname(path_)):
             raise PathDoesNotExist("Path does not exist. Please check the path again")
-        if format and not isinstance(format, str):
-            raise WrongArgumentsType("Please check the type of the format argument")
+
         try:
-            self.__file_stream.save(path_, format=format)
+            if isinstance(path_, str):
+                cv2.imwrite(path_, self._image)
+            elif isinstance(path_, io.BytesIO):
+                file_stream = Image.fromarray(self._image)
+                file_stream.save(path_, extension)
         except Exception as e:
             raise LoaderError("Failed to save the image") from e
 
@@ -350,7 +381,7 @@ def _(path, formats: Optional[Union[List[str], Tuple[str]]] = None) -> BaseImage
 
 # -------------------------------------------------------------------------
 
-@open_image.register(BinaryIO)
+@open_image.register(io.BytesIO)
 def _(path, formats: Optional[Union[List[str], Tuple[str]]] = None) -> BaseImage:
     if formats and not isinstance(formats, (list, tuple)):
         raise WrongArgumentsType("Please check the type of the formats argument")
@@ -369,13 +400,3 @@ def _find_path(path: Path) -> Tuple[bool, Union[Path, None]]:
     return (False, None)
 
 # -------------------------------------------------------------------------
-
-if __name__ == "__main__":
-    from pathlib import Path
-    import matplotlib.pyplot as plt
-    image_path = Path(__file__).parent.parent.parent / "sample.jpg"
-    import numpy as np
-    a = open_image(str(image_path))
-    b = a
-    a.close()
-    print("hallo")

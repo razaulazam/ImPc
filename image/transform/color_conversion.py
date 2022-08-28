@@ -378,13 +378,14 @@ INTERNAL_CONVERSION_MODES = {
 
 @check_image_exist_external
 def convert(image: BaseImage, code: str) -> BaseImage:
-
-    image_array_check_conversion(image, "openCV")
+    """Converts the image to different color spaces"""
 
     if not isinstance(code, str):
         raise WrongArgumentsType(
             "Please check the type of the provided code. Only strings are accepted"
         )
+
+    check_image = image_array_check_conversion(image)
 
     opencv_code = COLOR_REGISTRY.get(code.lower())
     if not opencv_code:
@@ -393,13 +394,14 @@ def convert(image: BaseImage, code: str) -> BaseImage:
     mode, mode_description = INTERNAL_CONVERSION_MODES.get(code.lower())
 
     try:
-        new_im = image.copy()
-        new_im.image = cv2.cvtColor(new_im.image, opencv_code).astype(image.dtype)
-        new_im._set_mode(mode)
-        new_im._set_mode_description(mode_description)
+        check_image._set_image(
+            cv2.cvtColor(check_image.image, opencv_code).astype(check_image.dtype.value)
+        )
+        check_image._set_mode(mode)
+        check_image._set_mode_description(mode_description)
     except Exception as e:
         raise TransformError(f"Conversion to {code} is not possible") from e
 
-    return new_im
+    return check_image
 
 # -------------------------------------------------------------------------

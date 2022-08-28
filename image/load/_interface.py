@@ -16,10 +16,6 @@ class BaseImage(ABC):
         ...
 
     @abstractproperty
-    def file_stream(self):
-        ...
-
-    @abstractproperty
     def image(self):
         ...
 
@@ -37,6 +33,42 @@ class BaseImage(ABC):
 
     @abstractproperty
     def dims(self):
+        ...
+
+    @abstractproperty
+    def channels(self):
+        ...
+
+    @abstractproperty
+    def mode(self):
+        ...
+
+    @abstractproperty
+    def mode_description(self):
+        ...
+
+    @abstractmethod
+    def is_rgb(self):
+        ...
+
+    @abstractmethod
+    def is_gray(self):
+        ...
+
+    @abstractmethod
+    def is_rgba(self):
+        ...
+
+    @abstractmethod
+    def is_lab(self):
+        ...
+
+    @abstractmethod
+    def is_hsv(self):
+        ...
+
+    @abstractmethod
+    def is_ycbcr(self):
         ...
 
     @abstractmethod
@@ -74,37 +106,5 @@ class BaseImage(ABC):
     @abstractmethod
     def close(self):
         ...
-    
-    @abstractmethod
-    def _load_image(self):
-        ...
-
-    @abstractmethod
-    def _set_initial_loader_properties(self):
-        ...
-
-    @abstractmethod
-    def _get_original_image_mode(self):
-        ...
-
-    @abstractmethod
-    def _set_mode_description(self):
-        ...
-
-    @abstractmethod
-    def _set_mode(self):
-        ...
-
-    @abstractmethod
-    def _image_conversion_helper(self):
-        ...
-    
-    @abstractmethod
-    def _update_dtype(self):
-        ...
-
-    @abstractmethod
-    def _set_image(self):
-        ...
-    
+        
 # -------------------------------------------------------------------------
