@@ -2,12 +2,10 @@
 # \brief Image transforms
 
 import cv2
+import numpy as np
 
-from PIL import Image
 from skimage.transform import rotate as sk_rotate
 from typing import Tuple, Optional, Union, List
-
-from sklearn import cluster
 from image._decorators import check_image_exist_external
 from image.load._interface import BaseImage
 from commons.warning import DefaultSetting
@@ -63,7 +61,7 @@ def resize(
         raise WrongArgumentsType("Please check the type of the resample argument")
 
     sample_arg = CV2_SAMPLING_REGISTRY.get(resample.lower(), None)
-    if not sample_arg:
+    if sample_arg is None:
         DefaultSetting(
             "Using default sampling strategy (nearest) since the provided filter type is not supported"
         )
@@ -110,7 +108,7 @@ def rotate(
             raise WrongArgumentsValue("Invalid number of arguments for the center")
 
     sample_arg = SKIMAGE_SAMPLING_REGISTRY.get(resample.lower(), None)
-    if not sample_arg:
+    if sample_arg is None:
         sample_arg = SKIMAGE_SAMPLING_REGISTRY["constant"]
         DefaultSetting(
             "Using default sampling strategy (constant) since the provided filter type is not supported"
@@ -188,8 +186,13 @@ def kmeans_quantize(
         )
         kmeans_manager = MiniBatchKMeans(n_clusters=int(clusters))
         compute_clusters = kmeans_manager.fit_predict(quantize_image_flatten)
-        final_result = kmeans_manager.cluster_centers_.astype(quantize_image.dtype.value, copy=False)[compute_clusters]
-        final_result = final_result.reshape(*quantize_image.dims, quantize_image.channels,)
+        final_result = kmeans_manager.cluster_centers_.astype(
+            quantize_image.dtype.value, copy=False
+        )[compute_clusters]
+        final_result = final_result.reshape(
+            *quantize_image.dims,
+            quantize_image.channels,
+        )
         quantize_image._set_image(final_result)
         if quantize_image.mode == "LAB":
             quantize_image = convert(quantize_image, "lab2rgb")

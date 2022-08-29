@@ -10,6 +10,7 @@ from image.load._interface import BaseImage
 from image._helpers import image_array_check_conversion, check_user_provided_ndarray
 from image._decorators import check_image_exist_external
 from collections import namedtuple
+from image.filter._common_methods import _is_not_namedtuple
 
 # -------------------------------------------------------------------------
 
@@ -19,8 +20,7 @@ def erode(
     kernel: Union[namedtuple, np.ndarray],
     iterations: Optional[Union[int, float]] = 1
 ) -> BaseImage:
-
-    image_array_check_conversion(image, "openCV")
+    """Erode Morphological Filter"""
 
     if not isinstance(kernel, np.ndarray) and _is_not_namedtuple(kernel):
         raise WrongArgumentsType(
@@ -30,7 +30,7 @@ def erode(
     if not _is_not_namedtuple(kernel):
         kernel = kernel.array_
     else:
-        kernel = check_user_provided_ndarray(kernel, "openCV")
+        kernel = check_user_provided_ndarray(kernel)
 
     if not isinstance(iterations, (int, float)):
         raise WrongArgumentsType(
@@ -39,15 +39,14 @@ def erode(
     if int(iterations) < 0:
         raise WrongArgumentsValue("Value of the iterations cannot be less than 0")
 
+    check_image = image_array_check_conversion(image)
+
     try:
-        new_im = image.copy()
-        new_im.image = cv2.erode(new_im.image, kernel, int(iterations))
-        new_im.update_file_stream()
-        new_im.set_loader_properties()
+        check_image._set_image(cv2.erode(check_image.image, kernel, int(iterations)))
     except Exception as e:
         raise FilteringError("Failed to dilate the image") from e
 
-    return new_im
+    return check_image
 
 # -------------------------------------------------------------------------
 
@@ -57,7 +56,7 @@ def dilate(
     kernel: Union[namedtuple, np.ndarray],
     iterations: Optional[int] = 1
 ) -> BaseImage:
-    image_array_check_conversion(image, "openCV")
+    """Dilate Morphological Filter"""
 
     if not isinstance(kernel, np.ndarray) and _is_not_namedtuple(kernel):
         raise WrongArgumentsType(
@@ -67,7 +66,7 @@ def dilate(
     if not _is_not_namedtuple(kernel):
         kernel = kernel.array_
     else:
-        kernel = check_user_provided_ndarray(kernel, "openCV")
+        kernel = check_user_provided_ndarray(kernel)
 
     if not isinstance(iterations, (int, float)):
         raise WrongArgumentsType(
@@ -76,21 +75,20 @@ def dilate(
     if int(iterations) < 0:
         raise WrongArgumentsValue("Value of the iterations cannot be less than 0")
 
+    check_image = image_array_check_conversion(image)
+
     try:
-        new_im = image.copy()
-        new_im.image = cv2.dilate(new_im.image, kernel, int(iterations))
-        new_im.update_file_stream()
-        new_im.set_loader_properties()
+        check_image._set_image(cv2.dilate(check_image.image, kernel, int(iterations)))
     except Exception as e:
         raise FilteringError("Failed to dilate the image") from e
 
-    return new_im
+    return check_image
 
 # -------------------------------------------------------------------------
 
 @check_image_exist_external
 def closing(image: BaseImage, kernel: Union[namedtuple, np.ndarray]) -> BaseImage:
-    image_array_check_conversion(image, "openCV")
+    """Closing Morphological Filter"""
 
     if not isinstance(kernel, np.ndarray) and _is_not_namedtuple(kernel):
         raise WrongArgumentsType(
@@ -100,23 +98,22 @@ def closing(image: BaseImage, kernel: Union[namedtuple, np.ndarray]) -> BaseImag
     if not _is_not_namedtuple(kernel):
         kernel = kernel.array_
     else:
-        kernel = check_user_provided_ndarray(kernel, "openCV")
+        kernel = check_user_provided_ndarray(kernel)
+
+    check_image = image_array_check_conversion(image)
 
     try:
-        new_im = image.copy()
-        new_im.image = cv2.morphologyEx(new_im.image, cv2.MORPH_CLOSE, kernel)
-        new_im.update_file_stream()
-        new_im.set_loader_properties()
+        check_image._set_image(cv2.morphologyEx(check_image.image, cv2.MORPH_CLOSE, kernel))
     except Exception as e:
         raise FilteringError("Failed to dilate the image") from e
 
-    return new_im
+    return check_image
 
 # -------------------------------------------------------------------------
 
 @check_image_exist_external
 def morph_gradient(image: BaseImage, kernel: Union[namedtuple, np.ndarray]) -> BaseImage:
-    image_array_check_conversion(image, "openCV")
+    """Morph Gradient Morphological Filter"""
 
     if not isinstance(kernel, np.ndarray) and _is_not_namedtuple(kernel):
         raise WrongArgumentsType(
@@ -126,23 +123,22 @@ def morph_gradient(image: BaseImage, kernel: Union[namedtuple, np.ndarray]) -> B
     if not _is_not_namedtuple(kernel):
         kernel = kernel.array_
     else:
-        kernel = check_user_provided_ndarray(kernel, "openCV")
+        kernel = check_user_provided_ndarray(kernel)
+
+    check_image = image_array_check_conversion(image)
 
     try:
-        new_im = image.copy()
-        new_im.image = cv2.morphologyEx(new_im.image, cv2.MORPH_GRADIENT, kernel)
-        new_im.update_file_stream()
-        new_im.set_loader_properties()
+        check_image._set_image(cv2.morphologyEx(check_image.image, cv2.MORPH_GRADIENT, kernel))
     except Exception as e:
         raise FilteringError("Failed to dilate the image") from e
 
-    return new_im
+    return check_image
 
 # -------------------------------------------------------------------------
 
 @check_image_exist_external
 def top_hat(image: BaseImage, kernel: Union[namedtuple, np.ndarray]) -> BaseImage:
-    image_array_check_conversion(image, "openCV")
+    """Tophar Morphological Filter"""
 
     if not isinstance(kernel, np.ndarray) and _is_not_namedtuple(kernel):
         raise WrongArgumentsType(
@@ -152,23 +148,22 @@ def top_hat(image: BaseImage, kernel: Union[namedtuple, np.ndarray]) -> BaseImag
     if not _is_not_namedtuple(kernel):
         kernel = kernel.array_
     else:
-        kernel = check_user_provided_ndarray(kernel, "openCV")
+        kernel = check_user_provided_ndarray(kernel)
+
+    check_image = image_array_check_conversion(image)
 
     try:
-        new_im = image.copy()
-        new_im.image = cv2.morphologyEx(new_im.image, cv2.MORPH_TOPHAT, kernel)
-        new_im.update_file_stream()
-        new_im.set_loader_properties()
+        check_image._set_image(cv2.morphologyEx(check_image.image, cv2.MORPH_TOPHAT, kernel))
     except Exception as e:
         raise FilteringError("Failed to dilate the image") from e
 
-    return new_im
+    return check_image
 
 # -------------------------------------------------------------------------
 
 @check_image_exist_external
 def black_hat(image: BaseImage, kernel: Union[namedtuple, np.ndarray]) -> BaseImage:
-    image_array_check_conversion(image, "openCV")
+    """Blackhat Morphological Filter"""
 
     if not isinstance(kernel, np.ndarray) and _is_not_namedtuple(kernel):
         raise WrongArgumentsType(
@@ -178,31 +173,15 @@ def black_hat(image: BaseImage, kernel: Union[namedtuple, np.ndarray]) -> BaseIm
     if not _is_not_namedtuple(kernel):
         kernel = kernel.array_
     else:
-        kernel = check_user_provided_ndarray(kernel, "openCV")
+        kernel = check_user_provided_ndarray(kernel)
+
+    check_image = image_array_check_conversion(image)
 
     try:
-        new_im = image.copy()
-        new_im.image = cv2.morphologyEx(new_im.image, cv2.MORPH_BLACKHAT, kernel)
-        new_im.update_file_stream()
-        new_im.set_loader_properties()
+        check_image._set_image(cv2.morphologyEx(check_image.image, cv2.MORPH_BLACKHAT, kernel))
     except Exception as e:
         raise FilteringError("Failed to dilate the image") from e
 
-    return new_im
+    return check_image
 
 # -------------------------------------------------------------------------
-
-def _is_not_namedtuple(source: namedtuple) -> bool:
-    return not (
-        isinstance(source, tuple) and hasattr(source, "_asdict") and hasattr(source, "_fields")
-    )
-
-# -------------------------------------------------------------------------
-
-if __name__ == "__main__":
-    a = "C:\\dev\\pyfaro\\sample.jpg"
-    from image.load.loader import open_image
-    b = open_image(a)
-    c = top_hat(b, np.ones((5, 5), dtype=np.uint8))
-
-    print(c)

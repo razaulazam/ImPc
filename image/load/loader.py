@@ -17,7 +17,7 @@ from image._decorators import check_image_exist_internal
 from commons.exceptions import WrongArgumentsValue, NotSupportedDataType, NotSupportedMode
 from commons.exceptions import PathDoesNotExist, WrongArgumentsType, LoaderError
 from image.load._interface import BaseImage
-from image._common_datastructs import AllowedDataType
+from image._common_datastructs import AllowedDataType, ALLOWED_DATA_TYPES, DataType
 
 # -------------------------------------------------------------------------
 
@@ -37,12 +37,6 @@ IMAGE_LOADER_MODES = {
     "I;16": ("Uint16", "16 bit unsigned integer pixels"),
     "I;16L": ("Uint16LE", "16 bit little endian unsigned integer pixels"),
     "I;16B": ("Uint16BE", "16 bit big endian unsigned integer pixels"),
-}
-
-ALLOWED_DATA_TYPES = {
-    "uint8": AllowedDataType.Uint8,
-    "uint16": AllowedDataType.Uint16,
-    "float32": AllowedDataType.Float32,
 }
 
 # -------------------------------------------------------------------------
@@ -96,7 +90,7 @@ class ImageLoader:
         self.__original_mode = file_stream.mode
         self._mode, self._mode_description = IMAGE_LOADER_MODES[file_stream.mode]
         self._data_type = ALLOWED_DATA_TYPES.get(str(self._image.dtype), None)
-        if not self._data_type:
+        if self._data_type is None:
             raise NotSupportedDataType(
                 "The data type of this image is currently not supported by the library"
             )
@@ -116,13 +110,13 @@ class ImageLoader:
                           ), WrongArgumentsValue("Provided mode does not have the accurate type")
         self._mode = mode
 
-    def _image_conversion_helper(self, desired_type: np.dtype):
-        self._image = self._image.astype(desired_type, casting="same_kind", copy=False)
+    def _image_conversion_helper(self, desired_type: DataType):
+        self._image = self._image.astype(desired_type.value, copy=False)
 
     @check_image_exist_internal
     def _update_dtype(self):
         self._data_type = ALLOWED_DATA_TYPES.get(str(self._image.dtype), None)
-        if not self._data_type:
+        if self._data_type is None:
             raise NotSupportedDataType(
                 "The data type of this image is currently not supported by the library"
             )
@@ -201,7 +195,7 @@ class ImageLoader:
         if len(image_dims) == 3 and image_dims[-1] == 4 and self.mode == "RGBA":
             return True
         return False
-    
+
     @check_image_exist_internal
     def is_lab(self) -> bool:
         image_dims = self.image.shape
@@ -222,7 +216,7 @@ class ImageLoader:
         if len(image_dims) == 3 and image_dims[-1] == 3 and self.mode == "YCbCr":
             return True
         return False
-    
+
     @check_image_exist_internal
     def normalize(self):
         """Normalizes the image. Supports only 8-bit, 16-bit and 32-bit encoding"""
