@@ -61,7 +61,7 @@ def resize(
         raise WrongArgumentsType("Please check the type of the resample argument")
 
     sample_arg = CV2_SAMPLING_REGISTRY.get(resample.lower(), None)
-    if not sample_arg:
+    if sample_arg is None:
         DefaultSetting(
             "Using default sampling strategy (nearest) since the provided filter type is not supported"
         )
@@ -108,7 +108,7 @@ def rotate(
             raise WrongArgumentsValue("Invalid number of arguments for the center")
 
     sample_arg = SKIMAGE_SAMPLING_REGISTRY.get(resample.lower(), None)
-    if not sample_arg:
+    if sample_arg is None:
         sample_arg = SKIMAGE_SAMPLING_REGISTRY["constant"]
         DefaultSetting(
             "Using default sampling strategy (constant) since the provided filter type is not supported"

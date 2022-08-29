@@ -387,8 +387,8 @@ def convert(image: BaseImage, code: str) -> BaseImage:
 
     check_image = image_array_check_conversion(image)
 
-    opencv_code = COLOR_REGISTRY.get(code.lower())
-    if not opencv_code:
+    opencv_code = COLOR_REGISTRY.get(code.lower(), None)
+    if opencv_code is None:
         raise WrongArgumentsValue("Provided conversion code is currently not supported")
 
     mode, mode_description = INTERNAL_CONVERSION_MODES.get(code.lower())

@@ -96,7 +96,7 @@ class ImageLoader:
         self.__original_mode = file_stream.mode
         self._mode, self._mode_description = IMAGE_LOADER_MODES[file_stream.mode]
         self._data_type = ALLOWED_DATA_TYPES.get(str(self._image.dtype), None)
-        if not self._data_type:
+        if self._data_type is None:
             raise NotSupportedDataType(
                 "The data type of this image is currently not supported by the library"
             )
@@ -122,7 +122,7 @@ class ImageLoader:
     @check_image_exist_internal
     def _update_dtype(self):
         self._data_type = ALLOWED_DATA_TYPES.get(str(self._image.dtype), None)
-        if not self._data_type:
+        if self._data_type is None:
             raise NotSupportedDataType(
                 "The data type of this image is currently not supported by the library"
             )
