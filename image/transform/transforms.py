@@ -2,12 +2,10 @@
 # \brief Image transforms
 
 import cv2
+import numpy as np
 
-from PIL import Image
 from skimage.transform import rotate as sk_rotate
 from typing import Tuple, Optional, Union, List
-
-from sklearn import cluster
 from image._decorators import check_image_exist_external
 from image.load._interface import BaseImage
 from commons.warning import DefaultSetting
