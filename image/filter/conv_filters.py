@@ -11,6 +11,7 @@ from commons.warning import DefaultSetting, ImageDataTypeConversion
 from image.load._interface import BaseImage
 from image._decorators import check_image_exist_external
 from image._helpers import image_array_check_conversion, check_user_provided_ndarray
+from image._common_datastructs import AllowedDataType
 
 # -------------------------------------------------------------------------
 
@@ -43,27 +44,29 @@ def corr2d(
     if isinstance(kernel, namedtuple):
         kernel = kernel.array_
     else:
-        kernel = check_user_provided_ndarray(kernel, "openCV")
+        kernel = check_user_provided_ndarray(kernel)
 
     if not isinstance(delta, (float, int)):
         raise WrongArgumentsType("Provided value for delta is not either an integer or a float")
 
     if not isinstance(border, str):
         raise WrongArgumentsType("Provided border type is not a string")
-    
+
     check_image = image_array_check_conversion(image)
 
     border_actual = BORDER_INTERPOLATION.get(border, None)
-    if not border_actual:
+    if border_actual is None:
         DefaultSetting(
             "Provided border option is not supported currently. Using the default strategy (reflect)"
         )
         border_actual = BORDER_INTERPOLATION["default"]
 
     try:
-        check_image._set_image(cv2.filter2D(
-            check_image.image, -1, kernel, delta=float(delta), borderType=border_actual
-        ))
+        check_image._set_image(
+            cv2.filter2D(
+                check_image.image, -1, kernel, delta=float(delta), borderType=border_actual
+            )
+        )
     except Exception as e:
         raise FilteringError("Failed to filter the image") from e
 
@@ -81,8 +84,6 @@ def average_blur(
     """Wrap border is not supported here. Normalize = False can be used to extract useful image chracteristics e.g. covariance matrix of the image gradients
     can help with extracting images demonstrating optical flow for object tracking."""
 
-    image_array_check_conversion(image, "openCV")
-
     if not isinstance(kernel_size, (tuple, list)):
         raise WrongArgumentsType("Kernel size can only be defined in form of a tuple or list")
 
@@ -98,15 +99,17 @@ def average_blur(
     if not isinstance(border, str):
         raise WrongArgumentsType("Border argument can only be specified as a string")
 
+    check_image = image_array_check_conversion(image)
+
     if border == "wrap":
         DefaultSetting(
             "Provided border option is not supported for this operation. Using the default strategy (reflect)"
         )
         border_actual = BORDER_INTERPOLATION["default"]
     else:
-        border_actual = BORDER_INTERPOLATION.get(border, "None")
+        border_actual = BORDER_INTERPOLATION.get(border, None)
 
-    if not border_actual:
+    if border_actual is None:
         DefaultSetting(
             "Provided border option is not supported by the library currently. Using the default strategy (reflect)"
         )
@@ -114,16 +117,15 @@ def average_blur(
 
     kernel_size = [int(i) for i in kernel_size]
     try:
-        new_im = image.copy()
-        new_im.image = cv2.boxFilter(
-            new_im.image, -1, kernel_size, normalize=normalize, borderType=border_actual
+        check_image._set_image(
+            cv2.boxFilter(
+                check_image.image, -1, kernel_size, normalize=normalize, borderType=border_actual
+            )
         )
-        new_im.update_file_stream()
-        new_im.set_loader_properties()
     except Exception as e:
         raise FilteringError("Failed to filter the image") from e
 
-    return new_im
+    return check_image
 
 # -------------------------------------------------------------------------
 
@@ -138,8 +140,6 @@ def gaussian_blur(
     """Warp border is not supported here. It is better to supply both the kernel size and the sigma_x. If the kernel size is zero
     then it is computed from the sigma's provided by the user. If sigma_y is zero, it is computed from sigma_x. If both sigma_x and sigma_y is 
     zero then it is computed from the kernel_size."""
-
-    image_array_check_conversion(image, "openCV")
 
     if not isinstance(kernel_size, (tuple, list)):
         raise WrongArgumentsType("Kernel size can only be defined in form of a tuple or list")
@@ -168,15 +168,17 @@ def gaussian_blur(
     if not isinstance(border, str):
         raise WrongArgumentsType("Border argument can only be specified as a string")
 
+    check_image = image_array_check_conversion(image)
+
     if border == "wrap":
         DefaultSetting(
             "Provided border option is not supported for this operation. Using the default strategy (reflect)"
         )
         border_actual = BORDER_INTERPOLATION["default"]
     else:
-        border_actual = BORDER_INTERPOLATION.get(border, "None")
+        border_actual = BORDER_INTERPOLATION.get(border, None)
 
-    if not border_actual:
+    if border_actual is None:
         DefaultSetting(
             "Provided border option is not supported by the library currently. Using the default strategy (reflect)"
         )
@@ -184,25 +186,25 @@ def gaussian_blur(
 
     kernel_size = [int(i) for i in kernel_size]
     try:
-        new_im = image.copy()
-        new_im.image = cv2.GaussianBlur(
-            new_im.image, kernel_size, float(sigma_x), float(sigma_y), borderType=border_actual
+        check_image._set_image(
+            cv2.GaussianBlur(
+                check_image.image,
+                kernel_size,
+                float(sigma_x),
+                float(sigma_y),
+                borderType=border_actual
+            )
         )
-        new_im.update_file_stream()
-        new_im.set_loader_properties()
     except Exception as e:
         raise FilteringError("Failed to filter the image") from e
-    np.uint32
-    return new_im
+
+    return check_image
 
 # -------------------------------------------------------------------------
 
 @check_image_exist_external
 def median_blur(image: BaseImage, kernel_size: Union[List[int], Tuple[int, int]]) -> BaseImage:
     """Kernel size has to be odd. Different data types for different kernel size"""
-
-    new_im = image.copy()
-    image_array_check_conversion(new_im, "openCV")
 
     if not isinstance(kernel_size, (tuple, list)):
         raise WrongArgumentsType("Kernel size can only be defined as either tuple or list")
@@ -219,22 +221,21 @@ def median_blur(image: BaseImage, kernel_size: Union[List[int], Tuple[int, int]]
     if kernel_size[0] % 2 == 0:
         raise WrongArgumentsValue("Kernel width/height should be an odd integer")
 
-    if kernel_size[0] > 5 and image.dtype != np.uint8:
+    check_image = image_array_check_conversion(image)
+
+    if kernel_size[0] > 5 and image.dtype != AllowedDataType.Uint8:
         ImageDataTypeConversion(
             "Converting the image type to uint8 since for kernel sizes > 5 only this type is supported"
         )
-        new_im._image_conversion_helper(np.uint8)
-        new_im.update_file_stream()
-        new_im.set_loader_properties()
+        check_image._image_conversion_helper(AllowedDataType.Uint8)
+        check_image._update_dtype()
 
     try:
-        new_im.image = cv2.medianBlur(new_im.image, int(kernel_size[0]))
-        new_im.update_file_stream()
-        new_im.set_loader_properties()
+        check_image._set_image(cv2.medianBlur(check_image.image, int(kernel_size[0])))
     except Exception as e:
         raise FilteringError("Failed to filter the image") from e
 
-    return new_im
+    return check_image
 
 # -------------------------------------------------------------------------
 
@@ -253,18 +254,7 @@ def bilateral_filter(
         raise FilteringError(
             "This filter cannot operate on images that have color channels more than 3"
         )
-
-    new_im = image.copy()
-    image_array_check_conversion(image, "openCV")
-
-    if image.dtype == "uint16":
-        ImageDataTypeConversion(
-            "Converting the image from 16 bits to 8 bits per channel since this is what is only supported for this filter"
-        )
-        new_im._image_conversion_helper(np.uint8)
-        new_im.update_file_stream()
-        new_im.set_loader_properties()
-
+        
     if not isinstance(kernel_diameter, (float, int)):
         raise WrongArgumentsType("Diameter value can only be either an integer or float value")
 
@@ -279,25 +269,32 @@ def bilateral_filter(
 
     if not isinstance(border, str):
         raise WrongArgumentsType("Border argument can only be specified as a string")
+    
+    check_image = image_array_check_conversion(image)
+    
+    if check_image.dtype is AllowedDataType.Uint16:
+        ImageDataTypeConversion(
+            "Converting the image from 16 bits to 8 bits per channel since this is what is only supported for this filter"
+        )
+        check_image._image_conversion_helper(AllowedDataType.Uint8)
+        check_image._update_dtype()
 
-    border_actual = BORDER_INTERPOLATION.get(border, "None")
-    if not border_actual:
+    border_actual = BORDER_INTERPOLATION.get(border, None)
+    if border_actual is None:
         DefaultSetting(
             "Provided border option is not supported by the library currently. Using the default strategy (reflect)"
         )
         border_actual = BORDER_INTERPOLATION["default"]
 
     try:
-        new_im.image = cv2.bilateralFilter(
-            new_im.image, int(kernel_diameter), float(color_sigma), float(spatial_sigma),
+        check_image._set_image(cv2.bilateralFilter(
+            check_image.image, int(kernel_diameter), float(color_sigma), float(spatial_sigma),
             border_actual
-        )
-        new_im.update_file_stream()
-        new_im.set_loader_properties()
+        ))
     except Exception as e:
         raise FilteringError("Failed to filter the image") from e
 
-    return new_im
+    return check_image
 
 # -------------------------------------------------------------------------
 

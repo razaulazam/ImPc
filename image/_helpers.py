@@ -6,17 +6,16 @@ import numpy as np
 from image.load._interface import BaseImage
 from commons.exceptions import NotSupportedDataType
 from commons.warning import ImageDataTypeConversion
-from image._common_datastructs import DataType, ConversionDataType, AllowedDataType
+from image._common_datastructs import DataType, ConversionDataType, AllowedDataType, ALLOWED_DATA_TYPES
 
 # -------------------------------------------------------------------------
-# needs rrevision
-def check_user_provided_ndarray(array_: np.ndarray, strategy: str):
+
+def check_user_provided_ndarray(array_: np.ndarray):
     data_type = array_.dtype
-    if not _correct_type(data_type, strategy):
-        if not _conversion_type(data_type, strategy):
-            raise NotSupportedDataType("Image has a data-type which is currently not supported")
-        array_ = _convert_array_dtype(array_)
-    return array_ # need to check on this
+    internal_data_type = ALLOWED_DATA_TYPES.get(str(data_type), None)
+    if internal_data_type is None:
+        raise NotSupportedDataType("Provided numpy array does not have the supported internal data type")
+    return array_
 
 # -------------------------------------------------------------------------
 
@@ -68,33 +67,5 @@ def _convert_image_dtype(image_new: BaseImage):
 
     else:
         raise NotSupportedDataType("Image has a data-type which is currently not supported")
-
-# -------------------------------------------------------------------------
-
-# needs revision
-def _convert_array_dtype(array_: np.ndarray) -> np.ndarray:
-    data_type = array_.dtype
-    if data_type == "float16":
-        ImageDataTypeConversion(
-            "Converting the data type from float16 to float32 which is supported by the library"
-        )
-        array_ = array_.astype(np.float32)
-
-    elif data_type == "float64":
-        ImageDataTypeConversion(
-            "Converting the data type from float64 to float32 which this method supports. This can possibly result in loss of precision/data"
-        )
-        array_ = array_.astype(np.float32)
-
-    elif data_type == "uint32":
-        ImageDataTypeConversion(
-            "Converting the data type from uint32 to uint16 which this method supports. This can possibly result in loss of precision/data"
-        )
-        array_ = array_.astype(np.uint16)
-
-    else:
-        raise NotSupportedDataType("Image has a data-type which is currently not supported")
-
-    return array_ # need to check on this
 
 # -------------------------------------------------------------------------

@@ -19,7 +19,7 @@ ALLOWED_KERNELS = {
 
 def get_kernel(kernel_shape: str, kernel_size: Union[List[int], Tuple[int, int]]) -> namedtuple:
     """Utility for getting the kernel of a particular shape"""
-    
+
     if not isinstance(kernel_shape, str):
         raise WrongArgumentsType(
             "Please check the type of the first argument. Only strings are allowed"

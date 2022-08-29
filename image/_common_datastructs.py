@@ -23,3 +23,11 @@ class ConversionDataType(DataType):
     Float64 = np.float64
 
 # -------------------------------------------------------------------------
+
+ALLOWED_DATA_TYPES = {
+    "uint8": AllowedDataType.Uint8,
+    "uint16": AllowedDataType.Uint16,
+    "float32": AllowedDataType.Float32,
+}
+
+# -------------------------------------------------------------------------
