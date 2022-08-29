@@ -18,13 +18,15 @@ ALLOWED_KERNELS = {
 # -------------------------------------------------------------------------
 
 def get_kernel(kernel_shape: str, kernel_size: Union[List[int], Tuple[int, int]]) -> namedtuple:
+    """Utility for getting the kernel of a particular shape"""
+    
     if not isinstance(kernel_shape, str):
         raise WrongArgumentsType(
             "Please check the type of the first argument. Only strings are allowed"
         )
 
     shape_strategy = ALLOWED_KERNELS.get(kernel_shape, None)
-    if not shape_strategy:
+    if shape_strategy is None:
         raise WrongArgumentsValue(
             "Provided shape of the kernel is currently not supported. Please provide it yourself or stick to the provided ones by the library"
         )
@@ -45,8 +47,8 @@ def get_kernel(kernel_shape: str, kernel_size: Union[List[int], Tuple[int, int]]
     kernel_size = [int(i) for i in kernel_size]
 
     structuring_element = cv2.getStructuringElement(shape_strategy, kernel_size)
-    _pyfaro_array = namedtuple("PyFaroArray", "array_")
+    _impc_array = namedtuple("ImPcArray", "array_")
 
-    return _pyfaro_array(structuring_element)
+    return _impc_array(structuring_element)
 
 # -------------------------------------------------------------------------

@@ -35,11 +35,6 @@ def corr2d(
     """Outputs the image with the same depth. Places the computed/filtered value in the center of the area covered by the kernel.
        Note: Kernel windows are not variable sized here. They have a constant size over each pixel neighborhood."""
 
-    new_im = image.copy()
-    image_array_check_conversion(new_im, "openCV")
-    
-    # Base image check has to be added here
-
     if not isinstance(kernel, (np.ndarray, namedtuple)):
         raise WrongArgumentsType(
             "Provided kernel has a type that is not supported by the library. Try using get_kernel() for getting the kernel instead"
@@ -55,6 +50,8 @@ def corr2d(
 
     if not isinstance(border, str):
         raise WrongArgumentsType("Provided border type is not a string")
+    
+    check_image = image_array_check_conversion(image)
 
     border_actual = BORDER_INTERPOLATION.get(border, None)
     if not border_actual:
@@ -64,15 +61,13 @@ def corr2d(
         border_actual = BORDER_INTERPOLATION["default"]
 
     try:
-        image = cv2.filter2D(
-            new_im.image, -1, kernel, delta=float(delta), borderType=border_actual
-        )
-        new_im._set_image(image) # this needs to be applied to all the methods
-        new_im.set_loader_properties()
+        check_image._set_image(cv2.filter2D(
+            check_image.image, -1, kernel, delta=float(delta), borderType=border_actual
+        ))
     except Exception as e:
         raise FilteringError("Failed to filter the image") from e
 
-    return new_im
+    return check_image
 
 # -------------------------------------------------------------------------
 

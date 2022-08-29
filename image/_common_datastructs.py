@@ -21,3 +21,5 @@ class ConversionDataType(DataType):
     Uint32 = np.float32
     Float16 = np.float16
     Float64 = np.float64
+
+# -------------------------------------------------------------------------

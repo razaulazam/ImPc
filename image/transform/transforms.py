@@ -186,8 +186,13 @@ def kmeans_quantize(
         )
         kmeans_manager = MiniBatchKMeans(n_clusters=int(clusters))
         compute_clusters = kmeans_manager.fit_predict(quantize_image_flatten)
-        final_result = kmeans_manager.cluster_centers_.astype(quantize_image.dtype.value, copy=False)[compute_clusters]
-        final_result = final_result.reshape(*quantize_image.dims, quantize_image.channels,)
+        final_result = kmeans_manager.cluster_centers_.astype(
+            quantize_image.dtype.value, copy=False
+        )[compute_clusters]
+        final_result = final_result.reshape(
+            *quantize_image.dims,
+            quantize_image.channels,
+        )
         quantize_image._set_image(final_result)
         if quantize_image.mode == "LAB":
             quantize_image = convert(quantize_image, "lab2rgb")
