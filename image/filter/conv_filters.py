@@ -12,17 +12,7 @@ from image.load._interface import BaseImage
 from image._decorators import check_image_exist_external
 from image._helpers import image_array_check_conversion, check_user_provided_ndarray
 from image._common_datastructs import AllowedDataType
-
-# -------------------------------------------------------------------------
-
-BORDER_INTERPOLATION = {
-    "constant": cv2.BORDER_CONSTANT,
-    "replicate": cv2.BORDER_REPLICATE,
-    "reflect": cv2.BORDER_REFLECT,
-    "wrap": cv2.BORDER_WRAP,
-    "transparent": cv2.BORDER_TRANSPARENT,
-    "default": cv2.BORDER_DEFAULT
-}
+from image.filter.common import BORDER_INTERPOLATION
 
 # -------------------------------------------------------------------------
 

@@ -9,7 +9,7 @@ from image._helpers import image_array_check_conversion
 from commons.exceptions import WrongArgumentsType, WrongArgumentsValue, FilteringError
 from commons.warning import DefaultSetting
 from typing import Union, List, Tuple, Optional
-from conv_filters import BORDER_INTERPOLATION
+from image.filter.common import BORDER_INTERPOLATION
 
 # -------------------------------------------------------------------------
 
@@ -23,8 +23,6 @@ def laplacian(
 ) -> BaseImage:
     """Scale factor, delta and border are optional
     Kernal size must be odd and positive"""
-
-    image_array_check_conversion(image, "openCV")
 
     if not isinstance(kernel_size, (tuple, list)):
         raise WrongArgumentsType("Kernel size must either be provided as tuple or list")
@@ -54,31 +52,32 @@ def laplacian(
     if not isinstance(border, str):
         raise WrongArgumentsType("Border argument can only be specified as a string")
 
+    check_image = image_array_check_conversion(image)
+
     if border == "wrap":
         DefaultSetting(
             "Provided border option is not supported for this operation. Using the default strategy (reflect)"
         )
         border_actual = BORDER_INTERPOLATION["default"]
     else:
-        border_actual = BORDER_INTERPOLATION.get(border, "None")
+        border_actual = BORDER_INTERPOLATION.get(border, None)
 
-    if not border_actual:
+    if border_actual is None:
         DefaultSetting(
             "Provided border option is not supported by the library currently. Using the default strategy (reflect)"
         )
         border_actual = BORDER_INTERPOLATION["default"]
 
     try:
-        new_im = image.copy()
-        new_im.image = cv2.Laplacian(
-            new_im.image, int(kernel_size[0]), float(scale), float(delta), border_actual
+        check_image._set_image(
+            cv2.Laplacian(
+                check_image.image, int(kernel_size[0]), float(scale), float(delta), border_actual
+            ).astype(check_image.dtype.value, copy=False)
         )
-        new_im.update_file_stream()
-        new_im.set_loader_properties()
     except Exception as e:
         raise FilteringError("Failed to filter the image") from e
 
-    return new_im
+    return check_image
 
 # -------------------------------------------------------------------------
 
@@ -92,8 +91,6 @@ def sobel(
     border: Optional[str] = "default"
 ) -> BaseImage:
     """First, second, and mixed image derivatives can be calculated from this function."""
-
-    image_array_check_conversion(image, "openCV")
 
     if not isinstance(xorder, int):
         raise WrongArgumentsType("Provided argument (xorder) should have a integer type")
@@ -110,31 +107,32 @@ def sobel(
     if not isinstance(border, str):
         raise WrongArgumentsType("Border argument can only be specified as a string")
 
+    check_image = image_array_check_conversion(image)
+
     if border == "wrap":
         DefaultSetting(
             "Provided border option is not supported for this operation. Using the default strategy (reflect)"
         )
         border_actual = BORDER_INTERPOLATION["default"]
     else:
-        border_actual = BORDER_INTERPOLATION.get(border, "None")
+        border_actual = BORDER_INTERPOLATION.get(border, None)
 
-    if not border_actual:
+    if border_actual is None:
         DefaultSetting(
             "Provided border option is not supported by the library currently. Using the default strategy (reflect)"
         )
         border_actual = BORDER_INTERPOLATION["default"]
 
     try:
-        new_im = image.copy()
-        new_im.image = cv2.Sobel(
-            new_im.image, -1, xorder, yorder, cv2.FILTER_SCHARR, float(scale), float(delta),
-            border_actual
+        check_image._set_image(
+            cv2.Sobel(
+                check_image.image, -1, xorder, yorder, cv2.FILTER_SCHARR, float(scale),
+                float(delta), border_actual
+            )
         )
-        new_im.update_file_stream()
-        new_im.set_loader_properties()
     except Exception as e:
         raise FilteringError("Failed to filter the image") from e
 
-    return new_im
+    return check_image
 
 # -------------------------------------------------------------------------
