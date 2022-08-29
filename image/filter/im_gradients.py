@@ -9,7 +9,7 @@ from image._helpers import image_array_check_conversion
 from commons.exceptions import WrongArgumentsType, WrongArgumentsValue, FilteringError
 from commons.warning import DefaultSetting
 from typing import Union, List, Tuple, Optional
-from image.filter.common import BORDER_INTERPOLATION
+from image.filter._common_datastructs import BORDER_INTERPOLATION
 
 # -------------------------------------------------------------------------
 
