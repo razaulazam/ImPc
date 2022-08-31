@@ -1,11 +1,13 @@
 # Copyright (C) Raza Ul Azam, All Rights Reserved.
 # \brief Internal library helpers
 
+import re
 import numpy as np
 
 from image.load._interface import BaseImage
 from commons.exceptions import NotSupportedDataType
 from commons.warning import ImageDataTypeConversion
+from image._decorators import check_image_exist_external
 from image._common_datastructs import DataType, ConversionDataType, AllowedDataType, ALLOWED_DATA_TYPES
 
 # -------------------------------------------------------------------------
@@ -14,7 +16,9 @@ def check_user_provided_ndarray(array_: np.ndarray):
     data_type = array_.dtype
     internal_data_type = ALLOWED_DATA_TYPES.get(str(data_type), None)
     if internal_data_type is None:
-        raise NotSupportedDataType("Provided numpy array does not have the supported internal data type")
+        raise NotSupportedDataType(
+            "Provided numpy array does not have the supported internal data type"
+        )
     return array_
 
 # -------------------------------------------------------------------------
@@ -69,3 +73,22 @@ def _convert_image_dtype(image_new: BaseImage):
         raise NotSupportedDataType("Image has a data-type which is currently not supported")
 
 # -------------------------------------------------------------------------
+
+@check_image_exist_external
+def safe_cast(image: BaseImage, desired_type: str):
+    """Casts the image to the desired type"""
+
+    internal_data_type = ALLOWED_DATA_TYPES.get(desired_type, None)
+    if internal_data_type is None:
+        raise RuntimeError("Failed to cast the image to the type provided")
+
+    data_type = internal_data_type.value
+    bit_depth = re.search("(?<=uint)\d+|(?<=float)\d+", str(data_type))
+
+    assert bit_depth is not None, RuntimeError("Failed to retrieve the bit depth")
+    num_bits = int(bit_depth.group(0))
+    norm_factor = (2**num_bits) - 1
+
+    check_image = image_array_check_conversion(image)
+
+    max_pixel_val = np.max(check_image.image)
