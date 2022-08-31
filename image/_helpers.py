@@ -90,5 +90,15 @@ def safe_cast(image: BaseImage, desired_type: str):
     norm_factor = (2**num_bits) - 1
 
     check_image = image_array_check_conversion(image)
+    internal_image = check_image.image
 
-    max_pixel_val = np.max(check_image.image)
+    max_pixel_val = np.max(internal_image)
+    internal_image = (internal_image / max_pixel_val) * norm_factor
+    internal_image = np.clip(internal_image, np.min(internal_image), norm_factor).astype(internal_data_type.value, copy=False)
+    
+    check_image._set_image(internal_image)
+    check_image._update_dtype()
+    
+    return check_image
+
+# -------------------------------------------------------------------------
