@@ -105,7 +105,7 @@ def difference_gaussians(
             ).astype(AllowedDataType.Float32.value, copy=False)
         )
     except Exception as e:
-        raise FilteringError("Failed to filter the image with difference of gaussians strategy") from e
+        raise FilteringError("Failed to filter the image with difference of gaussians strategy") from 
 
     return check_image
 
