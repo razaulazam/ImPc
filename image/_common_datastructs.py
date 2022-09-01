@@ -31,3 +31,16 @@ ALLOWED_DATA_TYPES = {
 }
 
 # -------------------------------------------------------------------------
+
+SKIMAGE_SAMPLING_REGISTRY = {
+    "constant": "constant",
+    "edge": "edge",
+    "nearest": "nearest",
+    "mirror": "mirror",
+    "symmetric": "symmetric",
+    "reflect": "reflect",
+    "wrap": "wrap"
+}
+
+# -------------------------------------------------------------------------
+

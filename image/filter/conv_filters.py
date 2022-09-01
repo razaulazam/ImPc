@@ -13,7 +13,7 @@ from image._decorators import check_image_exist_external
 from image._helpers import image_array_check_conversion, check_user_provided_ndarray
 from image._common_datastructs import AllowedDataType
 from image.filter._common_datastructs import BORDER_INTERPOLATION
-from image.filter._common_methods import _is_not_namedtuple
+from image.filter._common_methods import is_not_namedtuple
 
 # -------------------------------------------------------------------------
 
@@ -27,12 +27,12 @@ def corr2d(
     """Outputs the image with the same depth. Places the computed/filtered value in the center of the area covered by the kernel.
        Note: Kernel windows are not variable sized here. They have a constant size over each pixel neighborhood."""
 
-    if not isinstance(kernel, np.ndarray) and _is_not_namedtuple(kernel):
+    if not isinstance(kernel, np.ndarray) and is_not_namedtuple(kernel):
         raise WrongArgumentsType(
             "Please check the type of the provided kernel. Use get_kernel() method of the library instead"
         )
 
-    if not _is_not_namedtuple(kernel):
+    if not is_not_namedtuple(kernel):
         kernel = kernel.array_
     else:
         kernel = check_user_provided_ndarray(kernel)

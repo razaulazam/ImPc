@@ -11,7 +11,7 @@ from image.load._interface import BaseImage
 from commons.warning import DefaultSetting
 from commons.exceptions import WrongArgumentsType, TransformError, WrongArgumentsValue
 from image._helpers import image_array_check_conversion
-from image._common_datastructs import AllowedDataType
+from image._common_datastructs import AllowedDataType, SKIMAGE_SAMPLING_REGISTRY
 from image.transform.color_conversion import convert
 
 # -------------------------------------------------------------------------
@@ -26,14 +26,6 @@ CV2_SAMPLING_REGISTRY = {
     "max": cv2.INTER_MAX,
     "fill_outliers": cv2.WARP_FILL_OUTLIERS,
     "inverse_map": cv2.WARP_INVERSE_MAP
-}
-
-SKIMAGE_SAMPLING_REGISTRY = {
-    "constant": "constant",
-    "edge": "edge",
-    "symmetric": "symmetric",
-    "reflect": "reflect",
-    "wrap": "wrap"
 }
 
 # -------------------------------------------------------------------------

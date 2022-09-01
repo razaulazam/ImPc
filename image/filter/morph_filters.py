@@ -10,7 +10,7 @@ from image.load._interface import BaseImage
 from image._helpers import image_array_check_conversion, check_user_provided_ndarray
 from image._decorators import check_image_exist_external
 from collections import namedtuple
-from image.filter._common_methods import _is_not_namedtuple
+from image.filter._common_methods import is_not_namedtuple
 
 # -------------------------------------------------------------------------
 
@@ -22,12 +22,12 @@ def erode(
 ) -> BaseImage:
     """Erode Morphological Filter"""
 
-    if not isinstance(kernel, np.ndarray) and _is_not_namedtuple(kernel):
+    if not isinstance(kernel, np.ndarray) and is_not_namedtuple(kernel):
         raise WrongArgumentsType(
             "Please check the type of the provided kernel. Use get_kernel() method of the library instead"
         )
 
-    if not _is_not_namedtuple(kernel):
+    if not is_not_namedtuple(kernel):
         kernel = kernel.array_
     else:
         kernel = check_user_provided_ndarray(kernel)
@@ -58,12 +58,12 @@ def dilate(
 ) -> BaseImage:
     """Dilate Morphological Filter"""
 
-    if not isinstance(kernel, np.ndarray) and _is_not_namedtuple(kernel):
+    if not isinstance(kernel, np.ndarray) and is_not_namedtuple(kernel):
         raise WrongArgumentsType(
             "Please check the type of the provided kernel. Use get_kernel() method of the library instead"
         )
 
-    if not _is_not_namedtuple(kernel):
+    if not is_not_namedtuple(kernel):
         kernel = kernel.array_
     else:
         kernel = check_user_provided_ndarray(kernel)
@@ -90,12 +90,12 @@ def dilate(
 def closing(image: BaseImage, kernel: Union[namedtuple, np.ndarray]) -> BaseImage:
     """Closing Morphological Filter"""
 
-    if not isinstance(kernel, np.ndarray) and _is_not_namedtuple(kernel):
+    if not isinstance(kernel, np.ndarray) and is_not_namedtuple(kernel):
         raise WrongArgumentsType(
             "Please check the type of the provided kernel. Use get_kernel() method of the library instead"
         )
 
-    if not _is_not_namedtuple(kernel):
+    if not is_not_namedtuple(kernel):
         kernel = kernel.array_
     else:
         kernel = check_user_provided_ndarray(kernel)
@@ -115,12 +115,12 @@ def closing(image: BaseImage, kernel: Union[namedtuple, np.ndarray]) -> BaseImag
 def morph_gradient(image: BaseImage, kernel: Union[namedtuple, np.ndarray]) -> BaseImage:
     """Morph Gradient Morphological Filter"""
 
-    if not isinstance(kernel, np.ndarray) and _is_not_namedtuple(kernel):
+    if not isinstance(kernel, np.ndarray) and is_not_namedtuple(kernel):
         raise WrongArgumentsType(
             "Please check the type of the provided kernel. Use get_kernel() method of the library instead"
         )
 
-    if not _is_not_namedtuple(kernel):
+    if not is_not_namedtuple(kernel):
         kernel = kernel.array_
     else:
         kernel = check_user_provided_ndarray(kernel)
@@ -140,12 +140,12 @@ def morph_gradient(image: BaseImage, kernel: Union[namedtuple, np.ndarray]) -> B
 def top_hat(image: BaseImage, kernel: Union[namedtuple, np.ndarray]) -> BaseImage:
     """Tophar Morphological Filter"""
 
-    if not isinstance(kernel, np.ndarray) and _is_not_namedtuple(kernel):
+    if not isinstance(kernel, np.ndarray) and is_not_namedtuple(kernel):
         raise WrongArgumentsType(
             "Please check the type of the provided kernel. Use get_kernel() method of the library instead"
         )
 
-    if not _is_not_namedtuple(kernel):
+    if not is_not_namedtuple(kernel):
         kernel = kernel.array_
     else:
         kernel = check_user_provided_ndarray(kernel)
@@ -165,12 +165,12 @@ def top_hat(image: BaseImage, kernel: Union[namedtuple, np.ndarray]) -> BaseImag
 def black_hat(image: BaseImage, kernel: Union[namedtuple, np.ndarray]) -> BaseImage:
     """Blackhat Morphological Filter"""
 
-    if not isinstance(kernel, np.ndarray) and _is_not_namedtuple(kernel):
+    if not isinstance(kernel, np.ndarray) and is_not_namedtuple(kernel):
         raise WrongArgumentsType(
             "Please check the type of the provided kernel. Use get_kernel() method of the library instead"
         )
 
-    if not _is_not_namedtuple(kernel):
+    if not is_not_namedtuple(kernel):
         kernel = kernel.array_
     else:
         kernel = check_user_provided_ndarray(kernel)
