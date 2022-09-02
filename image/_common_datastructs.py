@@ -32,6 +32,14 @@ ALLOWED_DATA_TYPES = {
 
 # -------------------------------------------------------------------------
 
+CONVERSION_DATA_TYPES = {
+    "uint32": ConversionDataType.Uint32,
+    "float16": ConversionDataType.Float16,
+    "float64": ConversionDataType.Float64,
+}
+
+# -------------------------------------------------------------------------
+
 SKIMAGE_SAMPLING_REGISTRY = {
     "constant": "constant",
     "edge": "edge",

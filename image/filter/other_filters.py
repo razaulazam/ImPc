@@ -1,12 +1,14 @@
 # Copyright (C) Raza Ul Azam, All Rights Reserved.
 # \brief Image filtering methods
 
+import numpy as np
+
 from image.load._interface import BaseImage
 from commons.exceptions import WrongArgumentsType, WrongArgumentsValue, FilteringError
 from commons.warning import DefaultSetting
 from image._decorators import check_image_exist_external
 from image._common_datastructs import AllowedDataType, SKIMAGE_SAMPLING_REGISTRY
-from image._helpers import image_array_check_conversion
+from image._helpers import image_array_check_conversion, check_user_provided_ndarray
 from skimage.filters._fft_based import butterworth as sk_butterworth
 from skimage.filters._gaussian import difference_of_gaussians as sk_difference_gaussians
 from typing import Optional, Union
@@ -113,19 +115,49 @@ def difference_gaussians(
 
 # -------------------------------------------------------------------------
 
+@check_image_exist_external
+def farid(
+    image: BaseImage,
+    mask: Optional[np.ndarray] = None,
+    mode: Optional[str] = "reflect"
+) -> BaseImage:
+    """Computes the Farid transform which finds the edge magnitude. Result is return as float32"""
+
+    if not image.is_gray():
+        raise WrongArgumentsValue("This method only work with gray images")
+    
+    if mask and not isinstance(mask, np.ndarray):
+        raise WrongArgumentsType(
+            "Mask should be provided as a numpy array with the same size as the image"
+        )
+
+    if mask and len(mask.shape) > 2:
+        raise WrongArgumentsValue("Mask can only be provided as a 2D array")
+    
+    if not isinstance(mode, str):
+        raise WrongArgumentsType("Mode should be provided as a string")
+    
+    if image.dims != mask.shape:
+        raise WrongArgumentsValue("Dimensions of the image and the mask does not match")
+    
+    check_image = image_array_check_conversion(image)
+
+    # continue from here
+
 if __name__ == "__main__":
     from image.load.loader import open_image
     import cv2
     from image.transform.color_conversion import convert
     import numpy as np
     from pathlib import Path
-    from skimage.filters._gaussian import difference_of_gaussians
+    from skimage.filters.edges import farid as sk_farid
     path_image = Path(__file__).parent.parent.parent / "sample.jpg"
+    mask = np.ones((400, 750), dtype=np.uint8)
     image_ = open_image(str(path_image))
-    #image_ = convert(image_, "rgb2hsv")
+    image_ = convert(image_, "rgb2gray")
     image_ = image_.image
 
-    im1 = difference_of_gaussians(image_, 2.0, 1.0)
+    im1 = sk_farid(image_, mask=mask)
     im1 = im1.astype(np.float32)
     max_im1 = np.max(im1)
     im1 = (im1/max_im1) * 255
