@@ -11,8 +11,9 @@ from image._common_datastructs import AllowedDataType, SKIMAGE_SAMPLING_REGISTRY
 from image._helpers import image_array_check_conversion, check_user_provided_ndarray
 from skimage.filters._fft_based import butterworth as sk_butterworth
 from skimage.filters._gaussian import difference_of_gaussians as sk_difference_gaussians
+from skimage.filters._gabor import gabor as sk_gabor
 from skimage.filters.edges import farid as sk_farid
-from typing import Optional, Union
+from typing import Optional, Union, Tuple
 
 # -------------------------------------------------------------------------
 
@@ -127,7 +128,7 @@ def farid(
 
     if not image.is_gray():
         raise WrongArgumentsValue("This method only work with gray images")
-    
+
     if mask and not isinstance(mask, np.ndarray):
         raise WrongArgumentsType(
             "Mask should be provided as a numpy array with the same size as the image"
@@ -135,28 +136,76 @@ def farid(
 
     if mask and len(mask.shape) > 2:
         raise WrongArgumentsValue("Mask can only be provided as a 2D array")
-    
+
     if not isinstance(mode, str):
         raise WrongArgumentsType("Mode should be provided as a string")
-    
+
     if image.dims != mask.shape:
         raise WrongArgumentsValue("Dimensions of the image and the mask does not match")
-    
+
     check_mask = check_user_provided_ndarray(mask)
     check_image = image_array_check_conversion(image)
-    
+
     mode_arg = SKIMAGE_SAMPLING_REGISTRY.get(mode.lower(), None)
     if mode_arg is None:
         mode_arg = SKIMAGE_SAMPLING_REGISTRY["reflect"]
         DefaultSetting("Using default mode (reflect) since the provided mode type is not supported")
 
     try:
-        check_image._set_image(sk_farid(check_image.image, mask=check_mask, mode=mode_arg).astype(AllowedDataType.Float32.value, copy=False))
+        check_image._set_image(
+            sk_farid(check_image.image, mask=check_mask,
+                     mode=mode_arg).astype(AllowedDataType.Float32.value, copy=False)
+        )
         check_image._update_dtype()
     except Exception as e:
         raise FilteringError("Failed to filter the image using Farid transform") from e
-    
+
     return check_image
+
+# -------------------------------------------------------------------------
+
+@check_image_exist_external
+def gabor(
+    image: BaseImage,
+    frequency: float,
+    sigma_x: Optional[float] = None,
+    sigma_y: Optional[float] = None,
+    mode: Optional[str] = "constant"
+) -> Tuple[BaseImage, BaseImage]:
+    """Return imaginary and real response to the gabor filter. Responses are returned as a tuple of float32 image loader instances"""
+
+    if not image.is_gray():
+        raise WrongArgumentsValue("This method only work with gray images")
+
+    if not isinstance(frequency, float):
+        raise WrongArgumentsType("Frequency argument should be specified as a float value")
+
+    if sigma_x and not isinstance(sigma_x, float):
+        raise WrongArgumentsType("Sigma (X) argument should be specified as a float value")
+
+    if sigma_y and not isinstance(sigma_y, float):
+        raise WrongArgumentsType("Sigma (X) argument should be specified as a float value")
+
+    mode_arg = SKIMAGE_SAMPLING_REGISTRY.get(mode.lower(), None)
+    if mode_arg is None:
+        mode_arg = SKIMAGE_SAMPLING_REGISTRY["reflect"]
+        DefaultSetting("Using default mode (reflect) since the provided mode type is not supported")
+
+    check_image = image_array_check_conversion(image)
+    check_image_imaginary = check_image.copy()
+
+    try:
+        real_resp, im_resp = sk_gabor(
+            check_image.image, frequency=frequency, sigma_x=sigma_x, sigma_y=sigma_y, mode=mode_arg
+        )
+        check_image._set_image(real_resp.astype(AllowedDataType.Float32.value, copy=False))
+        check_image._update_dtype()
+        check_image_imaginary._set_image(im_resp.astype(AllowedDataType.Float32.value, copy=False))
+        check_image_imaginary._update_dtype()
+    except Exception as e:
+        raise FilteringError("Failed to filter the image using Gabor transform") from e
+
+    return (check_image, check_image_imaginary)
 
 # -------------------------------------------------------------------------
 
@@ -166,14 +215,14 @@ if __name__ == "__main__":
     from image.transform.color_conversion import convert
     import numpy as np
     from pathlib import Path
-    from skimage.filters.edges import farid as sk_farid
+    from skimage.filters._gabor import gabor as sk_gabor
     path_image = Path(__file__).parent.parent.parent / "sample.jpg"
-    mask = np.ones((400, 750), dtype=np.uint8)
+    #mask = np.ones((400, 750), dtype=np.uint8)
     image_ = open_image(str(path_image))
     image_ = convert(image_, "rgb2gray")
     image_ = image_.image
 
-    im1 = sk_farid(image_, mask=mask)
+    im1, im2 = sk_gabor(image_, -0.1)
     im1 = im1.astype(np.float32)
     max_im1 = np.max(im1)
     im1 = (im1/max_im1) * 255
