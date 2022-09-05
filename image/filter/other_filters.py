@@ -11,6 +11,7 @@ from image._common_datastructs import AllowedDataType, SKIMAGE_SAMPLING_REGISTRY
 from image._helpers import image_array_check_conversion, check_user_provided_ndarray
 from skimage.filters._fft_based import butterworth as sk_butterworth
 from skimage.filters._gaussian import difference_of_gaussians as sk_difference_gaussians
+from skimage.filters.edges import farid as sk_farid
 from typing import Optional, Union
 
 # -------------------------------------------------------------------------
@@ -106,6 +107,7 @@ def difference_gaussians(
                 channel_axis=channel_axis
             ).astype(AllowedDataType.Float32.value, copy=False)
         )
+        check_image._update_dtype()
     except Exception as e:
         raise FilteringError(
             "Failed to filter the image with difference of gaussians strategy"
@@ -140,9 +142,23 @@ def farid(
     if image.dims != mask.shape:
         raise WrongArgumentsValue("Dimensions of the image and the mask does not match")
     
+    check_mask = check_user_provided_ndarray(mask)
     check_image = image_array_check_conversion(image)
+    
+    mode_arg = SKIMAGE_SAMPLING_REGISTRY.get(mode.lower(), None)
+    if mode_arg is None:
+        mode_arg = SKIMAGE_SAMPLING_REGISTRY["reflect"]
+        DefaultSetting("Using default mode (reflect) since the provided mode type is not supported")
 
-    # continue from here
+    try:
+        check_image._set_image(sk_farid(check_image.image, mask=check_mask, mode=mode_arg).astype(AllowedDataType.Float32.value, copy=False))
+        check_image._update_dtype()
+    except Exception as e:
+        raise FilteringError("Failed to filter the image using Farid transform") from e
+    
+    return check_image
+
+# -------------------------------------------------------------------------
 
 if __name__ == "__main__":
     from image.load.loader import open_image
