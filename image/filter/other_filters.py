@@ -13,6 +13,7 @@ from skimage.filters._fft_based import butterworth as sk_butterworth
 from skimage.filters._gaussian import difference_of_gaussians as sk_difference_gaussians
 from skimage.filters._gabor import gabor as sk_gabor
 from skimage.filters.edges import farid as sk_farid
+from skimage.filters.edges import prewitt as sk_prewitt
 from typing import Optional, Union, Tuple
 
 # -------------------------------------------------------------------------
@@ -134,7 +135,7 @@ def farid(
             "Mask should be provided as a numpy array with the same size as the image"
         )
 
-    if mask and len(mask.shape) > 2:
+    if mask and (len(mask.shape) > 2 or len(mask.shape) < 2):
         raise WrongArgumentsValue("Mask can only be provided as a 2D array")
 
     if not isinstance(mode, str):
@@ -143,7 +144,7 @@ def farid(
     if image.dims != mask.shape:
         raise WrongArgumentsValue("Dimensions of the image and the mask does not match")
 
-    check_mask = check_user_provided_ndarray(mask)
+    check_mask = check_user_provided_ndarray(mask) if mask else None
     check_image = image_array_check_conversion(image)
 
     mode_arg = SKIMAGE_SAMPLING_REGISTRY.get(mode.lower(), None)
@@ -209,20 +210,62 @@ def gabor(
 
 # -------------------------------------------------------------------------
 
+@check_image_exist_external
+def prewitt(image: BaseImage, mask: Optional[np.ndarray] = None, mode: Optional[str] = "reflect") -> BaseImage:
+    """Edge magnitude using prewitt transform"""
+    
+    if mask and not isinstance(mask, np.ndarray):
+        raise WrongArgumentsType(
+            "Mask should be provided as a numpy array with the same size as the image"
+        )
+
+    if mask and (len(mask.shape) > 3 or len(mask.shape) < 2):
+        raise WrongArgumentsValue("Incorrect dimensions for the mask provided")
+
+    if not isinstance(mode, str):
+        raise WrongArgumentsType("Mode should be provided as a string")
+
+    if image.is_gray() and image.dims != mask.shape:
+        raise WrongArgumentsValue("Dimensions of the image and the mask does not match")
+    
+    if image.is_rgb():
+        if len(mask.shape) == 2 and image.dims != mask.shape:
+            raise WrongArgumentsValue("Dimensions of the image and the mask does not match")
+        elif len(mask.shape) == 3 and (image.dims + (image.channels) != mask.shape):
+            raise WrongArgumentsValue("Dimensions of the image and the mask does not match. Please look at the dimensions")
+
+    check_mask = check_user_provided_ndarray(mask) if mask else None
+    check_image = image_array_check_conversion(image)
+
+    mode_arg = SKIMAGE_SAMPLING_REGISTRY.get(mode.lower(), None)
+    if mode_arg is None:
+        mode_arg = SKIMAGE_SAMPLING_REGISTRY["reflect"]
+        DefaultSetting("Using default mode (reflect) since the provided mode type is not supported")
+    
+    try:
+        check_image._set_image(sk_prewitt(check_image.image, mask=check_mask, mode=mode_arg).astype(AllowedDataType.Float32.value, copy=False))
+        check_image._update_dtype()
+    except Exception as e:
+        raise FilteringError("Failed to filter the image using Prewitt transform") from e
+    
+    return check_image
+
+# -------------------------------------------------------------------------
+
 if __name__ == "__main__":
     from image.load.loader import open_image
     import cv2
     from image.transform.color_conversion import convert
     import numpy as np
     from pathlib import Path
-    from skimage.filters._gabor import gabor as sk_gabor
+    from skimage.filters.edges import prewitt
     path_image = Path(__file__).parent.parent.parent / "sample.jpg"
     #mask = np.ones((400, 750), dtype=np.uint8)
     image_ = open_image(str(path_image))
-    image_ = convert(image_, "rgb2gray")
+    #image_ = convert(image_, "rgb2gray")
     image_ = image_.image
 
-    im1, im2 = sk_gabor(image_, -0.1)
+    im1 = prewitt(image_)
     im1 = im1.astype(np.float32)
     max_im1 = np.max(im1)
     im1 = (im1/max_im1) * 255
