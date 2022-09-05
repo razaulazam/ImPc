@@ -14,6 +14,7 @@ from skimage.filters._gaussian import difference_of_gaussians as sk_difference_g
 from skimage.filters._gabor import gabor as sk_gabor
 from skimage.filters.edges import farid as sk_farid
 from skimage.filters.edges import prewitt as sk_prewitt
+from skimage.filters._rank_order import rank_order
 from typing import Optional, Union, Tuple
 
 # -------------------------------------------------------------------------
@@ -252,6 +253,16 @@ def prewitt(image: BaseImage, mask: Optional[np.ndarray] = None, mode: Optional[
 
 # -------------------------------------------------------------------------
 
+@check_image_exist_external
+def sk_rank_order(image: BaseImage) -> np.ndarray:
+    """Returns the rank-order of the image"""
+    
+    try:
+        order = rank_order
+        
+    # Continue from here
+    
+
 if __name__ == "__main__":
     from image.load.loader import open_image
     import cv2
@@ -265,7 +276,7 @@ if __name__ == "__main__":
     #image_ = convert(image_, "rgb2gray")
     image_ = image_.image
 
-    im1 = prewitt(image_)
+    im1 = rank_order(image_)
     im1 = im1.astype(np.float32)
     max_im1 = np.max(im1)
     im1 = (im1/max_im1) * 255
