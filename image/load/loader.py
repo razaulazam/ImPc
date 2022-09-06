@@ -221,27 +221,17 @@ class ImageLoader:
     def normalize(self):
         """Normalizes the image. Supports only 8-bit, 16-bit and 32-bit encoding"""
 
-        self._image = ImageLoader.normalize_image(self._image, self.dtype)
+        self._image = ImageLoader.normalize_image(self._image)
+        self._update_dtype()
 
         return self
 
     @staticmethod
-    def normalize_image(image: np.ndarray, dtype: AllowedDataType):
+    def normalize_image(image: np.ndarray):
         """Internal helper for normalizing the image"""
 
-        data_type = dtype.value
-        bit_depth = re.search("(?<=uint)\d+|(?<=float)\d+", str(data_type))
-        if not bit_depth:
-            raise NotSupportedDataType("Image has a data-type which is currently not supported")
-
-        num_bits = int(bit_depth.group(0))
-        if num_bits > 32:
-            raise NotSupportedDataType(
-                "Number of bits used to encode pixel information is higher than 32. Only images with 8, 16 and 32-bit encoding are supported"
-            )
-
-        norm_factor = (2**num_bits) - 1
-        image = (image / norm_factor).astype(data_type, copy=False)
+        max_pixel_value = np.max(image)
+        image = (image / max_pixel_value).astype(AllowedDataType.Float32.value, copy=False)
 
         return image
 

@@ -1,12 +1,14 @@
 # Copyright (C) Raza Ul Azam, All Rights Reserved.
 # \brief Internal library helpers
 
+import re
 import numpy as np
 
 from image.load._interface import BaseImage
 from commons.exceptions import NotSupportedDataType
 from commons.warning import ImageDataTypeConversion
-from image._common_datastructs import DataType, ConversionDataType, AllowedDataType, ALLOWED_DATA_TYPES
+from image._decorators import check_image_exist_external
+from image._common_datastructs import DataType, ConversionDataType, AllowedDataType, ALLOWED_DATA_TYPES, CONVERSION_DATA_TYPES
 
 # -------------------------------------------------------------------------
 
@@ -14,7 +16,12 @@ def check_user_provided_ndarray(array_: np.ndarray):
     data_type = array_.dtype
     internal_data_type = ALLOWED_DATA_TYPES.get(str(data_type), None)
     if internal_data_type is None:
-        raise NotSupportedDataType("Provided numpy array does not have the supported internal data type")
+        conversion_data_type = CONVERSION_DATA_TYPES.get(str(data_type), None)
+        if conversion_data_type is None:
+            raise NotSupportedDataType(
+                "Provided numpy array does not have the supported internal data type"
+            )
+        array_ = _convert_array_dtype(array_, conversion_data_type)
     return array_
 
 # -------------------------------------------------------------------------
@@ -65,7 +72,56 @@ def _convert_image_dtype(image_new: BaseImage):
         )
         image_new._set_image(stored_image.astype(AllowedDataType.Uint16.value, copy=False))
 
-    else:
-        raise NotSupportedDataType("Image has a data-type which is currently not supported")
+# -------------------------------------------------------------------------
+
+def _convert_array_dtype(array: np.ndarray, internal_type: DataType) -> np.ndarray:
+    """Converts the provided numpy array to the internal valid data type"""
+
+    if internal_type is ConversionDataType.Float16:
+        ImageDataTypeConversion(
+            "Converting the data type from float16 to float32 which is supported by the library"
+        )
+        return array.astype(AllowedDataType.Float32.value, copy=False)
+    elif internal_type is ConversionDataType.Float64:
+        ImageDataTypeConversion(
+            "Converting the data type from float64 to float32 which is supported by the library"
+        )
+        return array.astype(AllowedDataType.Float32.value, copy=False)
+    elif internal_type is ConversionDataType.Uint32:
+        ImageDataTypeConversion(
+            "Converting the data type from Uint32 to Uint16 which is supported by the library"
+        )
+        return array.astype(AllowedDataType.Uint16.value, copy=False)
+
+# -------------------------------------------------------------------------
+
+@check_image_exist_external
+def safe_cast(image: BaseImage, desired_type: str):
+    """Casts the image to the desired type"""
+
+    internal_data_type = ALLOWED_DATA_TYPES.get(desired_type, None)
+    if internal_data_type is None:
+        raise RuntimeError("Failed to cast the image to the type provided")
+
+    data_type = internal_data_type.value
+    bit_depth = re.search("(?<=uint)\d+|(?<=float)\d+", str(data_type))
+
+    assert bit_depth is not None, RuntimeError("Failed to retrieve the bit depth")
+    num_bits = int(bit_depth.group(0))
+    norm_factor = (2**num_bits) - 1
+
+    check_image = image_array_check_conversion(image)
+    internal_image = check_image.image
+
+    max_pixel_val = np.max(internal_image)
+    internal_image = (internal_image/max_pixel_val) * norm_factor
+    internal_image = np.clip(internal_image, np.min(internal_image), norm_factor).astype(
+        internal_data_type.value, copy=False
+    )
+
+    check_image._set_image(internal_image)
+    check_image._update_dtype()
+
+    return check_image
 
 # -------------------------------------------------------------------------

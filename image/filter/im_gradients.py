@@ -2,13 +2,16 @@
 # \brief Image gradient methods
 
 import cv2
+import numpy as np
 
 from image.load._interface import BaseImage
 from image._decorators import check_image_exist_external
-from image._helpers import image_array_check_conversion
+from image._helpers import image_array_check_conversion, check_user_provided_ndarray
 from commons.exceptions import WrongArgumentsType, WrongArgumentsValue, FilteringError
 from commons.warning import DefaultSetting
 from typing import Union, List, Tuple, Optional
+from skimage.filters.edges import scharr as sk_scharr
+from image._common_datastructs import SKIMAGE_SAMPLING_REGISTRY, AllowedDataType
 from image.filter._common_datastructs import BORDER_INTERPOLATION
 
 # -------------------------------------------------------------------------
@@ -132,6 +135,57 @@ def sobel(
         )
     except Exception as e:
         raise FilteringError("Failed to filter the image") from e
+
+    return check_image
+
+# -------------------------------------------------------------------------
+
+@check_image_exist_external
+def scharr(
+    image: BaseImage,
+    mask: Optional[np.ndarray] = None,
+    mode: Optional[str] = "reflect"
+) -> BaseImage:
+    """Edge magnitude using Scharr transform. Result is returned as float32 image"""
+
+    if mask and not isinstance(mask, np.ndarray):
+        raise WrongArgumentsType(
+            "Mask should be provided as a numpy array with the same size as the image"
+        )
+
+    if mask and (len(mask.shape) > 3 or len(mask.shape) < 2):
+        raise WrongArgumentsValue("Incorrect dimensions for the mask provided")
+
+    if not isinstance(mode, str):
+        raise WrongArgumentsType("Mode should be provided as a string")
+
+    if image.is_gray() and image.dims != mask.shape:
+        raise WrongArgumentsValue("Dimensions of the image and the mask does not match")
+
+    if image.is_rgb():
+        if len(mask.shape) == 2 and image.dims != mask.shape:
+            raise WrongArgumentsValue("Dimensions of the image and the mask does not match")
+        elif len(mask.shape) == 3 and (image.dims + (image.channels) != mask.shape):
+            raise WrongArgumentsValue(
+                "Dimensions of the image and the mask does not match. Please look at the dimensions"
+            )
+
+    check_mask = check_user_provided_ndarray(mask) if mask else None
+    check_image = image_array_check_conversion(image)
+
+    mode_arg = SKIMAGE_SAMPLING_REGISTRY.get(mode.lower(), None)
+    if mode_arg is None:
+        mode_arg = SKIMAGE_SAMPLING_REGISTRY["reflect"]
+        DefaultSetting("Using default mode (reflect) since the provided mode type is not supported")
+
+    try:
+        check_image._set_image(
+            sk_scharr(check_image.image, mask=check_mask,
+                      mode=mode_arg).astype(AllowedDataType.Float32.value, copy=False)
+        )
+        check_image._update_dtype()
+    except Exception as e:
+        raise FilteringError("Failed to filter the image using Prewitt transform") from e
 
     return check_image
 

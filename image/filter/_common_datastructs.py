@@ -1,5 +1,5 @@
 # Copyright (C) Raza Ul Azam, All Rights Reserved.
-# \brief Image gradient methods
+# \brief Internal common structs for filtering methods
 
 import cv2
 
