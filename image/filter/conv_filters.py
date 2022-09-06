@@ -245,7 +245,7 @@ def bilateral_filter(
         raise FilteringError(
             "This filter cannot operate on images that have color channels more than 3"
         )
-        
+
     if not isinstance(kernel_diameter, (float, int)):
         raise WrongArgumentsType("Diameter value can only be either an integer or float value")
 
@@ -260,9 +260,9 @@ def bilateral_filter(
 
     if not isinstance(border, str):
         raise WrongArgumentsType("Border argument can only be specified as a string")
-    
+
     check_image = image_array_check_conversion(image)
-    
+
     if check_image.dtype is AllowedDataType.Uint16:
         ImageDataTypeConversion(
             "Converting the image from 16 bits to 8 bits per channel since this is what is only supported for this filter"
@@ -278,42 +278,15 @@ def bilateral_filter(
         border_actual = BORDER_INTERPOLATION["default"]
 
     try:
-        check_image._set_image(cv2.bilateralFilter(
-            check_image.image, int(kernel_diameter), float(color_sigma), float(spatial_sigma),
-            border_actual
-        ))
+        check_image._set_image(
+            cv2.bilateralFilter(
+                check_image.image, int(kernel_diameter), float(color_sigma), float(spatial_sigma),
+                border_actual
+            )
+        )
     except Exception as e:
         raise FilteringError("Failed to filter the image") from e
 
     return check_image
 
 # -------------------------------------------------------------------------
-
-if __name__ == "__main__":
-
-    from image.load.loader import open_image
-    import cv2
-    from pathlib import Path
-    path_image = Path(__file__).parent.parent.parent / "sample.jpg"
-    image_ = open_image(str(path_image))
-    image_._image_conversion_helper(np.uint16)
-
-    cv2.imwrite("./file_check.png", image_.image)
-
-    # Why don't we get the accurate mode here?
-    image_new = open_image("./file_check.png")
-
-    image_.update_file_stream()
-    image_.set_loader_properties()
-    print(image_.mode)
-    print(image_.dtype)
-    print(id(image_.dtype))
-    im_new = median_blur(image_, [7, 7])
-    print(image_.dtype)
-    print(im_new.dtype)
-    print(id(image_.dtype))
-    print("hallo")
-    # Do we want to return the same data types for the input images?
-    # Or, do we accept the converted types?
-    import warnings
-    warnings.warn("hello")
