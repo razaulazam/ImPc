@@ -14,7 +14,10 @@ from skimage.filters._gaussian import difference_of_gaussians as sk_difference_g
 from skimage.filters._gabor import gabor as sk_gabor
 from skimage.filters.edges import farid as sk_farid
 from skimage.filters.edges import prewitt as sk_prewitt
-from skimage.filters._rank_order import rank_order
+from skimage.filters._rank_order import rank_order as sk_rank_order
+from skimage.filters.edges import roberts as sk_roberts
+from skimage.filters.edges import roberts_neg_diag as sk_roberts_neg_diag
+from skimage.filters.edges import roberts_pos_diag as sk_roberts_pos_diag
 from typing import Optional, Union, Tuple
 
 # -------------------------------------------------------------------------
@@ -212,9 +215,13 @@ def gabor(
 # -------------------------------------------------------------------------
 
 @check_image_exist_external
-def prewitt(image: BaseImage, mask: Optional[np.ndarray] = None, mode: Optional[str] = "reflect") -> BaseImage:
-    """Edge magnitude using prewitt transform"""
-    
+def prewitt(
+    image: BaseImage,
+    mask: Optional[np.ndarray] = None,
+    mode: Optional[str] = "reflect"
+) -> BaseImage:
+    """Edge magnitude using prewitt transform. Result is returned as float32 image"""
+
     if mask and not isinstance(mask, np.ndarray):
         raise WrongArgumentsType(
             "Mask should be provided as a numpy array with the same size as the image"
@@ -228,12 +235,14 @@ def prewitt(image: BaseImage, mask: Optional[np.ndarray] = None, mode: Optional[
 
     if image.is_gray() and image.dims != mask.shape:
         raise WrongArgumentsValue("Dimensions of the image and the mask does not match")
-    
+
     if image.is_rgb():
         if len(mask.shape) == 2 and image.dims != mask.shape:
             raise WrongArgumentsValue("Dimensions of the image and the mask does not match")
         elif len(mask.shape) == 3 and (image.dims + (image.channels) != mask.shape):
-            raise WrongArgumentsValue("Dimensions of the image and the mask does not match. Please look at the dimensions")
+            raise WrongArgumentsValue(
+                "Dimensions of the image and the mask does not match. Please look at the dimensions"
+            )
 
     check_mask = check_user_provided_ndarray(mask) if mask else None
     check_image = image_array_check_conversion(image)
@@ -242,26 +251,133 @@ def prewitt(image: BaseImage, mask: Optional[np.ndarray] = None, mode: Optional[
     if mode_arg is None:
         mode_arg = SKIMAGE_SAMPLING_REGISTRY["reflect"]
         DefaultSetting("Using default mode (reflect) since the provided mode type is not supported")
-    
+
     try:
-        check_image._set_image(sk_prewitt(check_image.image, mask=check_mask, mode=mode_arg).astype(AllowedDataType.Float32.value, copy=False))
+        check_image._set_image(
+            sk_prewitt(check_image.image, mask=check_mask,
+                       mode=mode_arg).astype(AllowedDataType.Float32.value, copy=False)
+        )
         check_image._update_dtype()
     except Exception as e:
         raise FilteringError("Failed to filter the image using Prewitt transform") from e
-    
+
     return check_image
 
 # -------------------------------------------------------------------------
 
 @check_image_exist_external
-def sk_rank_order(image: BaseImage) -> np.ndarray:
+def rank_order(image: BaseImage) -> np.ndarray:
     """Returns the rank-order of the image"""
-    
+
+    check_image = image_array_check_conversion(image)
     try:
-        order = rank_order
-        
-    # Continue from here
-    
+        order, _ = sk_rank_order(check_image.image).astype(check_image.dtype.value, copy=False)
+    except Exception as e:
+        raise FilteringError("Failed to find the rank order of the image") from e
+
+    return order
+
+# -------------------------------------------------------------------------
+
+@check_image_exist_external
+def roberts(image: BaseImage, mask: Optional[np.ndarray] = None) -> BaseImage:
+    """Edge magnitude using Robert transform. Result is returned as a float32 image"""
+
+    if not image.is_gray():
+        raise WrongArgumentsValue("This method only work with gray images")
+
+    if mask and not isinstance(mask, np.ndarray):
+        raise WrongArgumentsType(
+            "Mask should be provided as a numpy array with the same size as the image"
+        )
+
+    if mask and (len(mask.shape) > 2 or len(mask.shape) < 2):
+        raise WrongArgumentsValue("Mask can only be provided as a 2D array")
+
+    if image.dims != mask.shape:
+        raise WrongArgumentsValue("Dimensions of the image and the mask does not match")
+
+    check_mask = check_user_provided_ndarray(mask) if mask else None
+    check_image = image_array_check_conversion(image)
+
+    try:
+        check_image._set_image(
+            sk_roberts(check_image.image,
+                       mask=check_mask).astype(AllowedDataType.Float32.value, copy=False)
+        )
+        check_image._update_dtype()
+    except Exception as e:
+        raise FilteringError("Failed to compute the edge magnitude using Roberts transform") from e
+
+    return check_image
+
+# -------------------------------------------------------------------------
+
+@check_image_exist_external
+def roberts_neg_diag(image: BaseImage, mask: Optional[np.ndarray] = None) -> BaseImage:
+    """Cross edges of image using Robert's cross transform. Result is returned as a float32 image"""
+
+    if not image.is_gray():
+        raise WrongArgumentsValue("This method only work with gray images")
+
+    if mask and not isinstance(mask, np.ndarray):
+        raise WrongArgumentsType(
+            "Mask should be provided as a numpy array with the same size as the image"
+        )
+
+    if mask and (len(mask.shape) > 2 or len(mask.shape) < 2):
+        raise WrongArgumentsValue("Mask can only be provided as a 2D array")
+
+    if image.dims != mask.shape:
+        raise WrongArgumentsValue("Dimensions of the image and the mask does not match")
+
+    check_mask = check_user_provided_ndarray(mask) if mask else None
+    check_image = image_array_check_conversion(image)
+
+    try:
+        check_image._set_image(
+            sk_roberts_neg_diag(check_image.image,
+                       mask=check_mask).astype(AllowedDataType.Float32.value, copy=False)
+        )
+        check_image._update_dtype()
+    except Exception as e:
+        raise FilteringError("Failed to compute the edge magnitude using Roberts transform") from e
+
+    return check_image
+
+# -------------------------------------------------------------------------
+
+@check_image_exist_external
+def roberts_pos_diag(image: BaseImage, mask: Optional[np.ndarray] = None) -> BaseImage:
+    """Cross edges of image using Robert's cross transform. Result is returned as a float32 image"""
+
+    if not image.is_gray():
+        raise WrongArgumentsValue("This method only work with gray images")
+
+    if mask and not isinstance(mask, np.ndarray):
+        raise WrongArgumentsType(
+            "Mask should be provided as a numpy array with the same size as the image"
+        )
+
+    if mask and (len(mask.shape) > 2 or len(mask.shape) < 2):
+        raise WrongArgumentsValue("Mask can only be provided as a 2D array")
+
+    if image.dims != mask.shape:
+        raise WrongArgumentsValue("Dimensions of the image and the mask does not match")
+
+    check_mask = check_user_provided_ndarray(mask) if mask else None
+    check_image = image_array_check_conversion(image)
+
+    try:
+        check_image._set_image(
+            sk_roberts_pos_diag(check_image.image,
+                       mask=check_mask).astype(AllowedDataType.Float32.value, copy=False)
+        )
+        check_image._update_dtype()
+    except Exception as e:
+        raise FilteringError("Failed to compute the edge magnitude using Roberts transform") from e
+
+    return check_image
 
 if __name__ == "__main__":
     from image.load.loader import open_image
@@ -269,14 +385,14 @@ if __name__ == "__main__":
     from image.transform.color_conversion import convert
     import numpy as np
     from pathlib import Path
-    from skimage.filters.edges import prewitt
+    from skimage.filters.edges import roberts
     path_image = Path(__file__).parent.parent.parent / "sample.jpg"
     #mask = np.ones((400, 750), dtype=np.uint8)
     image_ = open_image(str(path_image))
     #image_ = convert(image_, "rgb2gray")
     image_ = image_.image
 
-    im1 = rank_order(image_)
+    im1, im2 = roberts(image_)
     im1 = im1.astype(np.float32)
     max_im1 = np.max(im1)
     im1 = (im1/max_im1) * 255
