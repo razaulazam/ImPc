@@ -337,7 +337,7 @@ def roberts_neg_diag(image: BaseImage, mask: Optional[np.ndarray] = None) -> Bas
     try:
         check_image._set_image(
             sk_roberts_neg_diag(check_image.image,
-                       mask=check_mask).astype(AllowedDataType.Float32.value, copy=False)
+                                mask=check_mask).astype(AllowedDataType.Float32.value, copy=False)
         )
         check_image._update_dtype()
     except Exception as e:
@@ -371,7 +371,7 @@ def roberts_pos_diag(image: BaseImage, mask: Optional[np.ndarray] = None) -> Bas
     try:
         check_image._set_image(
             sk_roberts_pos_diag(check_image.image,
-                       mask=check_mask).astype(AllowedDataType.Float32.value, copy=False)
+                                mask=check_mask).astype(AllowedDataType.Float32.value, copy=False)
         )
         check_image._update_dtype()
     except Exception as e:
@@ -385,14 +385,14 @@ if __name__ == "__main__":
     from image.transform.color_conversion import convert
     import numpy as np
     from pathlib import Path
-    from skimage.filters.edges import roberts
+    from skimage.filters.edges import scharr
     path_image = Path(__file__).parent.parent.parent / "sample.jpg"
     #mask = np.ones((400, 750), dtype=np.uint8)
     image_ = open_image(str(path_image))
     #image_ = convert(image_, "rgb2gray")
     image_ = image_.image
 
-    im1, im2 = roberts(image_)
+    im1 = scharr(image_)
     im1 = im1.astype(np.float32)
     max_im1 = np.max(im1)
     im1 = (im1/max_im1) * 255
