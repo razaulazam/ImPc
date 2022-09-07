@@ -8,6 +8,7 @@ from commons.exceptions import WrongArgumentsType, WrongArgumentsValue, Filterin
 from commons.warning import DefaultSetting
 from image._decorators import check_image_exist_external
 from image._helpers import image_array_check_conversion
+from image._common_datastructs import AllowedDataType
 from typing import Union
 
 # -------------------------------------------------------------------------
@@ -46,7 +47,7 @@ def simple_threshold(
     try:
         check_image._set_image(
             cv2.threshold(check_image.image, float(threshold), float(max_val),
-                          method_arg).astype(check_image.dtype.value, copy=False)
+                          method_arg)[1].astype(check_image.dtype.value, copy=False)
         )
     except Exception as e:
         raise FilteringError(
@@ -57,16 +58,53 @@ def simple_threshold(
 
 # -------------------------------------------------------------------------
 
+@check_image_exist_external
+def adaptive_threshold(
+    image: BaseImage, max_val: Union[float, int], adaptive_method: str, threshold_method: str,
+    block_size: int, subtract_val: Union[float, int]
+) -> BaseImage:
+    """Works on grayscale 8 bit images only"""
+    
+    if not image.is_gray():
+        raise WrongArgumentsValue("This method only works with grayscale images")
+    
+    if not isinstance(max_val, (float, int)):
+        raise WrongArgumentsType("Maximum value can only be provided as integer or float")
+    
+    if not isinstance(adaptive_method, str):
+        raise WrongArgumentsType("Adaptive method argument can only be provided as a string")
+    
+    if not isinstance(threshold_method, str):
+        raise WrongArgumentsType("Threshold method argument can only be provided as a string")
+    
+    if not isinstance(block_size, int):
+        raise WrongArgumentsType("Block size argument can only be provided as a integer")
+    
+    if block_size <= 1 or block_size % 2 == 1:
+        raise WrongArgumentsValue("Block size can not be less than or equal to 1. Further it should be odd e.g. 3, 5, 7, 9 ...")
+    
+    if not isinstance(subtract_val, (float, int)):
+        raise WrongArgumentsType("Block size argument can only be provided as a integer")
+    
+    check_image = image_array_check_conversion(image)
+    if check_image.dtype is not AllowedDataType.Uint8.value:
+        ... # start from here
+    
+    
 if __name__ == "__main__":
     import cv2
     from pathlib import Path
     import numpy as np
     from image.load.loader import open_image
+    from image.transform.color_conversion import convert
     image_path = Path(__file__).parent.parent.parent / "sample.jpg"
 
     image = open_image(str(image_path))
-    image = image.image.astype(np.float32)
+    image = convert(image, "rgb2gray")
+    image = image.image.astype(np.uint8)
 
-    im1 = cv2.threshold(image, -1, 1000, cv2.THRESH_BINARY_INV)
+    im1 = cv2.adaptiveThreshold(
+        image, 200, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 2, 0
+    )
 
     print("hallo")
