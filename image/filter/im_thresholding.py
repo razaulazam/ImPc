@@ -19,6 +19,8 @@ CV_THRESHOLD_STRATEGY = {
     "trunc": cv2.THRESH_TRUNC,
     "tozero": cv2.THRESH_TOZERO,
     "tozeroinv": cv2.THRESH_TOZERO_INV,
+    "mean": cv2.ADAPTIVE_THRESH_MEAN_C,
+    "gaussian": cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
 }
 
 # -------------------------------------------------------------------------
@@ -64,33 +66,55 @@ def adaptive_threshold(
     block_size: int, subtract_val: Union[float, int]
 ) -> BaseImage:
     """Works on grayscale 8 bit images only"""
-    
+
     if not image.is_gray():
         raise WrongArgumentsValue("This method only works with grayscale images")
-    
+
     if not isinstance(max_val, (float, int)):
         raise WrongArgumentsType("Maximum value can only be provided as integer or float")
-    
+
     if not isinstance(adaptive_method, str):
         raise WrongArgumentsType("Adaptive method argument can only be provided as a string")
-    
+
     if not isinstance(threshold_method, str):
         raise WrongArgumentsType("Threshold method argument can only be provided as a string")
-    
+
     if not isinstance(block_size, int):
         raise WrongArgumentsType("Block size argument can only be provided as a integer")
-    
+
     if block_size <= 1 or block_size % 2 == 1:
-        raise WrongArgumentsValue("Block size can not be less than or equal to 1. Further it should be odd e.g. 3, 5, 7, 9 ...")
-    
+        raise WrongArgumentsValue(
+            "Block size can not be less than or equal to 1. Further it should be odd e.g. 3, 5, 7, 9 ..."
+        )
+
     if not isinstance(subtract_val, (float, int)):
         raise WrongArgumentsType("Block size argument can only be provided as a integer")
-    
+
+    threshold_method_arg = CV_THRESHOLD_STRATEGY.get(threshold_method, None)
+    if threshold_method_arg is None:
+        raise WrongArgumentsValue("Provided thresholding method is wrong")
+
+    adaptive_method_arg = CV_THRESHOLD_STRATEGY.get(adaptive_method, None)
+    if adaptive_method_arg is None:
+        raise WrongArgumentsValue("Provided adaptive thresholding method is wrong")
+
     check_image = image_array_check_conversion(image)
     if check_image.dtype is not AllowedDataType.Uint8.value:
-        ... # start from here
-    
-    
+        check_image._image_conversion_helper(AllowedDataType.Uint8)
+        check_image._update_dtype()
+
+    try:
+        check_image._set_image(
+            cv2.adaptiveThreshold(
+                check_image.image, float(max_val), adaptive_method_arg, threshold_method_arg,
+                int(block_size), float(subtract_val)
+            )
+        )
+    except Exception as e:
+        raise FilteringError("Failed to apply the adaptive threshold method to the image") from e
+
+    return check_image
+
 if __name__ == "__main__":
     import cv2
     from pathlib import Path
