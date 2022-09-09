@@ -13,6 +13,7 @@ from skimage.filters.thresholding import threshold_mean as sk_thresh_mean
 from skimage.filters.thresholding import threshold_minimum as sk_thresh_minimum
 from skimage.filters.thresholding import threshold_otsu as sk_thresh_otsu
 from skimage.filters.thresholding import threshold_triangle as sk_thresh_triangle
+from skimage.filters.thresholding import threshold_yen as sk_thresh_yen
 from image._helpers import image_array_check_conversion
 from image._decorators import check_image_exist_external
 
@@ -156,7 +157,7 @@ def compute_threshold_otsu(image: BaseImage, bins: Optional[Union[float, int]] =
 
 @check_image_exist_external
 def compute_threshold_triangle(image: BaseImage, bins: Optional[Union[float, int]] = 256) -> float:
-    """Computes the threshold based on otsu's method"""
+    """Computes the threshold based on the triangle method"""
 
     if not isinstance(bins, (float, int)):
         raise WrongArgumentsType("Bins can only be provided as either integer or float")
@@ -167,6 +168,24 @@ def compute_threshold_triangle(image: BaseImage, bins: Optional[Union[float, int
         threshold = sk_thresh_triangle(check_image.image, nbins=bins)
     except Exception as e:
         raise FilteringError("Failed to compute the threshold based on triangle strategy") from e
+
+    return threshold
+
+# -------------------------------------------------------------------------
+
+@check_image_exist_external
+def compute_threshold_yen(image: BaseImage, bins: Optional[Union[float, int]] = 256) -> float:
+    """Computes the threshold based on the yen's method"""
+
+    if not isinstance(bins, (float, int)):
+        raise WrongArgumentsType("Bins can only be provided as either integer or float")
+
+    check_image = image_array_check_conversion(image)
+
+    try:
+        threshold = sk_thresh_yen(check_image.image, nbins=bins)
+    except Exception as e:
+        raise FilteringError("Failed to compute the threshold based on yen's strategy") from e
 
     return threshold
 

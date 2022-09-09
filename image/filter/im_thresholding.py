@@ -9,7 +9,7 @@ from commons.warning import DefaultSetting
 from image._decorators import check_image_exist_external
 from image._helpers import image_array_check_conversion
 from image._common_datastructs import AllowedDataType
-from typing import Union
+from typing import Union, Optional
 
 # -------------------------------------------------------------------------
 
@@ -118,19 +118,29 @@ def adaptive_threshold(
 
 # -------------------------------------------------------------------------
 
+@check_image_exist_external
+def niblack_threshold(
+    image: BaseImage,
+    kernel_size: Optional[Union[float, int]] = 15,
+    factor: Optional[float] = 0.2
+) -> BaseImage:
+    """Computes the local Niblack threshold"""
+
+    ...
+
 if __name__ == "__main__":
     import cv2
     from pathlib import Path
     import numpy as np
     from image.load.loader import open_image
     from image.transform.color_conversion import convert
-    from skimage.filters.thresholding import threshold_mean
+    from skimage.filters.thresholding import threshold_sauvola
     image_path = Path(__file__).parent.parent.parent / "sample.jpg"
 
     image = open_image(str(image_path))
     #image = convert(image, "rgb2gray")
     #image = image.image.astype(np.uint8)
 
-    im1 = threshold_mean(image.image)
+    im1 = threshold_sauvola(image.image)
 
     print("hallo")
