@@ -11,6 +11,8 @@ from skimage.filters.thresholding import threshold_isodata as sk_thresh_isodata
 from skimage.filters.thresholding import threshold_li as sk_thresh_li
 from skimage.filters.thresholding import threshold_mean as sk_thresh_mean
 from skimage.filters.thresholding import threshold_minimum as sk_thresh_minimum
+from skimage.filters.thresholding import threshold_otsu as sk_thresh_otsu
+from skimage.filters.thresholding import threshold_triangle as sk_thresh_triangle
 from image._helpers import image_array_check_conversion
 from image._decorators import check_image_exist_external
 
@@ -95,7 +97,7 @@ def compute_threshold_li(
     try:
         threshold = sk_thresh_li(check_image.image, initial_guess=start_guess)
     except Exception as e:
-        raise FilteringError("Failed to compute the threshold based on isodata strategy") from e
+        raise FilteringError("Failed to compute the threshold based on li's strategy") from e
 
     return threshold
 
@@ -110,7 +112,7 @@ def compute_threshold_mean(image: BaseImage) -> float:
     try:
         threshold = sk_thresh_mean(check_image.image)
     except Exception as e:
-        raise FilteringError("Failed to compute the threshold based on isodata strategy") from e
+        raise FilteringError("Failed to compute the threshold based on mean strategy") from e
 
     return threshold
 
@@ -126,9 +128,45 @@ def compute_threshold_minimum(image: BaseImage, bins: Optional[Union[float, int]
     check_image = image_array_check_conversion(image)
 
     try:
-        threshold = sk_thresh_minimum(check_image.image)
+        threshold = sk_thresh_minimum(check_image.image, nbins=bins)
     except Exception as e:
-        raise FilteringError("Failed to compute the threshold based on isodata strategy") from e
+        raise FilteringError("Failed to compute the threshold based on minimum strategy") from e
+
+    return threshold
+
+# -------------------------------------------------------------------------
+
+@check_image_exist_external
+def compute_threshold_otsu(image: BaseImage, bins: Optional[Union[float, int]] = 256) -> float:
+    """Computes the threshold based on otsu's method"""
+
+    if not isinstance(bins, (float, int)):
+        raise WrongArgumentsType("Bins can only be provided as either integer or float")
+
+    check_image = image_array_check_conversion(image)
+
+    try:
+        threshold = sk_thresh_otsu(check_image.image, nbins=bins)
+    except Exception as e:
+        raise FilteringError("Failed to compute the threshold based on otsu's strategy") from e
+
+    return threshold
+
+# -------------------------------------------------------------------------
+
+@check_image_exist_external
+def compute_threshold_triangle(image: BaseImage, bins: Optional[Union[float, int]] = 256) -> float:
+    """Computes the threshold based on otsu's method"""
+
+    if not isinstance(bins, (float, int)):
+        raise WrongArgumentsType("Bins can only be provided as either integer or float")
+
+    check_image = image_array_check_conversion(image)
+
+    try:
+        threshold = sk_thresh_triangle(check_image.image, nbins=bins)
+    except Exception as e:
+        raise FilteringError("Failed to compute the threshold based on triangle strategy") from e
 
     return threshold
 
