@@ -29,7 +29,7 @@ CV_THRESHOLD_STRATEGY = {
 def simple_threshold(
     image: BaseImage, threshold: Union[float, int], max_val: Union[float, int], method: str
 ) -> BaseImage:
-    """Applied fixed level threshold to each image pixel"""
+    """Applied fixed level threshold to each image pixel. Maximum value is ignored for trunc, tozero and tozeroinv methods."""
 
     if not isinstance(threshold, (float, int)):
         raise WrongArgumentsType("Threshold can only be provided as float or integer")
@@ -115,20 +115,21 @@ def adaptive_threshold(
 
     return check_image
 
+# -------------------------------------------------------------------------
+
 if __name__ == "__main__":
     import cv2
     from pathlib import Path
     import numpy as np
     from image.load.loader import open_image
     from image.transform.color_conversion import convert
+    from skimage.filters.thresholding import threshold_isodata as sk_isodata
     image_path = Path(__file__).parent.parent.parent / "sample.jpg"
 
     image = open_image(str(image_path))
     image = convert(image, "rgb2gray")
-    image = image.image.astype(np.uint8)
+    #image = image.image.astype(np.uint8)
 
-    im1 = cv2.adaptiveThreshold(
-        image, 200, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 2, 0
-    )
+    im1 = sk_isodata(image.image, return_all=True)
 
     print("hallo")
