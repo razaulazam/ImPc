@@ -29,7 +29,8 @@ CV_THRESHOLD_STRATEGY = {
 def simple_threshold(
     image: BaseImage, threshold: Union[float, int], max_val: Union[float, int], method: str
 ) -> BaseImage:
-    """Applied fixed level threshold to each image pixel. Maximum value is ignored for trunc, tozero and tozeroinv methods."""
+    """Applied fixed level threshold to each image pixel. Maximum value is ignored for trunc, tozero and tozeroinv methods.
+    Threshold values can be calculated from different strategies e.g. Isodata etc."""
 
     if not isinstance(threshold, (float, int)):
         raise WrongArgumentsType("Threshold can only be provided as float or integer")
@@ -127,7 +128,7 @@ if __name__ == "__main__":
     image_path = Path(__file__).parent.parent.parent / "sample.jpg"
 
     image = open_image(str(image_path))
-    image = convert(image, "rgb2gray")
+    #image = convert(image, "rgb2gray")
     #image = image.image.astype(np.uint8)
 
     im1 = sk_isodata(image.image, return_all=True)

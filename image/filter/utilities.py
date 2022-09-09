@@ -3,9 +3,13 @@
 
 import cv2
 
-from typing import Union, List, Tuple
-from commons.exceptions import WrongArgumentsType, WrongArgumentsValue
+from typing import Union, List, Tuple, Optional
+from image.load._interface import BaseImage
+from commons.exceptions import WrongArgumentsType, WrongArgumentsValue, FilteringError
 from collections import namedtuple
+from skimage.filters.thresholding import threshold_isodata as sk_thresh_isodata
+from image._helpers import image_array_check_conversion
+from image._decorators import check_image_exist_external
 
 # -------------------------------------------------------------------------
 
@@ -50,5 +54,23 @@ def get_kernel(kernel_shape: str, kernel_size: Union[List[int], Tuple[int, int]]
     _impc_array = namedtuple("ImPcArray", "array_")
 
     return _impc_array(structuring_element)
+
+# -------------------------------------------------------------------------
+
+@check_image_exist_external
+def compute_threshold_isodata(image: BaseImage, bins: Optional[Union[float, int]] = 256) -> int:
+    """Computes the threshold based on isodata strategy"""
+
+    if not isinstance(bins, (float, int)):
+        raise WrongArgumentsType("Bins can only be provided as either integer or float")
+
+    check_image = image_array_check_conversion(image)
+
+    try:
+        threshold = sk_thresh_isodata(check_image.image, nbins=bins)[0]
+    except Exception as e:
+        raise FilteringError("Failed to compute the threshold based on isodata strategy") from e
+
+    return threshold
 
 # -------------------------------------------------------------------------
