@@ -124,13 +124,13 @@ if __name__ == "__main__":
     import numpy as np
     from image.load.loader import open_image
     from image.transform.color_conversion import convert
-    from skimage.filters.thresholding import threshold_li
+    from skimage.filters.thresholding import threshold_mean
     image_path = Path(__file__).parent.parent.parent / "sample.jpg"
 
     image = open_image(str(image_path))
     #image = convert(image, "rgb2gray")
     #image = image.image.astype(np.uint8)
 
-    im1 = threshold_li(image.image)
+    im1 = threshold_mean(image.image)
 
     print("hallo")

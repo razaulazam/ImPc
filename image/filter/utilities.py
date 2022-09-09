@@ -9,6 +9,8 @@ from commons.exceptions import WrongArgumentsType, WrongArgumentsValue, Filterin
 from collections import namedtuple
 from skimage.filters.thresholding import threshold_isodata as sk_thresh_isodata
 from skimage.filters.thresholding import threshold_li as sk_thresh_li
+from skimage.filters.thresholding import threshold_mean as sk_thresh_mean
+from skimage.filters.thresholding import threshold_minimum as sk_thresh_minimum
 from image._helpers import image_array_check_conversion
 from image._decorators import check_image_exist_external
 
@@ -59,7 +61,8 @@ def get_kernel(kernel_shape: str, kernel_size: Union[List[int], Tuple[int, int]]
 # -------------------------------------------------------------------------
 
 @check_image_exist_external
-def compute_threshold_isodata(image: BaseImage, bins: Optional[Union[float, int]] = 256) -> Union[float, int]:
+def compute_threshold_isodata(image: BaseImage,
+                              bins: Optional[Union[float, int]] = 256) -> Union[float, int]:
     """Computes the threshold based on isodata strategy"""
 
     if not isinstance(bins, (float, int)):
@@ -77,16 +80,53 @@ def compute_threshold_isodata(image: BaseImage, bins: Optional[Union[float, int]
 # -------------------------------------------------------------------------
 
 @check_image_exist_external
-def compute_threshold_li(image: BaseImage, start_guess: Optional[Union[float, int]] = None) -> float:
+def compute_threshold_li(
+    image: BaseImage, start_guess: Optional[Union[float, int]] = None
+) -> float:
     """Computes the threshold based on Li's iterative minimum cross entropy method"""
 
     if start_guess and not isinstance(start_guess, (float, int)):
-        raise WrongArgumentsType("Starting guess value can only be provided as either integer or float")
+        raise WrongArgumentsType(
+            "Starting guess value can only be provided as either integer or float"
+        )
 
     check_image = image_array_check_conversion(image)
 
     try:
-        threshold = sk_thresh_li(check_image.image, initial_guess=start_guess)[0]
+        threshold = sk_thresh_li(check_image.image, initial_guess=start_guess)
+    except Exception as e:
+        raise FilteringError("Failed to compute the threshold based on isodata strategy") from e
+
+    return threshold
+
+# -------------------------------------------------------------------------
+
+@check_image_exist_external
+def compute_threshold_mean(image: BaseImage) -> float:
+    """Computes the threshold based on the mean of pixel values in the image provided"""
+
+    check_image = image_array_check_conversion(image)
+
+    try:
+        threshold = sk_thresh_mean(check_image.image)
+    except Exception as e:
+        raise FilteringError("Failed to compute the threshold based on isodata strategy") from e
+
+    return threshold
+
+# -------------------------------------------------------------------------
+
+@check_image_exist_external
+def compute_threshold_minimum(image: BaseImage, bins: Optional[Union[float, int]] = 256) -> float:
+    """Computes the threshold based on the minimum method"""
+
+    if not isinstance(bins, (float, int)):
+        raise WrongArgumentsType("Bins can only be provided as either integer or float")
+
+    check_image = image_array_check_conversion(image)
+
+    try:
+        threshold = sk_thresh_minimum(check_image.image)
     except Exception as e:
         raise FilteringError("Failed to compute the threshold based on isodata strategy") from e
 
