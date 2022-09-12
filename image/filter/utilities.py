@@ -15,6 +15,7 @@ from skimage.filters.thresholding import threshold_minimum as sk_thresh_minimum
 from skimage.filters.thresholding import threshold_otsu as sk_thresh_otsu
 from skimage.filters.thresholding import threshold_triangle as sk_thresh_triangle
 from skimage.filters.thresholding import threshold_yen as sk_thresh_yen
+from skimage.filters.thresholding import threshold_multiotsu as sk_thresh_multiotsu
 from image._helpers import image_array_check_conversion
 from image._decorators import check_image_exist_external
 
@@ -75,7 +76,7 @@ def compute_threshold_isodata(image: BaseImage,
     check_image = image_array_check_conversion(image)
 
     try:
-        threshold = sk_thresh_isodata(check_image.image, nbins=bins)[0]
+        threshold = sk_thresh_isodata(check_image.image, nbins=int(bins))[0]
     except Exception as e:
         raise FilteringError("Failed to compute the threshold based on isodata strategy") from e
 
@@ -97,7 +98,7 @@ def compute_threshold_li(
     check_image = image_array_check_conversion(image)
 
     try:
-        threshold = sk_thresh_li(check_image.image, initial_guess=start_guess)
+        threshold = sk_thresh_li(check_image.image, initial_guess=float(start_guess))
     except Exception as e:
         raise FilteringError("Failed to compute the threshold based on li's strategy") from e
 
@@ -130,7 +131,7 @@ def compute_threshold_minimum(image: BaseImage, bins: Optional[Union[float, int]
     check_image = image_array_check_conversion(image)
 
     try:
-        threshold = sk_thresh_minimum(check_image.image, nbins=bins)
+        threshold = sk_thresh_minimum(check_image.image, nbins=int(bins))
     except Exception as e:
         raise FilteringError("Failed to compute the threshold based on minimum strategy") from e
 
@@ -148,7 +149,7 @@ def compute_threshold_otsu(image: BaseImage, bins: Optional[Union[float, int]] =
     check_image = image_array_check_conversion(image)
 
     try:
-        threshold = sk_thresh_otsu(check_image.image, nbins=bins)
+        threshold = sk_thresh_otsu(check_image.image, nbins=int(bins))
     except Exception as e:
         raise FilteringError("Failed to compute the threshold based on otsu's strategy") from e
 
@@ -166,7 +167,7 @@ def compute_threshold_triangle(image: BaseImage, bins: Optional[Union[float, int
     check_image = image_array_check_conversion(image)
 
     try:
-        threshold = sk_thresh_triangle(check_image.image, nbins=bins)
+        threshold = sk_thresh_triangle(check_image.image, nbins=int(bins))
     except Exception as e:
         raise FilteringError("Failed to compute the threshold based on triangle strategy") from e
 
@@ -184,7 +185,7 @@ def compute_threshold_yen(image: BaseImage, bins: Optional[Union[float, int]] = 
     check_image = image_array_check_conversion(image)
 
     try:
-        threshold = sk_thresh_yen(check_image.image, nbins=bins)
+        threshold = sk_thresh_yen(check_image.image, nbins=int(bins))
     except Exception as e:
         raise FilteringError("Failed to compute the threshold based on yen's strategy") from e
 
@@ -203,10 +204,13 @@ def compute_threshold_multiotsu(
     if not isinstance(bins, (float, int)):
         raise WrongArgumentsType("Bins can only be provided as either integer or float")
 
+    if not isinstance(classes, (float, int)):
+        raise WrongArgumentsType("Classes can only be provided as either integer or float")
+
     check_image = image_array_check_conversion(image)
 
     try:
-        threshold = sk_thresh_yen(check_image.image, nbins=bins)
+        threshold = sk_thresh_multiotsu(check_image.image, nbins=int(bins), classes=int(classes))
     except Exception as e:
         raise FilteringError("Failed to compute the threshold based on yen's strategy") from e
 
