@@ -11,6 +11,7 @@ from commons.exceptions import WrongArgumentsType, WrongArgumentsValue, Filterin
 from commons.warning import DefaultSetting
 from typing import Union, List, Tuple, Optional
 from skimage.filters.edges import scharr as sk_scharr
+from skimage.filters._unsharp_mask import unsharp_mask as sk_unsharp_mask
 from image._common_datastructs import SKIMAGE_SAMPLING_REGISTRY, AllowedDataType
 from image.filter._common_datastructs import BORDER_INTERPOLATION
 
@@ -186,6 +187,42 @@ def scharr(
         check_image._update_dtype()
     except Exception as e:
         raise FilteringError("Failed to filter the image using Prewitt transform") from e
+
+    return check_image
+
+# -------------------------------------------------------------------------
+
+@check_image_exist_external
+def unsharp_mask_filter(
+    image: BaseImage,
+    radius: Optional[Union[float, int]] = 1.0,
+    scale_factor: Optional[Union[float, int]] = 1.0
+) -> BaseImage:
+    """Identifies the sharp details in the image and adds them back to the original image"""
+
+    if not isinstance(radius, (float, int)):
+        raise WrongArgumentsType("Radius can only be specified as int or float")
+
+    if not isinstance(scale_factor, (float, int)):
+        raise WrongArgumentsType("Scale factor can only be specified as int or float")
+
+    check_image = image_array_check_conversion(image)
+    channel_axis = None if check_image.channels == 0 else 2
+
+    try:
+        check_image._set_image(
+            sk_unsharp_mask(
+                check_image.image,
+                radius=float(radius),
+                amount=float(scale_factor),
+                preserve_range=True,
+                channel_axis=channel_axis
+            ).astype(AllowedDataType.Float32.value),
+            copy=False
+        )
+        check_image._update_dtype()
+    except Exception as e:
+        raise FilteringError("Failed to filter the image with the Unsharp mask filter") from e
 
     return check_image
 

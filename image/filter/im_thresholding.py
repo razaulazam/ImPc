@@ -183,20 +183,3 @@ def sauvola_threshold(
     return check_image
 
 # -------------------------------------------------------------------------
-
-if __name__ == "__main__":
-    import cv2
-    from pathlib import Path
-    import numpy as np
-    from image.load.loader import open_image
-    from image.transform.color_conversion import convert
-    from skimage.filters.thresholding import threshold_multiotsu
-    image_path = Path(__file__).parent.parent.parent / "sample.jpg"
-
-    image = open_image(str(image_path))
-    #image = convert(image, "rgb2gray")
-    #image = image.image.astype(np.uint8)
-
-    im1 = threshold_multiotsu(image.image, 2)
-
-    print("hallo")

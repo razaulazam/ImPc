@@ -199,7 +199,7 @@ def compute_threshold_multiotsu(
     classes: Optional[Union[float, int]] = 3,
     bins: Optional[Union[float, int]] = 256
 ) -> np.ndarray:
-    """Computes the threshold based on the yen's method"""
+    """Computes the threshold based on the multiotsu method"""
 
     if not isinstance(bins, (float, int)):
         raise WrongArgumentsType("Bins can only be provided as either integer or float")
@@ -212,7 +212,7 @@ def compute_threshold_multiotsu(
     try:
         threshold = sk_thresh_multiotsu(check_image.image, nbins=int(bins), classes=int(classes))
     except Exception as e:
-        raise FilteringError("Failed to compute the threshold based on yen's strategy") from e
+        raise FilteringError("Failed to compute the threshold based on multiotsu strategy") from e
 
     return threshold
 
