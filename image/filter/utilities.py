@@ -2,6 +2,7 @@
 # \brief Utility methods that support filtering operations
 
 import cv2
+import numpy as np
 
 from typing import Union, List, Tuple, Optional
 from image.load._interface import BaseImage
@@ -175,6 +176,28 @@ def compute_threshold_triangle(image: BaseImage, bins: Optional[Union[float, int
 
 @check_image_exist_external
 def compute_threshold_yen(image: BaseImage, bins: Optional[Union[float, int]] = 256) -> float:
+    """Computes the threshold based on the yen's method"""
+
+    if not isinstance(bins, (float, int)):
+        raise WrongArgumentsType("Bins can only be provided as either integer or float")
+
+    check_image = image_array_check_conversion(image)
+
+    try:
+        threshold = sk_thresh_yen(check_image.image, nbins=bins)
+    except Exception as e:
+        raise FilteringError("Failed to compute the threshold based on yen's strategy") from e
+
+    return threshold
+
+# -------------------------------------------------------------------------
+
+@check_image_exist_external
+def compute_threshold_multiotsu(
+    image: BaseImage,
+    classes: Optional[Union[float, int]] = 3,
+    bins: Optional[Union[float, int]] = 256
+) -> np.ndarray:
     """Computes the threshold based on the yen's method"""
 
     if not isinstance(bins, (float, int)):

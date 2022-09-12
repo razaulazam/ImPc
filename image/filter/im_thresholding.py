@@ -9,6 +9,8 @@ from commons.warning import DefaultSetting
 from image._decorators import check_image_exist_external
 from image._helpers import image_array_check_conversion
 from image._common_datastructs import AllowedDataType
+from skimage.filters.thresholding import threshold_niblack as sk_niblack
+from skimage.filters.thresholding import threshold_sauvola as sk_sauvola
 from typing import Union, Optional
 
 # -------------------------------------------------------------------------
@@ -126,7 +128,61 @@ def niblack_threshold(
 ) -> BaseImage:
     """Computes the local Niblack threshold"""
 
-    ...
+    if not isinstance(kernel_size, (float, int)):
+        raise WrongArgumentsType("Kernel size must be either an integer or a float value")
+
+    if kernel_size <= 0 or kernel_size % 2 != 1:
+        raise WrongArgumentsValue("Kernel size can not be <= 0 and must always be odd")
+
+    if not isinstance(factor, float):
+        raise WrongArgumentsType("Factor must only be defined as a float value")
+
+    check_image = image_array_check_conversion(image)
+
+    try:
+        check_image._set_image(
+            sk_niblack(check_image.image, kernel_size,
+                       factor).astype(AllowedDataType.Float32.value, copy=False)
+        )
+        check_image._update_dtype()
+    except Exception as e:
+        raise FilteringError("Failed to apply the Niblack threshold to the image") from e
+
+    return check_image
+
+# -------------------------------------------------------------------------
+
+@check_image_exist_external
+def sauvola_threshold(
+    image: BaseImage,
+    kernel_size: Optional[Union[float, int]] = 15,
+    factor: Optional[float] = 0.2
+) -> BaseImage:
+    """Applies local Sauvola threshold to the image"""
+
+    if not isinstance(kernel_size, (float, int)):
+        raise WrongArgumentsType("Kernel size must be either an integer or a float value")
+
+    if kernel_size <= 0 or kernel_size % 2 != 1:
+        raise WrongArgumentsValue("Kernel size can not be <= 0 and must always be odd")
+
+    if not isinstance(factor, float):
+        raise WrongArgumentsType("Factor must only be defined as a float value")
+
+    check_image = image_array_check_conversion(image)
+
+    try:
+        check_image._set_image(
+            sk_sauvola(check_image.image, kernel_size,
+                       factor).astype(AllowedDataType.Float32.value, copy=False)
+        )
+        check_image._update_dtype()
+    except Exception as e:
+        raise FilteringError("Failed to apply the Niblack threshold to the image") from e
+
+    return check_image
+
+# -------------------------------------------------------------------------
 
 if __name__ == "__main__":
     import cv2
@@ -134,13 +190,13 @@ if __name__ == "__main__":
     import numpy as np
     from image.load.loader import open_image
     from image.transform.color_conversion import convert
-    from skimage.filters.thresholding import threshold_sauvola
+    from skimage.filters.thresholding import threshold_multiotsu
     image_path = Path(__file__).parent.parent.parent / "sample.jpg"
 
     image = open_image(str(image_path))
     #image = convert(image, "rgb2gray")
     #image = image.image.astype(np.uint8)
 
-    im1 = threshold_sauvola(image.image)
+    im1 = threshold_multiotsu(image.image, 2)
 
     print("hallo")
