@@ -290,15 +290,3 @@ def bilateral_filter(
     return check_image
 
 # -------------------------------------------------------------------------
-
-if __name__ == "__main__":
-    from pathlib import Path
-    from image.load.loader import open_image
-    from skimage.restoration import denoise_nl_means
-
-    image_path = Path(__file__).parent.parent.parent / "sample.jpg"
-    image = open_image(str(image_path))
-
-    output = denoise_nl_means(image.image)
-
-    print("dsad")

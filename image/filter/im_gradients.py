@@ -13,7 +13,7 @@ from typing import Union, List, Tuple, Optional
 from skimage.filters.edges import scharr as sk_scharr
 from skimage.filters._unsharp_mask import unsharp_mask as sk_unsharp_mask
 from image._common_datastructs import SKIMAGE_SAMPLING_REGISTRY, AllowedDataType
-from image.filter._common_datastructs import BORDER_INTERPOLATION
+from image._common_datastructs import CV_BORDER_INTERPOLATION
 
 # -------------------------------------------------------------------------
 
@@ -62,15 +62,15 @@ def laplacian(
         DefaultSetting(
             "Provided border option is not supported for this operation. Using the default strategy (reflect)"
         )
-        border_actual = BORDER_INTERPOLATION["default"]
+        border_actual = CV_BORDER_INTERPOLATION["default"]
     else:
-        border_actual = BORDER_INTERPOLATION.get(border, None)
+        border_actual = CV_BORDER_INTERPOLATION.get(border, None)
 
     if border_actual is None:
         DefaultSetting(
             "Provided border option is not supported by the library currently. Using the default strategy (reflect)"
         )
-        border_actual = BORDER_INTERPOLATION["default"]
+        border_actual = CV_BORDER_INTERPOLATION["default"]
 
     try:
         check_image._set_image(
@@ -117,15 +117,15 @@ def sobel(
         DefaultSetting(
             "Provided border option is not supported for this operation. Using the default strategy (reflect)"
         )
-        border_actual = BORDER_INTERPOLATION["default"]
+        border_actual = CV_BORDER_INTERPOLATION["default"]
     else:
-        border_actual = BORDER_INTERPOLATION.get(border, None)
+        border_actual = CV_BORDER_INTERPOLATION.get(border, None)
 
     if border_actual is None:
         DefaultSetting(
             "Provided border option is not supported by the library currently. Using the default strategy (reflect)"
         )
-        border_actual = BORDER_INTERPOLATION["default"]
+        border_actual = CV_BORDER_INTERPOLATION["default"]
 
     try:
         check_image._set_image(
