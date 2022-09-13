@@ -163,6 +163,49 @@ def tv_chambolle_denoising(
 
 # -------------------------------------------------------------------------
 
+def wavelet_denoising(image: BaseImage, wavelet: Optional[str] = ""):
+    wavelist = {
+        "db1": "db1",
+        "db1": "db2",
+        "db1": "db3",
+        "db1": "db4",
+        "db1": "db5",
+        "db1": "db6",
+        "db1": "db7",
+        "db1": "db8",
+        "db1": "db9",
+        "db1": "db10",
+        "db1": "db11",
+        "db1": "db12",
+        "db1": "db13",
+        "db1": "db14",
+        "db1": "db15",
+        "db1": "db16",
+        "db1": "db17",
+        "db1": "db18",
+        "db1": "db19",
+        "db1": "db20",
+        "db1": "db21",
+        "db1": "db22",
+        "db1": "db23",
+        "db1": "db24",
+        "db1": "db25",
+        "db1": "db26",
+        "db1": "db27",
+        "db1": "db28",
+        "db1": "db29",
+        "db1": "db30",
+        "db1": "db31",
+        "db1": "db32",
+        "db1": "db33",
+        "db1": "db34",
+        "db1": "db35",
+        "db1": "db36",
+        "db1": "db37",
+        "db1": "db38",
+        "haar": "haar",
+    } #continue with this
+
 if __name__ == "__main__":
     from pathlib import Path
     from image.load.loader import open_image
