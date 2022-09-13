@@ -12,7 +12,7 @@ from image.load._interface import BaseImage
 from image._decorators import check_image_exist_external
 from image._helpers import image_array_check_conversion, check_user_provided_ndarray
 from image._common_datastructs import AllowedDataType
-from image.filter._common_datastructs import BORDER_INTERPOLATION
+from image._common_datastructs import CV_BORDER_INTERPOLATION
 from image.filter._common_methods import is_not_namedtuple
 
 # -------------------------------------------------------------------------
@@ -45,12 +45,12 @@ def corr2d(
 
     check_image = image_array_check_conversion(image)
 
-    border_actual = BORDER_INTERPOLATION.get(border, None)
+    border_actual = CV_BORDER_INTERPOLATION.get(border, None)
     if border_actual is None:
         DefaultSetting(
             "Provided border option is not supported currently. Using the default strategy (reflect)"
         )
-        border_actual = BORDER_INTERPOLATION["default"]
+        border_actual = CV_BORDER_INTERPOLATION["default"]
 
     try:
         check_image._set_image(
@@ -96,15 +96,15 @@ def average_blur(
         DefaultSetting(
             "Provided border option is not supported for this operation. Using the default strategy (reflect)"
         )
-        border_actual = BORDER_INTERPOLATION["default"]
+        border_actual = CV_BORDER_INTERPOLATION["default"]
     else:
-        border_actual = BORDER_INTERPOLATION.get(border, None)
+        border_actual = CV_BORDER_INTERPOLATION.get(border, None)
 
     if border_actual is None:
         DefaultSetting(
             "Provided border option is not supported by the library currently. Using the default strategy (reflect)"
         )
-        border_actual = BORDER_INTERPOLATION["default"]
+        border_actual = CV_BORDER_INTERPOLATION["default"]
 
     kernel_size = [int(i) for i in kernel_size]
     try:
@@ -165,15 +165,15 @@ def gaussian_blur(
         DefaultSetting(
             "Provided border option is not supported for this operation. Using the default strategy (reflect)"
         )
-        border_actual = BORDER_INTERPOLATION["default"]
+        border_actual = CV_BORDER_INTERPOLATION["default"]
     else:
-        border_actual = BORDER_INTERPOLATION.get(border, None)
+        border_actual = CV_BORDER_INTERPOLATION.get(border, None)
 
     if border_actual is None:
         DefaultSetting(
             "Provided border option is not supported by the library currently. Using the default strategy (reflect)"
         )
-        border_actual = BORDER_INTERPOLATION["default"]
+        border_actual = CV_BORDER_INTERPOLATION["default"]
 
     kernel_size = [int(i) for i in kernel_size]
     try:
@@ -270,12 +270,12 @@ def bilateral_filter(
         check_image._image_conversion_helper(AllowedDataType.Uint8)
         check_image._update_dtype()
 
-    border_actual = BORDER_INTERPOLATION.get(border, None)
+    border_actual = CV_BORDER_INTERPOLATION.get(border, None)
     if border_actual is None:
         DefaultSetting(
             "Provided border option is not supported by the library currently. Using the default strategy (reflect)"
         )
-        border_actual = BORDER_INTERPOLATION["default"]
+        border_actual = CV_BORDER_INTERPOLATION["default"]
 
     try:
         check_image._set_image(
@@ -290,3 +290,15 @@ def bilateral_filter(
     return check_image
 
 # -------------------------------------------------------------------------
+
+if __name__ == "__main__":
+    from pathlib import Path
+    from image.load.loader import open_image
+    from skimage.restoration import denoise_nl_means
+
+    image_path = Path(__file__).parent.parent.parent / "sample.jpg"
+    image = open_image(str(image_path))
+
+    output = denoise_nl_means(image.image)
+
+    print("dsad")
