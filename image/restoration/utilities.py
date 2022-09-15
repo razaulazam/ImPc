@@ -1,9 +1,14 @@
+# Copyright (C) Raza Ul Azam., All Rights Reserved.
+# \brief Utilities for image restoration module
+
 from image.load._interface import BaseImage
 from typing import Optional, Union
 from commons.exceptions import WrongArgumentsType, RestorationError
 from image._helpers import image_array_check_conversion
 from image._decorators import check_image_exist_external
 from skimage.restoration import estimate_sigma as sk_sigma_estimator
+
+# -------------------------------------------------------------------------
 
 @check_image_exist_external
 def calculate_sigma(image: BaseImage, sigma_every_channel: Optional[bool] = False) -> Union[float, list]:
@@ -22,3 +27,4 @@ def calculate_sigma(image: BaseImage, sigma_every_channel: Optional[bool] = Fals
     
     return calculated_sigma
 
+# -------------------------------------------------------------------------

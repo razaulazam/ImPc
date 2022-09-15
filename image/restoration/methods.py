@@ -5,15 +5,16 @@ import cv2
 import numpy as np
 
 from typing import Optional, Union
-from commons.exceptions import WrongArgumentsType, RestorationError
+from commons.exceptions import WrongArgumentsType, RestorationError, WrongArgumentsValue
 from commons.warning import DefaultSetting, ImageDataTypeConversion
 from image.load._interface import BaseImage
-from image._helpers import image_array_check_conversion
+from image._helpers import image_array_check_conversion, check_user_provided_ndarray
 from image._common_datastructs import AllowedDataType, CV_BORDER_INTERPOLATION
 from image._decorators import check_image_exist_external
 from skimage.restoration import denoise_tv_bregman as sk_denoise_bregman
 from skimage.restoration import denoise_tv_chambolle as sk_denoise_tv_chambolle
 from skimage.restoration import denoise_wavelet as sk_denoise_wavelet
+from skimage.restoration import inpaint_biharmonic as sk_biharmonic_inpaint
 
 # -------------------------------------------------------------------------
 
@@ -377,12 +378,53 @@ def wavelet_denoising(
 # -------------------------------------------------------------------------
 
 @check_image_exist_external
-def biharmonic_inpainting(image: BaseImage, mask: np.ndarray, regions_split: Optional[bool] = False) -> BaseImage:
-    """Biharmonic inpainting for restoring the corrupted parts in an image. Result is returned as float32 image"""
+def biharmonic_inpainting(
+    image: BaseImage, mask: np.ndarray, regions_split: Optional[bool] = False
+) -> BaseImage:
+    """Biharmonic inpainting for restoring the corrupted parts in an image. Result is returned as float32 image
+    Note: 
+        - Mask must be provided as a 2D array. Unknown pixels are denoted with 1 and all the pixels can not be 1
+        - Regions splitting performs inpainting on a region-by-region basis which is slow but reduces overall memory requirements
+    """
 
     if not isinstance(mask, np.ndarray):
         raise WrongArgumentsType("Mask can only be provided as a numpy array")
-    
+
+    if np.all(mask):
+        raise WrongArgumentsValue("Mask can not specify all of the pixels as unknown")
+
+    if len(mask.shape) > 2:
+        raise WrongArgumentsValue("Mask must be provided as 2D numpy array")
+
+    if mask.shape != image.dims:
+        raise WrongArgumentsValue("Dimensions of the image and the mask do not match")
+
+    if not isinstance(regions_split, bool):
+        raise WrongArgumentsType("Regions split argument should be given as bool")
+
+    check_mask = check_user_provided_ndarray(mask)
+    check_image = image_array_check_conversion(image)
+    channel_axis = None if check_image.channels == 0 else 2
+
+    try:
+        check_image._set_image(
+            sk_biharmonic_inpaint(
+                check_image.image,
+                check_mask,
+                split_into_regions=regions_split,
+                channel_axis=channel_axis
+            ).astype(AllowedDataType.Float32.value, copy=False)
+        )
+        check_image._update_dtype()
+    except Exception as e:
+        raise RestorationError(
+            "Failed to inpaint the image with biharmonic inpainting strategy"
+        ) from e
+
+    return check_image
+
+# -------------------------------------------------------------------------
+
 if __name__ == "__main__":
     from pathlib import Path
     from image.load.loader import open_image
@@ -391,8 +433,9 @@ if __name__ == "__main__":
 
     image_path = Path(__file__).parent.parent.parent / "sample.jpg"
     image = open_image(str(image_path))
-    kernel = np.zeros((145, 335))
-    kernel[:10, :10] = 1
+    kernel = np.ones((400, 750))
+    flag = np.all(kernel)
+    #kernel[:10, :10] = 1
     output = inpaint_biharmonic(image.image, kernel, channel_axis=2)
 
     print("dsad")
