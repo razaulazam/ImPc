@@ -1,7 +1,6 @@
 # Copyright (C) Raza Ul Azam., All Rights Reserved.
 # \brief Image restoration methods
 
-from tabnanny import check
 import cv2
 
 from typing import Optional, Union
@@ -176,7 +175,7 @@ def wavelet_denoising(
     method: Optional[str] = "BayesShrink"
 ) -> BaseImage:
     """Wavelet denoising on the image. Result is returned as float32"""
-    
+
     mode_list = {"soft": "soft", "hard": "hard"}
     method_list = {"bayes": "BayesShrink", "visu": "VisuShrink"}
     wavelist = {
@@ -336,14 +335,14 @@ def wavelet_denoising(
             "Using the default wavelet (db1) since the provided wavelet is not supported by the library"
         )
         wavelet_arg = wavelist.get("db1")
-    
+
     mode_arg = mode_list.get(mode, None)
     if mode_arg is None:
         DefaultSetting(
             "Using the default mode (soft) since the provided mode is not supported by the library"
         )
         mode_arg = mode_list.get("soft")
-        
+
     method_arg = method_list.get(method, None)
     if method_arg is None:
         DefaultSetting(
