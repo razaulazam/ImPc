@@ -2,6 +2,7 @@
 # \brief Image restoration methods
 
 import cv2
+import numpy as np
 
 from typing import Optional, Union
 from commons.exceptions import WrongArgumentsType, RestorationError
@@ -375,14 +376,23 @@ def wavelet_denoising(
 
 # -------------------------------------------------------------------------
 
+@check_image_exist_external
+def biharmonic_inpainting(image: BaseImage, mask: np.ndarray, regions_split: Optional[bool] = False) -> BaseImage:
+    """Biharmonic inpainting for restoring the corrupted parts in an image. Result is returned as float32 image"""
+
+    if not isinstance(mask, np.ndarray):
+        raise WrongArgumentsType("Mask can only be provided as a numpy array")
+    
 if __name__ == "__main__":
     from pathlib import Path
     from image.load.loader import open_image
-    from skimage.restoration import denoise_wavelet
+    from skimage.restoration import inpaint_biharmonic
+    import numpy as np
 
     image_path = Path(__file__).parent.parent.parent / "sample.jpg"
     image = open_image(str(image_path))
-
-    output = denoise_wavelet(image.image, convert2ycbcr=True, channel_axis=2)
+    kernel = np.zeros((145, 335))
+    kernel[:10, :10] = 1
+    output = inpaint_biharmonic(image.image, kernel, channel_axis=2)
 
     print("dsad")
