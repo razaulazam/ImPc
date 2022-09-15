@@ -15,6 +15,7 @@ from skimage.restoration import denoise_tv_bregman as sk_denoise_bregman
 from skimage.restoration import denoise_tv_chambolle as sk_denoise_tv_chambolle
 from skimage.restoration import denoise_wavelet as sk_denoise_wavelet
 from skimage.restoration import inpaint_biharmonic as sk_biharmonic_inpaint
+from skimage.restoration import richardson_lucy as sk_richardson_lucy
 
 # -------------------------------------------------------------------------
 
@@ -425,17 +426,58 @@ def biharmonic_inpainting(
 
 # -------------------------------------------------------------------------
 
+@check_image_exist_external
+def deconv_richardson_lucy(
+    image: BaseImage,
+    kernel: np.ndarray,
+    iterations: Optional[Union[float, int]] = 50
+) -> BaseImage:
+    """Deconvolution using Richardson-Lucy algorithm. Result is returned as float32 image
+    Note:
+        - Kernel must have same number of channels as the image
+    """
+
+    if not isinstance(kernel, np.ndarray):
+        raise WrongArgumentsType("Kernel can only be provided as a numpy array")
+
+    if image.channels == 0 and len(kernel.shape) > 2:
+        raise WrongArgumentsValue(
+            "Kernel should be two dimensional since the input image is gray-scale"
+        )
+
+    if image.channels > 0 and len(kernel.shape) < 3:
+        raise WrongArgumentsValue("Kernel must have a channels dimension as the image")
+
+    if not isinstance(iterations, (float, int)):
+        raise WrongArgumentsType("Number of iterations can only be specified as integer or float")
+
+    check_kernel = check_user_provided_ndarray(kernel)
+    check_image = image_array_check_conversion(image)
+
+    try:
+        check_image._set_image(
+            sk_richardson_lucy(check_image.image, check_kernel, num_iter=int(iterations)
+                               ).astype(AllowedDataType.Float32.value, copy=False)
+        )
+        check_image._update_dtype()
+    except Exception as e:
+        raise RestorationError(
+            "Failed to deconvolve the image with Richardson-Lucy algorithm"
+        ) from e
+
+    return check_image
+
+# -------------------------------------------------------------------------
+
 if __name__ == "__main__":
     from pathlib import Path
     from image.load.loader import open_image
-    from skimage.restoration import inpaint_biharmonic
+    from skimage.restoration import richardson_lucy
     import numpy as np
 
     image_path = Path(__file__).parent.parent.parent / "sample.jpg"
     image = open_image(str(image_path))
-    kernel = np.ones((400, 750))
-    flag = np.all(kernel)
-    #kernel[:10, :10] = 1
-    output = inpaint_biharmonic(image.image, kernel, channel_axis=2)
+    kernel = np.ones((40, 75, 3))
+    output = richardson_lucy(image.image, kernel)
 
     print("dsad")
