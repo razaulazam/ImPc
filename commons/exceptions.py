@@ -31,6 +31,11 @@ class FilteringError(_BaseException):
 
 # -------------------------------------------------------------------------
 
+class RestorationError(_BaseException):
+    pass
+
+# -------------------------------------------------------------------------
+
 class LoaderError(_BaseException):
     pass
 
