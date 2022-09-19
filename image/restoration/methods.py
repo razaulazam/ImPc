@@ -6,7 +6,7 @@ import numpy as np
 
 from typing import Optional, Union
 from commons.exceptions import WrongArgumentsType, RestorationError, WrongArgumentsValue
-from commons.warning import DefaultSetting, ImageDataTypeConversion
+from commons.warning import DefaultSetting, ImageDataTypeConversion, IgnoreArgument
 from image.load._interface import BaseImage
 from image._helpers import image_array_check_conversion, check_user_provided_ndarray
 from image._common_datastructs import AllowedDataType, CV_BORDER_INTERPOLATION
@@ -16,6 +16,7 @@ from skimage.restoration import denoise_tv_chambolle as sk_denoise_tv_chambolle
 from skimage.restoration import denoise_wavelet as sk_denoise_wavelet
 from skimage.restoration import inpaint_biharmonic as sk_biharmonic_inpaint
 from skimage.restoration import richardson_lucy as sk_richardson_lucy
+from skimage.restoration import rolling_ball as sk_rolling_ball
 
 # -------------------------------------------------------------------------
 
@@ -469,16 +470,48 @@ def deconv_richardson_lucy(
 
 # -------------------------------------------------------------------------
 
+@check_image_exist_external
+def rolling_ball(image: BaseImage, radius: Optional[Union[int, float]] = 100, ball_kernel: Optional[np.ndarray] = None) -> BaseImage:
+    """Estimates the background intensity by rolling/translating a kernel"""
+
+    if not kernel:
+        if not isinstance(radius, (float, int)):
+            raise WrongArgumentsType("Radius can only be supplied as either integer or float")
+        if radius <= 0:
+            raise WrongArgumentsValue("Radius can not have a negative value")
+
+    if kernel and not isinstance(kernel, np.ndarray):
+        raise WrongArgumentsType("Kernel can only be supplied as a numpy array")
+
+    if kernel:
+        IgnoreArgument("Value of the radius would be ignored since the kernel is already provided")
+        if kernel.shape != ((*image.dims, image.channels)):
+            raise WrongArgumentsValue("Dimensions of the kernel must be equal to the image")
+
+    check_image = image_array_check_conversion(image)
+    check_kernel = check_user_provided_ndarray(kernel) if kernel else None
+
+    try:
+        check_image._set_image(sk_rolling_ball(check_image.image, radius=int(radius), kernel=check_kernel).astype(AllowedDataType.Float32.value, copy=False))
+        check_image._update_dtype()
+    except Exception as e:
+        raise RestorationError("Failed to compute the background intensity with rolling ball kernel") from e
+
+    return check_image
+
+# -------------------------------------------------------------------------
+
+
 if __name__ == "__main__":
     from pathlib import Path
     from image.load.loader import open_image
-    from skimage.restoration import rolling_ball, ellipsoid_kernel
+    from skimage.restoration import unsupervised_wiener
     import numpy as np
 
     image_path = Path(__file__).parent.parent.parent / "sample.jpg"
     image = open_image(str(image_path))
     kernel = np.ones((40, 75, 3))
-   # output = rolling_ball(image.image)
-    kernel = ellipsoid_kernel((42, 75, 3), -20)
+    output = unsupervised_wiener(image.image, psf=kernel)
+  
 
     print("dsad")
