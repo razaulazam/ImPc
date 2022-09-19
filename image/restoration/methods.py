@@ -17,6 +17,7 @@ from skimage.restoration import denoise_wavelet as sk_denoise_wavelet
 from skimage.restoration import inpaint_biharmonic as sk_biharmonic_inpaint
 from skimage.restoration import richardson_lucy as sk_richardson_lucy
 from skimage.restoration import rolling_ball as sk_rolling_ball
+from skimage.restoration import unwrap_phase as sk_unwrap_phase
 
 # -------------------------------------------------------------------------
 
@@ -472,7 +473,7 @@ def deconv_richardson_lucy(
 
 @check_image_exist_external
 def rolling_ball(image: BaseImage, radius: Optional[Union[int, float]] = 100, ball_kernel: Optional[np.ndarray] = None) -> BaseImage:
-    """Estimates the background intensity by rolling/translating a kernel"""
+    """Estimates the background intensity by rolling/translating a kernel. Result is returned as float32 image"""
 
     if not kernel:
         if not isinstance(radius, (float, int)):
@@ -501,17 +502,24 @@ def rolling_ball(image: BaseImage, radius: Optional[Union[int, float]] = 100, ba
 
 # -------------------------------------------------------------------------
 
+def unwrap_phase(image: BaseImage, wrap: Optional[bool] = False, seed: Optional[int] = None) -> BaseImage:
+    """Recovers the original image from wrapped phase image. Result is returned as float32 image"""
 
-if __name__ == "__main__":
-    from pathlib import Path
-    from image.load.loader import open_image
-    from skimage.restoration import unsupervised_wiener
-    import numpy as np
+    if not isinstance(wrap, bool):
+        raise WrongArgumentsType("Wrap argument can either be true or false (boolean)")
 
-    image_path = Path(__file__).parent.parent.parent / "sample.jpg"
-    image = open_image(str(image_path))
-    kernel = np.ones((40, 75, 3))
-    output = unsupervised_wiener(image.image, psf=kernel)
-  
+    if seed and not isinstance(seed, int):
+        raise WrongArgumentsType("Seed should only be provided as an integer value")
 
-    print("dsad")
+    check_image = image_array_check_conversion(image)
+
+    try:
+        check_image._set_image(sk_unwrap_phase(check_image.image, wrap_around=wrap, seed=seed).astype(AllowedDataType.Float32.value, copy=False))
+        check_image._update_dtype()
+    except Exception as e:
+        raise RestorationError("Failed to recover the original image from the wrapped phase image") from e
+
+    return check_image
+
+# -------------------------------------------------------------------------
+
