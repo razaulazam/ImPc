@@ -1,12 +1,15 @@
 # Copyright (C) Raza Ul Azam., All Rights Reserved.
 # \brief Utilities for image restoration module
 
+import numpy as np
+
 from image.load._interface import BaseImage
 from typing import Optional, Union
 from commons.exceptions import WrongArgumentsType, RestorationError
 from image._helpers import image_array_check_conversion
 from image._decorators import check_image_exist_external
 from skimage.restoration import estimate_sigma as sk_sigma_estimator
+from skimage.restoration import ellipsoid_kernel as sk_ellipsoid_kernel
 
 # -------------------------------------------------------------------------
 
@@ -26,5 +29,23 @@ def calculate_sigma(image: BaseImage, sigma_every_channel: Optional[bool] = Fals
         raise RestorationError("Failed to calculate the sigma for this image") from e
     
     return calculated_sigma
+
+# -------------------------------------------------------------------------
+
+def get_ellipsoid_kernel(shape: Union[tuple, list], intensity: Union[int, float]) -> np.ndarray:
+    """Creates an ellipsoid kernel for use in rolling ball algorithms"""
+
+    if not isinstance(shape, (list, tuple)):
+        raise WrongArgumentsType("Shape argument can only be provided as a tuple or a list")
+    
+    if not isinstance(intensity, (float, int)):
+        raise WrongArgumentsType("Intensity should be provided as either integer or float")
+
+    try:
+        kernel = sk_ellipsoid_kernel(shape, int(intensity))
+    except Exception as e:
+        raise RestorationError("Failed to compute the ellipsoid kernel for the specified shape and intensity") from e
+
+    return kernel
 
 # -------------------------------------------------------------------------

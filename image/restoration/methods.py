@@ -472,12 +472,13 @@ def deconv_richardson_lucy(
 if __name__ == "__main__":
     from pathlib import Path
     from image.load.loader import open_image
-    from skimage.restoration import rolling_ball
+    from skimage.restoration import rolling_ball, ellipsoid_kernel
     import numpy as np
 
     image_path = Path(__file__).parent.parent.parent / "sample.jpg"
     image = open_image(str(image_path))
     kernel = np.ones((40, 75, 3))
-    output = rolling_ball(image.image)
+   # output = rolling_ball(image.image)
+    kernel = ellipsoid_kernel((42, 75, 3), -20)
 
     print("dsad")
