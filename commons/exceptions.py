@@ -36,6 +36,11 @@ class RestorationError(_BaseException):
 
 # -------------------------------------------------------------------------
 
+class FeatureError(_BaseException):
+    pass
+
+# -------------------------------------------------------------------------
+
 class LoaderError(_BaseException):
     pass
 

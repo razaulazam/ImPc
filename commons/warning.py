@@ -32,3 +32,10 @@ class IgnoreArgument(BaseWarning):
         super().__init__(message)
 
 # -------------------------------------------------------------------------
+
+class ImageModeConversion(BaseWarning):
+
+    def __init__(self, message: str):
+        super().__init__(message)
+
+# -------------------------------------------------------------------------
