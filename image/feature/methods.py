@@ -1,6 +1,8 @@
 # Copyright (C) Raza Ul Azam, All Rights Reserved.
 # \brief Image feature detection methods
 
+import numpy as np
+
 from commons.exceptions import WrongArgumentsType, WrongArgumentsValue, FeatureError
 from commons.warning import ImageModeConversion
 from image._decorators import check_image_exist_external
@@ -11,6 +13,7 @@ from typing import Optional, Union
 from skimage.feature import canny as sk_canny
 from skimage.feature import blob_dog as sk_blob_dog
 from skimage.feature import blob_doh as sk_blob_doh
+from skimage.feature import blob_log as sk_blob_log
 
 # -------------------------------------------------------------------------
 
@@ -114,6 +117,43 @@ def blob_determinant_hessian(image: BaseImage, sigma_min: Optional[float] = 1.0,
     return found_blobs
 
 # -------------------------------------------------------------------------
+
+@check_image_exist_external
+def blob_laplacian_gaussian(image: BaseImage, sigma_min: Optional[float] = 1.0, sigma_max: Optional[float] = 50.0, sigma_num: Optional[Union[int, float]] = 10, threshold: Optional[float] = 0.2, overlap: Optional[float] = 0.5) -> np.ndarray:
+    """Compute blobs in a grayscale image using laplacian of gaussian method"""
+
+    if not image.is_gray():
+        raise WrongArgumentsType("Input image should be grayscale for this method to work")
+
+    if not isinstance(sigma_min, float):
+        raise WrongArgumentsType("Minimum sigma should be provided as float")
+
+    if not isinstance(sigma_max, float):
+        raise WrongArgumentsType("Maximum sigma should be provided as float")
+    
+    if not isinstance(threshold, float):
+        raise WrongArgumentsType("Threshold should be provided as float")
+
+    if not isinstance(sigma_num, (int, float)):
+        raise WrongArgumentsType("Number of sigmas must be provided as float or int")
+
+    if not isinstance(overlap, float):
+        raise WrongArgumentsType("Overlap must be provided as float")
+
+    if overlap <= 0 or overlap >= 1:
+        raise WrongArgumentsValue("Overlap value should be between 0 and 1")
+
+    check_image = image_array_check_conversion(image)
+
+    try:
+        found_blobs = sk_blob_log(check_image.image, sigma_min, sigma_max, int(sigma_num), threshold, overlap)
+    except Exception as e:
+        raise FeatureError("Failed to find the blobs in the image") from e
+
+    return found_blobs
+
+# -------------------------------------------------------------------------
+
 
 if __name__ == "__main__":
     from pathlib import Path
