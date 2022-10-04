@@ -43,6 +43,7 @@ def simple_threshold(
     if not isinstance(method, str):
         raise WrongArgumentsType("Method can only be provided as a string")
 
+    method = method.lower()
     method_arg = CV_THRESHOLD_STRATEGY.get(method, None)
     if method_arg is None:
         raise WrongArgumentsValue("Provided thresholding method is wrong")
@@ -93,6 +94,7 @@ def adaptive_threshold(
     if not isinstance(subtract_val, (float, int)):
         raise WrongArgumentsType("Block size argument can only be provided as a integer")
 
+    threshold_method = threshold_method.lower()
     threshold_method_arg = CV_THRESHOLD_STRATEGY.get(threshold_method, None)
     if threshold_method_arg is None:
         raise WrongArgumentsValue("Provided thresholding method is wrong")

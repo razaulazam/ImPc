@@ -37,6 +37,7 @@ def get_kernel(kernel_shape: str, kernel_size: Union[List[int], Tuple[int, int]]
             "Please check the type of the first argument. Only strings are allowed"
         )
 
+    kernel_shape = kernel_shape.lower()
     shape_strategy = ALLOWED_KERNELS.get(kernel_shape, None)
     if shape_strategy is None:
         raise WrongArgumentsValue(

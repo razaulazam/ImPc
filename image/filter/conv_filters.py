@@ -45,7 +45,8 @@ def corr2d(
 
     check_image = image_array_check_conversion(image)
 
-    border_actual = CV_BORDER_INTERPOLATION.get(border.lower(), None)
+    border = border.lower()
+    border_actual = CV_BORDER_INTERPOLATION.get(border, None)
     if border_actual is None:
         DefaultSetting(
             "Provided border option is not supported currently. Using the default strategy (reflect)"
@@ -92,13 +93,14 @@ def average_blur(
 
     check_image = image_array_check_conversion(image)
 
-    if border.lower() == "wrap":
+    border = border.lower()
+    if border == "wrap":
         DefaultSetting(
             "Provided border option is not supported for this operation. Using the default strategy (reflect)"
         )
         border_actual = CV_BORDER_INTERPOLATION["default"]
     else:
-        border_actual = CV_BORDER_INTERPOLATION.get(border.lower(), None)
+        border_actual = CV_BORDER_INTERPOLATION.get(border, None)
 
     if border_actual is None:
         DefaultSetting(
@@ -161,6 +163,7 @@ def gaussian_blur(
 
     check_image = image_array_check_conversion(image)
 
+    border = border.lower()
     if border == "wrap":
         DefaultSetting(
             "Provided border option is not supported for this operation. Using the default strategy (reflect)"
@@ -270,6 +273,7 @@ def bilateral_filter(
         check_image._image_conversion_helper(AllowedDataType.Uint8)
         check_image._update_dtype()
 
+    border = border.lower()
     border_actual = CV_BORDER_INTERPOLATION.get(border, None)
     if border_actual is None:
         DefaultSetting(

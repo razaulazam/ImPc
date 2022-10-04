@@ -61,6 +61,7 @@ def bilateral_filter(
         check_image._image_conversion_helper(AllowedDataType.Uint8)
         check_image._update_dtype()
 
+    border = border.lower()
     border_actual = CV_BORDER_INTERPOLATION.get(border, None)
     if border_actual is None:
         DefaultSetting(
@@ -334,6 +335,7 @@ def wavelet_denoising(
     if not isinstance(method, str):
         raise WrongArgumentsType("Method value should be provided as string")
 
+    wavelet = wavelet.lower()
     wavelet_arg = wavelist.get(wavelet, None)
     if wavelet_arg is None:
         DefaultSetting(
@@ -475,22 +477,22 @@ def deconv_richardson_lucy(
 def rolling_ball(image: BaseImage, radius: Optional[Union[int, float]] = 100, ball_kernel: Optional[np.ndarray] = None) -> BaseImage:
     """Estimates the background intensity by rolling/translating a kernel. Result is returned as float32 image"""
 
-    if not kernel:
+    if not ball_kernel:
         if not isinstance(radius, (float, int)):
             raise WrongArgumentsType("Radius can only be supplied as either integer or float")
         if radius <= 0:
             raise WrongArgumentsValue("Radius can not have a negative value")
 
-    if kernel and not isinstance(kernel, np.ndarray):
+    if ball_kernel and not isinstance(ball_kernel, np.ndarray):
         raise WrongArgumentsType("Kernel can only be supplied as a numpy array")
 
-    if kernel:
+    if ball_kernel:
         IgnoreArgument("Value of the radius would be ignored since the kernel is already provided")
-        if kernel.shape != ((*image.dims, image.channels)):
+        if ball_kernel.shape != ((*image.dims, image.channels)):
             raise WrongArgumentsValue("Dimensions of the kernel must be equal to the image")
 
     check_image = image_array_check_conversion(image)
-    check_kernel = check_user_provided_ndarray(kernel) if kernel else None
+    check_kernel = check_user_provided_ndarray(ball_kernel) if ball_kernel else None
 
     try:
         check_image._set_image(sk_rolling_ball(check_image.image, radius=int(radius), kernel=check_kernel).astype(AllowedDataType.Float32.value, copy=False))
