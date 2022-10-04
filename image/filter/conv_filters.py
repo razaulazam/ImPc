@@ -45,7 +45,7 @@ def corr2d(
 
     check_image = image_array_check_conversion(image)
 
-    border_actual = CV_BORDER_INTERPOLATION.get(border, None)
+    border_actual = CV_BORDER_INTERPOLATION.get(border.lower(), None)
     if border_actual is None:
         DefaultSetting(
             "Provided border option is not supported currently. Using the default strategy (reflect)"
@@ -92,13 +92,13 @@ def average_blur(
 
     check_image = image_array_check_conversion(image)
 
-    if border == "wrap":
+    if border.lower() == "wrap":
         DefaultSetting(
             "Provided border option is not supported for this operation. Using the default strategy (reflect)"
         )
         border_actual = CV_BORDER_INTERPOLATION["default"]
     else:
-        border_actual = CV_BORDER_INTERPOLATION.get(border, None)
+        border_actual = CV_BORDER_INTERPOLATION.get(border.lower(), None)
 
     if border_actual is None:
         DefaultSetting(
