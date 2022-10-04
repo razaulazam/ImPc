@@ -1,22 +1,24 @@
 # Copyright (C) Raza Ul Azam, All Rights Reserved.
 # \brief Image feature detection methods
 
+from re import L
 import numpy as np
 
 from commons.exceptions import WrongArgumentsType, WrongArgumentsValue, FeatureError
-from commons.warning import ImageModeConversion
+from commons.warning import ImageModeConversion, DefaultSetting
 from image._decorators import check_image_exist_external
 from image.load._interface import BaseImage
 from image._helpers import AllowedDataType
 from image.transform.color_conversion import convert
 from image._helpers import image_array_check_conversion
-from typing import Optional, Union
+from typing import List, Optional, Tuple, Union
 from skimage.feature import canny as sk_canny
 from skimage.feature import blob_dog as sk_blob_dog
 from skimage.feature import blob_doh as sk_blob_doh
 from skimage.feature import blob_log as sk_blob_log
 from skimage.feature import corner_fast as sk_corner_fast
 from skimage.feature import corner_foerstner as sk_corner_foerstner
+from skimage.feature import corner_harris as sk_corner_harris
 
 # -------------------------------------------------------------------------
 
@@ -183,7 +185,8 @@ def compute_fast_corners(image: BaseImage, num_pixels: Optional[Union[int, float
 
 # -------------------------------------------------------------------------
 
-def compute_foerstner_corners(image: BaseImage, sigma: Optional[float] = 1.0) -> tuple(BaseImage, BaseImage):
+@check_image_exist_external
+def compute_foerstner_corners(image: BaseImage, sigma: Optional[float] = 1.0) -> Tuple[BaseImage]:
     """Compute foerstner corners of an image. Result is returned as a tuple of float32 images"""
 
     if not image.is_gray():
@@ -209,13 +212,49 @@ def compute_foerstner_corners(image: BaseImage, sigma: Optional[float] = 1.0) ->
 
 # -------------------------------------------------------------------------
 
+@check_image_exist_external
+def compute_harris_corners(image: BaseImage, method: Optional[str] = "k", sens_factor: Optional[float] = 0.05, sigma: Optional[float] = 1.0) -> BaseImage:
+    """Compute harris corner measure response image"""
+    
+    methods = {"k": "k", "eps": "eps"}
+
+    if not image.is_gray():
+        ImageModeConversion("Converting the image to grayscale since this method can only be applied on 2D images")
+        converted_image = convert(image, "rgb2gray")
+
+    if not isinstance(method, str):
+        raise WrongArgumentsType("Method should be supplied as a string")
+    
+    if not isinstance(sens_factor, float):
+        raise WrongArgumentsType("Sensitivity factor can only be supplied as float")
+
+    if not isinstance(sigma, float):
+        raise WrongArgumentsType("Sigma should be supplied as float")
+
+    method = method.lower()
+    method_arg = methods.get(method, None)
+    if method_arg is None:
+        DefaultSetting("Provided method is not supported by the library. Using the default method -> k")
+        method_arg = methods["k"]
+    
+    check_image = image_array_check_conversion(converted_image)
+
+    try:
+        check_image._set_image(sk_corner_harris(check_image.image, method=method_arg, k=sens_factor, sigma=sigma).astype(AllowedDataType.Float32.value, copy=False))
+        check_image._update_dtype()
+    except Exception as e:
+        raise FeatureError("Failed to compute harris corners of the provided image") from e
+
+    return check_image
+
+# -------------------------------------------------------------------------
 
 if __name__ == "__main__":
     from pathlib import Path
     import numpy as np
     from image.load.loader import open_image
     from image.transform.color_conversion import convert
-    from skimage.feature import corner_foerstner
+    from skimage.feature import corner_harris
     import cv2
     path_image = Path(__file__).parent.parent.parent / "sample.jpg"
     image = open_image(str(path_image))
@@ -223,6 +262,6 @@ if __name__ == "__main__":
     image_input = image.image.astype(np.uint16)
 
     #out = cv2.Canny(image_input, 100, 200)
-    out1, out2 = corner_foerstner(image.image)
+    out1 = corner_harris(image.image, k=0.3)
 
     print("hallo")
