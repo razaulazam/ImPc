@@ -21,6 +21,7 @@ from skimage.feature import corner_foerstner as sk_corner_foerstner
 from skimage.feature import corner_harris as sk_corner_harris
 from skimage.feature import corner_kitchen_rosenfeld as sk_corner_kr
 from skimage.feature import corner_moravec as sk_corner_moravec
+from skimage.feature import corner_shi_tomasi as sk_corner_shi_tomasi
 
 # -------------------------------------------------------------------------
 
@@ -331,46 +332,84 @@ def compute_kitchen_rosenfeld_corners(
 
     if not isinstance(mode, str):
         raise WrongArgumentsType("Mode can only be supplied as a string")
-    
+
     mode = mode.lower()
     mode_arg = SKIMAGE_SAMPLING_REGISTRY.get(mode, None)
     if mode_arg is None:
-        DefaultSetting("Choosing constant as sampling strategy for handling values outside the image borders since the provided mode is not currently supported")
+        DefaultSetting(
+            "Choosing constant as sampling strategy for handling values outside the image borders since the provided mode is not currently supported"
+        )
         mode_arg = SKIMAGE_SAMPLING_REGISTRY["constant"]
-    
+
     check_image = image_array_check_conversion(converted_image)
-    
+
     try:
-        check_image._set_image(sk_corner_kr(check_image.image, mode=mode_arg).astype(AllowedDataType.Float32.value, copy=False))
+        check_image._set_image(
+            sk_corner_kr(check_image.image,
+                         mode=mode_arg).astype(AllowedDataType.Float32.value, copy=False)
+        )
         check_image._update_dtype()
     except Exception as e:
         raise FeatureError("Failed to compute kitchen rosenfeld corners") from e
-    
+
     return check_image
 
 # -------------------------------------------------------------------------
 
 @check_image_exist_external
-def compute_moravec_corners(image: BaseImage, kernel_size: Optional[Union[int, float]] = 1) -> BaseImage:
+def compute_moravec_corners(
+    image: BaseImage, kernel_size: Optional[Union[int, float]] = 1
+) -> BaseImage:
     """Compute moravec corners in the provided image. Result is returned as float32 image"""
-    
+
     if not image.is_gray():
         ImageModeConversion(
             "Converting the image to grayscale since this method can only be applied to 2D images"
         )
         converted_image = convert(image, "rgb2gray")
-    
+
     if not isinstance(kernel_size, (float, int)):
         raise WrongArgumentsType("Kernel size must be provided as either integer or float")
-    
+
     check_image = image_array_check_conversion(converted_image)
-    
+
     try:
-        check_image._set_image(sk_corner_moravec(check_image.image, window_size=int(kernel_size)).astype(AllowedDataType.Float32.value, copy=False))
+        check_image._set_image(
+            sk_corner_moravec(check_image.image, window_size=int(kernel_size)
+                              ).astype(AllowedDataType.Float32.value, copy=False)
+        )
         check_image._update_dtype()
     except Exception as e:
         raise FeatureError("Failed to compute moravec corners in the provided image") from e
-    
+
+    return check_image
+
+# -------------------------------------------------------------------------
+
+@check_image_exist_external
+def compute_shi_tomasi_corners(image: BaseImage, sigma: Optional[float] = 1.0) -> BaseImage:
+    """Compute shi tomasi corners in the provided image. Result is returned as a float32 image"""
+
+    if not image.is_gray():
+        ImageModeConversion(
+            "Converting the image to grayscale since this method can only be applied to 2D images"
+        )
+        converted_image = convert(image, "rgb2gray")
+
+    if not isinstance(sigma, float):
+        raise WrongArgumentsType("Sigma should be provided as a float value")
+
+    check_image = image_array_check_conversion(converted_image)
+
+    try:
+        check_image._set_image(
+            sk_corner_shi_tomasi(check_image.image,
+                                 float(sigma)).astype(AllowedDataType.Float32.value, copy=False)
+        )
+        check_image._update_dtype()
+    except Exception as e:
+        raise FeatureError("Failed to compute shi tomasi corners in the provided image") from e
+
     return check_image
 
 # -------------------------------------------------------------------------
