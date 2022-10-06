@@ -419,15 +419,15 @@ if __name__ == "__main__":
     import numpy as np
     from image.load.loader import open_image
     from image.transform.color_conversion import convert
-    from skimage.feature import corner_harris
+    from skimage.feature import daisy
     import cv2
     path_image = Path(__file__).parent.parent.parent / "sample.jpg"
     image = open_image(str(path_image))
-    image = convert(image, "rgb2gray")
+    #image = convert(image, "rgb2gray")
     image_input = image.image.astype(np.uint16)
 
     #out = cv2.Canny(image_input, 100, 200)
-    out1 = corner_harris(image.image, k=0.3)
+    out1 = daisy(image.image, visualize=False)
     out2 = out1.astype(np.uint8)
 
     print("hallo")
