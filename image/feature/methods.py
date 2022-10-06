@@ -366,7 +366,14 @@ def compute_moravec_corners(image: BaseImage, kernel_size: Optional[Union[int, f
     check_image = image_array_check_conversion(converted_image)
     
     try:
-        
+        check_image._set_image(sk_corner_moravec(check_image.image, window_size=int(kernel_size)).astype(AllowedDataType.Float32.value, copy=False))
+        check_image._update_dtype()
+    except Exception as e:
+        raise FeatureError("Failed to compute moravec corners in the provided image") from e
+    
+    return check_image
+
+# -------------------------------------------------------------------------
 
 if __name__ == "__main__":
     from pathlib import Path
