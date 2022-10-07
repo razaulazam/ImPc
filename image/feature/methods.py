@@ -80,7 +80,10 @@ def blob_diff_gaussian(
     """Compute blobs in a grayscale image using difference of gaussian method"""
 
     if not image.is_gray():
-        raise WrongArgumentsType("Input image should be grayscale for this method to work")
+        ImageModeConversion(
+            "Converting the image to grayscale since this method can only be applied to 2D images"
+        )
+        converted_image = convert(image, "rgb2gray")
 
     if not isinstance(sigma_min, float):
         raise WrongArgumentsType("Minimum sigma should be provided as float")
@@ -100,7 +103,7 @@ def blob_diff_gaussian(
     if overlap <= 0 or overlap >= 1:
         raise WrongArgumentsValue("Overlap value should be between 0 and 1")
 
-    check_image = image_array_check_conversion(image)
+    check_image = image_array_check_conversion(converted_image)
 
     try:
         found_blobs = sk_blob_dog(
@@ -125,8 +128,11 @@ def blob_determinant_hessian(
     """Compute blobs in a grayscale image using determinant of hessian method"""
 
     if not image.is_gray():
-        raise WrongArgumentsType("Input image should be grayscale for this method to work")
-
+        ImageModeConversion(
+            "Converting the image to grayscale since this method can only be applied to 2D images"
+        )
+        converted_image = convert(image, "rgb2gray")
+        
     if not isinstance(sigma_min, float):
         raise WrongArgumentsType("Minimum sigma should be provided as float")
 
@@ -145,7 +151,7 @@ def blob_determinant_hessian(
     if overlap <= 0 or overlap >= 1:
         raise WrongArgumentsValue("Overlap value should be between 0 and 1")
 
-    check_image = image_array_check_conversion(image)
+    check_image = image_array_check_conversion(converted_image)
 
     try:
         found_blobs = sk_blob_doh(
@@ -170,7 +176,10 @@ def blob_laplacian_gaussian(
     """Compute blobs in a grayscale image using laplacian of gaussian method"""
 
     if not image.is_gray():
-        raise WrongArgumentsType("Input image should be grayscale for this method to work")
+        ImageModeConversion(
+            "Converting the image to grayscale since this method can only be applied to 2D images"
+        )
+        converted_image = convert(image, "rgb2gray")
 
     if not isinstance(sigma_min, float):
         raise WrongArgumentsType("Minimum sigma should be provided as float")
@@ -190,7 +199,7 @@ def blob_laplacian_gaussian(
     if overlap <= 0 or overlap >= 1:
         raise WrongArgumentsValue("Overlap value should be between 0 and 1")
 
-    check_image = image_array_check_conversion(image)
+    check_image = image_array_check_conversion(converted_image)
 
     try:
         found_blobs = sk_blob_log(
@@ -215,7 +224,7 @@ def compute_fast_corners(
         ImageModeConversion(
             "Converting the image to grayscale image since this method works only with 2D arrays"
         )
-        converted_image = convert(image)
+        converted_image = convert(image, "rgb2gray")
 
     if not isinstance(num_pixels, (float, int)):
         raise WrongArgumentsType("Num pixels can only be provided as either integer or float")
@@ -246,7 +255,7 @@ def compute_foerstner_corners(image: BaseImage, sigma: Optional[float] = 1.0) ->
         ImageModeConversion(
             "Converting the image to grayscale since this method only supports 2D images"
         )
-        converted_image = convert(image)
+        converted_image = convert(image, "rgb2gray")
 
     if not isinstance(sigma, float):
         raise WrongArgumentsType("Sigma must be provided as a float value")
@@ -413,6 +422,15 @@ def compute_shi_tomasi_corners(image: BaseImage, sigma: Optional[float] = 1.0) -
     return check_image
 
 # -------------------------------------------------------------------------
+
+@check_image_exist_external
+def compute_daisy_features(image: BaseImage, sample_step: Optional[int] = 4, radius_outer: Optional[int] = 15, num_rings: Optional[int] = 3, num_histograms: Optional[int] = 8, normalization: Optional[str] = "l1", visualize: Optional[bool] = False):
+    """Computes daisy features of the provided image. If visualize = True, we return an array of 
+    descriptors and a image instance for visualizing those features otherwise we just 
+    return array of descriptors."""
+    
+    if not image.is_gray()
+    
 
 if __name__ == "__main__":
     from pathlib import Path
