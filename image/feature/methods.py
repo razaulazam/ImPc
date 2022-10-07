@@ -132,7 +132,7 @@ def blob_determinant_hessian(
             "Converting the image to grayscale since this method can only be applied to 2D images"
         )
         converted_image = convert(image, "rgb2gray")
-        
+
     if not isinstance(sigma_min, float):
         raise WrongArgumentsType("Minimum sigma should be provided as float")
 
@@ -228,6 +228,9 @@ def compute_fast_corners(
 
     if not isinstance(num_pixels, (float, int)):
         raise WrongArgumentsType("Num pixels can only be provided as either integer or float")
+
+    if num_pixels < 0:
+        ...
 
     if not isinstance(threshold, float):
         raise WrongArgumentsType("Threshold can only be provided as float value")
@@ -380,6 +383,9 @@ def compute_moravec_corners(
     if not isinstance(kernel_size, (float, int)):
         raise WrongArgumentsType("Kernel size must be provided as either integer or float")
 
+    if kernel_size <= 0:
+        raise WrongArgumentsValue("Kernel size must be > 0")
+
     check_image = image_array_check_conversion(converted_image)
 
     try:
@@ -424,28 +430,55 @@ def compute_shi_tomasi_corners(image: BaseImage, sigma: Optional[float] = 1.0) -
 # -------------------------------------------------------------------------
 
 @check_image_exist_external
-def compute_daisy_features(image: BaseImage, sample_step: Optional[int] = 4, radius_outer: Optional[int] = 15, num_rings: Optional[int] = 3, num_histograms: Optional[int] = 8, normalization: Optional[str] = "l1", visualize: Optional[bool] = False):
+def compute_daisy_features(
+    image: BaseImage,
+    sample_step: Optional[int] = 4,
+    radius_outer: Optional[int] = 15,
+    num_rings: Optional[int] = 3,
+    num_histograms: Optional[int] = 8,
+    normalization: Optional[str] = "l1",
+    visualize: Optional[bool] = False
+):
     """Computes daisy features of the provided image. If visualize = True, we return an array of 
     descriptors and a image instance for visualizing those features otherwise we just 
     return array of descriptors."""
-    
-    if not image.is_gray()
-    
+
+    norm_methods = {"l1": "l1", "l2": "l2", "daisy": "daisy", "off": "off"}
+
+    if not image.is_gray():
+        ImageModeConversion(
+            "Converting the image to grayscale since this method can only be applied to 2D images"
+        )
+        converted_image = convert(image, "rgb2gray")
+
+    if not isinstance(sample_step, int):
+        raise WrongArgumentsType("Sampling step argument can only be supplied as integer")
+
+    if not isinstance(radius_outer, int):
+        raise WrongArgumentsType(
+            "Radius of the outermost ring (radius_outer) can only be supplied as integer"
+        )
+
+    if not isinstance(num_rings, int):
+        raise WrongArgumentsType("Number of rings can only be supplied as integer")
+
+    if not isinstance(num_histograms, int):
+        raise WrongArgumentsType("Number of histograms can only be supplied as integer")
 
 if __name__ == "__main__":
     from pathlib import Path
     import numpy as np
     from image.load.loader import open_image
     from image.transform.color_conversion import convert
-    from skimage.feature import daisy
+    from skimage.feature import daisy, corner_fast
     import cv2
     path_image = Path(__file__).parent.parent.parent / "sample.jpg"
     image = open_image(str(path_image))
-    #image = convert(image, "rgb2gray")
-    image_input = image.image.astype(np.uint16)
+    image = convert(image, "rgb2gray")
+    # image_input = image.image.astype(np.uint16)
 
     #out = cv2.Canny(image_input, 100, 200)
-    out1 = daisy(image.image, visualize=False)
+    out1 = corner_fast(image.image, -1)
     out2 = out1.astype(np.uint8)
 
     print("hallo")
