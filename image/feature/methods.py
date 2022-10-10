@@ -22,6 +22,7 @@ from skimage.feature import corner_harris as sk_corner_harris
 from skimage.feature import corner_kitchen_rosenfeld as sk_corner_kr
 from skimage.feature import corner_moravec as sk_corner_moravec
 from skimage.feature import corner_shi_tomasi as sk_corner_shi_tomasi
+from skimage.feature import daisy as sk_daisy
 
 # -------------------------------------------------------------------------
 
@@ -438,7 +439,7 @@ def compute_daisy_features(
     num_histograms: Optional[int] = 8,
     normalization: Optional[str] = "l1",
     visualize: Optional[bool] = False
-):
+) -> Union[np.ndarray, tuple(np.ndarray, BaseImage)]:
     """Computes daisy features of the provided image. If visualize = True, we return an array of 
     descriptors and a image instance for visualizing those features otherwise we just 
     return array of descriptors."""
@@ -458,12 +459,46 @@ def compute_daisy_features(
         raise WrongArgumentsType(
             "Radius of the outermost ring (radius_outer) can only be supplied as integer"
         )
+        
+    if radius_outer <= 0:
+        raise WrongArgumentsValue("Outer radius can not be less than or equal to zero")
 
     if not isinstance(num_rings, int):
         raise WrongArgumentsType("Number of rings can only be supplied as integer")
-
+    
+    if num_rings <= 0:
+        raise WrongArgumentsValue("Number of rings can not be less than or equal to zero")
+ 
     if not isinstance(num_histograms, int):
         raise WrongArgumentsType("Number of histograms can only be supplied as integer")
+
+    if not isinstance(normalization, str):
+        raise WrongArgumentsType("Normalization method must be provided as string")
+
+    if not isinstance(visualize, bool):
+        raise WrongArgumentsType("Visualize argument must be provided as boolean")
+
+    check_image = image_array_check_conversion(converted_image)
+    
+    norm_method_arg = norm_methods.get("normalization", None)
+    if norm_method_arg is None:
+        DefaultSetting("Using the default normalization method (L1) since the provided normalization method is currently not supported by the library")
+        norm_method_arg = norm_methods["l1"]
+        
+    try:
+        descriptors = sk_daisy(check_image.image, step=sample_step, radius=radius_outer, rings=num_rings, histograms=num_histograms, normalization=norm_method_arg, visualize=visualize)
+        if visualize:
+            check_image._set_image(descriptors[1].astype(AllowedDataType.Float32.value, copy=False))
+            check_image._update_dtype()
+    except Exception as e:
+        raise FeatureError("Failed to compute daisy features of the provided image") from e
+    
+    if visualize:
+        return (descriptors[0], check_image)
+    else:
+        return descriptors
+    
+# -------------------------------------------------------------------------
 
 if __name__ == "__main__":
     from pathlib import Path
@@ -478,7 +513,7 @@ if __name__ == "__main__":
     # image_input = image.image.astype(np.uint16)
 
     #out = cv2.Canny(image_input, 100, 200)
-    out1 = corner_fast(image.image, -1)
+    out1 = daisy(image.image, histograms=0)
     out2 = out1.astype(np.uint8)
 
     print("hallo")
