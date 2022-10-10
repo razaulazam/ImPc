@@ -58,6 +58,7 @@ def laplacian(
 
     check_image = image_array_check_conversion(image)
 
+    border = border.lower()
     if border == "wrap":
         DefaultSetting(
             "Provided border option is not supported for this operation. Using the default strategy (reflect)"
@@ -113,6 +114,7 @@ def sobel(
 
     check_image = image_array_check_conversion(image)
 
+    border = border.lower()
     if border == "wrap":
         DefaultSetting(
             "Provided border option is not supported for this operation. Using the default strategy (reflect)"
