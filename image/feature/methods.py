@@ -230,9 +230,6 @@ def compute_fast_corners(
     if not isinstance(num_pixels, (float, int)):
         raise WrongArgumentsType("Num pixels can only be provided as either integer or float")
 
-    if num_pixels < 0:
-        ...
-
     if not isinstance(threshold, float):
         raise WrongArgumentsType("Threshold can only be provided as float value")
 
@@ -523,7 +520,7 @@ if __name__ == "__main__":
     # image_input = image.image.astype(np.uint16)
 
     #out = cv2.Canny(image_input, 100, 200)
-    out1 = daisy(image.image, visualize=True)
+    out1 = corner_fast(image.image, threshold=-2)
     out2 = out1.astype(np.uint8)
 
     print("hallo")
