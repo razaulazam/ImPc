@@ -1,7 +1,6 @@
 # Copyright (C) Raza Ul Azam, All Rights Reserved.
 # \brief Image feature detection methods
 
-from re import L
 import numpy as np
 
 from commons.exceptions import WrongArgumentsType, WrongArgumentsValue, FeatureError
