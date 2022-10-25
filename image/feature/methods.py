@@ -553,13 +553,16 @@ def compute_haar_like_features(image: BaseImage, row: int, col: int, width: int,
 
 if __name__ == "__main__":
     from pathlib import Path
+    from skimage import data
     import numpy as np
+    import napari
     from image.load.loader import open_image
     from image.transform.color_conversion import convert
     from skimage.feature import daisy, corner_fast, haar_like_feature
     import cv2
     path_image = Path(__file__).parent.parent.parent / "sample.jpg"
     image = open_image(str(path_image))
+    #viewer = napari.view_image(image.image)
     image = convert(image, "rgb2gray")
     #image_input = image.image.astype(np.uint16)
 
