@@ -1,6 +1,7 @@
 # Copyright (C) Raza Ul Azam, All Rights Reserved.
 # \brief Image feature detection methods
 
+from re import L
 import numpy as np
 
 from commons.exceptions import WrongArgumentsType, WrongArgumentsValue, FeatureError
@@ -507,20 +508,57 @@ def compute_daisy_features(
 
 # -------------------------------------------------------------------------
 
+def compute_haar_like_features(image: BaseImage, row: int, col: int, width: int, height: int) -> BaseImage:
+    """Computes haar like features. Result is returned as a numpy array"""
+
+    if not image.is_gray():
+        ImageModeConversion("Converting the image to grayscale since this operation can only be applied to 2D images")
+        converted_image = convert(image, "rgb2gray")
+    
+    if not isinstance(row, int):
+        raise WrongArgumentsType("Row can only be supplied as an integer")
+
+    if not isinstance(col, int):
+        raise WrongArgumentsType("Col can only be supplied as an integer")
+
+    if not isinstance(width, int):
+        raise WrongArgumentsType("Width can only be supplied as an integer")
+
+    if not isinstance(height, int):
+        raise WrongArgumentsType("Height can only be supplied as an integer")
+
+    if row < 0:
+        raise WrongArgumentsValue("Row should be supplied as an integer greater than or equal to zero")
+
+    if col < 0:
+        raise WrongArgumentsValue("Col should be supplied as an integer greater than or equal to zero")
+    
+    if width <= 0:
+        raise WrongArgumentsValue("Width should be supplied as an integer greater than zero")
+
+    if height <= 0:
+        raise WrongArgumentsValue("Height should be supplied as an integer greater than zero")
+
+    check_image = check_image_exist_external(converted_image)
+    
+
+
+
+
 if __name__ == "__main__":
     from pathlib import Path
     import numpy as np
     from image.load.loader import open_image
     from image.transform.color_conversion import convert
-    from skimage.feature import daisy, corner_fast
+    from skimage.feature import daisy, corner_fast, haar_like_feature
     import cv2
     path_image = Path(__file__).parent.parent.parent / "sample.jpg"
     image = open_image(str(path_image))
     image = convert(image, "rgb2gray")
-    # image_input = image.image.astype(np.uint16)
+    #image_input = image.image.astype(np.uint16)
 
     #out = cv2.Canny(image_input, 100, 200)
-    out1 = corner_fast(image.image, threshold=-2)
+    out1 = haar_like_feature(image.image, 1, 1, 100, 100)
     out2 = out1.astype(np.uint8)
 
     print("hallo")
