@@ -24,6 +24,7 @@ from skimage.feature import corner_kitchen_rosenfeld as sk_corner_kr
 from skimage.feature import corner_moravec as sk_corner_moravec
 from skimage.feature import corner_shi_tomasi as sk_corner_shi_tomasi
 from skimage.feature import daisy as sk_daisy
+from skimage.feature import haar_like_feature as sk_haar_like_feature
 
 # -------------------------------------------------------------------------
 
@@ -508,8 +509,9 @@ def compute_daisy_features(
 
 # -------------------------------------------------------------------------
 
-def compute_haar_like_features(image: BaseImage, row: int, col: int, width: int, height: int) -> BaseImage:
-    """Computes haar like features. Result is returned as a numpy array"""
+"""Need to add the feature types because that would be used in other functions as well eventually"""
+def compute_haar_like_features(image: BaseImage, row: int, col: int, width: int, height: int) -> np.ndarray:
+    """Computes haar like features. Result is returned as a numpy array of float32 feature values"""
 
     if not image.is_gray():
         ImageModeConversion("Converting the image to grayscale since this operation can only be applied to 2D images")
@@ -540,10 +542,14 @@ def compute_haar_like_features(image: BaseImage, row: int, col: int, width: int,
         raise WrongArgumentsValue("Height should be supplied as an integer greater than zero")
 
     check_image = check_image_exist_external(converted_image)
+    try:
+        features = sk_haar_like_feature(check_image.image, r=row, c=col, width=width, height=height).astype(AllowedDataType.Float32.value, copy=False)
+    except Exception as e:
+        raise FeatureError("Failed to compute haar like features for the provided image") from e
     
+    return features
 
-
-
+# -------------------------------------------------------------------------
 
 if __name__ == "__main__":
     from pathlib import Path
