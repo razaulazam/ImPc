@@ -11,7 +11,7 @@ from image._common_datastructs import SKIMAGE_SAMPLING_REGISTRY
 from image.load._interface import BaseImage
 from image._helpers import AllowedDataType
 from image.transform.color_conversion import convert
-from image._helpers import image_array_check_conversion
+from image._helpers import image_array_check_conversion, check_user_provided_ndarray
 from typing import Optional, Tuple, Union, List
 from skimage.feature import canny as sk_canny
 from skimage.feature import blob_dog as sk_blob_dog
@@ -26,6 +26,7 @@ from skimage.feature import corner_shi_tomasi as sk_corner_shi_tomasi
 from skimage.feature import daisy as sk_daisy
 from skimage.feature import haar_like_feature as sk_haar_like_feature
 from skimage.feature import hessian_matrix as sk_hessian_matrix
+from skimage.feature import hessian_matrix_eigvals as sk_hessian_matrix_eigvals
 
 # -------------------------------------------------------------------------
 
@@ -575,6 +576,22 @@ def compute_hessian_matrix(image: BaseImage, sigma: Optional[float] = 1.0, mode:
     
     return gradients
 
+# -------------------------------------------------------------------------
+
+def compute_hessian_matrix_eigvals(hessian_matrix: List[np.ndarray]) -> np.ndarray:
+    """Computes the eigen values of the hessian matrix. Result is returned as float """
+
+    for i in range(len(hessian_matrix)):
+        hessian_matrix[i] = check_user_provided_ndarray(hessian_matrix[i])
+
+    try:
+        eigen_values = sk_hessian_matrix_eigvals(hessian_matrix).astype(AllowedDataType.Float32.value, copy=False)
+    except Exception as e:
+        raise FeatureError("Failed to compute the eigen values of the provided hessian matrix")
+    
+    return eigen_values
+
+
 
 if __name__ == "__main__":
     from pathlib import Path
@@ -583,7 +600,7 @@ if __name__ == "__main__":
     import napari
     from image.load.loader import open_image
     from image.transform.color_conversion import convert
-    from skimage.feature import daisy, corner_fast, hessian_matrix
+    from skimage.feature import daisy, hessian_matrix_eigvals
     import cv2
     path_image = Path(__file__).parent.parent.parent / "sample.jpg"
     image = open_image(str(path_image))
@@ -593,6 +610,7 @@ if __name__ == "__main__":
 
     #out = cv2.Canny(image_input, 100, 200)
     out1 = compute_hessian_matrix(image, 1.0)
+    out3 = hessian_matrix_eigvals(out1)
     out2 = out1.astype(np.uint8)
 
     print("hallo")
