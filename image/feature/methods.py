@@ -1,6 +1,7 @@
 # Copyright (C) Raza Ul Azam, All Rights Reserved.
 # \brief Image feature detection methods
 
+from signal import default_int_handler
 import numpy as np
 
 from commons.exceptions import WrongArgumentsType, WrongArgumentsValue, FeatureError
@@ -11,7 +12,7 @@ from image.load._interface import BaseImage
 from image._helpers import AllowedDataType
 from image.transform.color_conversion import convert
 from image._helpers import image_array_check_conversion
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple, Union, List
 from skimage.feature import canny as sk_canny
 from skimage.feature import blob_dog as sk_blob_dog
 from skimage.feature import blob_doh as sk_blob_doh
@@ -24,6 +25,7 @@ from skimage.feature import corner_moravec as sk_corner_moravec
 from skimage.feature import corner_shi_tomasi as sk_corner_shi_tomasi
 from skimage.feature import daisy as sk_daisy
 from skimage.feature import haar_like_feature as sk_haar_like_feature
+from skimage.feature import hessian_matrix as sk_hessian_matrix
 
 # -------------------------------------------------------------------------
 
@@ -508,7 +510,6 @@ def compute_daisy_features(
 
 # -------------------------------------------------------------------------
 
-"""Need to add the feature types because that would be used in other functions as well eventually"""
 def compute_haar_like_features(image: BaseImage, row: int, col: int, width: int, height: int) -> np.ndarray:
     """Computes haar like features. Result is returned as a numpy array of float32 feature values"""
 
@@ -550,6 +551,31 @@ def compute_haar_like_features(image: BaseImage, row: int, col: int, width: int,
 
 # -------------------------------------------------------------------------
 
+@check_image_exist_external
+def compute_hessian_matrix(image: BaseImage, sigma: Optional[float] = 1.0, mode: Optional[str] = "constant") -> List[np.ndarray]:
+    """Computes the hessian matrix of the provided image. Result is returned as a list of float32 gradient arrays."""
+
+    if not isinstance(sigma, float):
+        raise WrongArgumentsType("Sigma must be provided as a float value")
+    
+    if not isinstance(mode, str):
+        raise WrongArgumentsType("Mode must be provided as string")
+
+    mode_arg = SKIMAGE_SAMPLING_REGISTRY.get(mode, None)
+    if mode_arg is None:
+        DefaultSetting("Using constant as the mode for filling in the boundary pixels since the provided mode is not supported by the library yet")
+        mode_arg = SKIMAGE_SAMPLING_REGISTRY["constant"]
+
+    check_image = image_array_check_conversion(image)
+    try:
+        gradients = sk_hessian_matrix(check_image.image, sigma, mode_arg)
+        gradients = [gradient.astype(AllowedDataType.Float32.value, copy=False) for gradient in gradients]
+    except Exception as e:
+        raise FeatureError("Failed to compute the hessian matrix") from e
+    
+    return gradients
+
+
 if __name__ == "__main__":
     from pathlib import Path
     from skimage import data
@@ -557,16 +583,16 @@ if __name__ == "__main__":
     import napari
     from image.load.loader import open_image
     from image.transform.color_conversion import convert
-    from skimage.feature import daisy, corner_fast, haar_like_feature
+    from skimage.feature import daisy, corner_fast, hessian_matrix
     import cv2
     path_image = Path(__file__).parent.parent.parent / "sample.jpg"
     image = open_image(str(path_image))
     #viewer = napari.view_image(image.image)
-    image = convert(image, "rgb2gray")
+    #image = convert(image, "rgb2gray")
     #image_input = image.image.astype(np.uint16)
 
     #out = cv2.Canny(image_input, 100, 200)
-    out1 = haar_like_feature(image.image, 1, 1, 100, 100)
+    out1 = compute_hessian_matrix(image, 1.0)
     out2 = out1.astype(np.uint8)
 
     print("hallo")
