@@ -27,6 +27,7 @@ from skimage.feature import daisy as sk_daisy
 from skimage.feature import haar_like_feature as sk_haar_like_feature
 from skimage.feature import hessian_matrix as sk_hessian_matrix
 from skimage.feature import hessian_matrix_eigvals as sk_hessian_matrix_eigvals
+from skimage.feature import hog as sk_hog_descriptors
 
 # -------------------------------------------------------------------------
 
@@ -511,13 +512,17 @@ def compute_daisy_features(
 
 # -------------------------------------------------------------------------
 
-def compute_haar_like_features(image: BaseImage, row: int, col: int, width: int, height: int) -> np.ndarray:
+def compute_haar_like_features(
+    image: BaseImage, row: int, col: int, width: int, height: int
+) -> np.ndarray:
     """Computes haar like features. Result is returned as a numpy array of float32 feature values"""
 
     if not image.is_gray():
-        ImageModeConversion("Converting the image to grayscale since this operation can only be applied to 2D images")
+        ImageModeConversion(
+            "Converting the image to grayscale since this operation can only be applied to 2D images"
+        )
         converted_image = convert(image, "rgb2gray")
-    
+
     if not isinstance(row, int):
         raise WrongArgumentsType("Row can only be supplied as an integer")
 
@@ -531,11 +536,15 @@ def compute_haar_like_features(image: BaseImage, row: int, col: int, width: int,
         raise WrongArgumentsType("Height can only be supplied as an integer")
 
     if row < 0:
-        raise WrongArgumentsValue("Row should be supplied as an integer greater than or equal to zero")
+        raise WrongArgumentsValue(
+            "Row should be supplied as an integer greater than or equal to zero"
+        )
 
     if col < 0:
-        raise WrongArgumentsValue("Col should be supplied as an integer greater than or equal to zero")
-    
+        raise WrongArgumentsValue(
+            "Col should be supplied as an integer greater than or equal to zero"
+        )
+
     if width <= 0:
         raise WrongArgumentsValue("Width should be supplied as an integer greater than zero")
 
@@ -544,36 +553,48 @@ def compute_haar_like_features(image: BaseImage, row: int, col: int, width: int,
 
     check_image = check_image_exist_external(converted_image)
     try:
-        features = sk_haar_like_feature(check_image.image, r=row, c=col, width=width, height=height).astype(AllowedDataType.Float32.value, copy=False)
+        features = sk_haar_like_feature(
+            check_image.image, r=row, c=col, width=width, height=height
+        ).astype(
+            AllowedDataType.Float32.value, copy=False
+        )
     except Exception as e:
         raise FeatureError("Failed to compute haar like features for the provided image") from e
-    
+
     return features
 
 # -------------------------------------------------------------------------
 
 @check_image_exist_external
-def compute_hessian_matrix(image: BaseImage, sigma: Optional[float] = 1.0, mode: Optional[str] = "constant") -> List[np.ndarray]:
+def compute_hessian_matrix(
+    image: BaseImage,
+    sigma: Optional[float] = 1.0,
+    mode: Optional[str] = "constant"
+) -> List[np.ndarray]:
     """Computes the hessian matrix of the provided image. Result is returned as a list of float32 gradient arrays."""
 
     if not isinstance(sigma, float):
         raise WrongArgumentsType("Sigma must be provided as a float value")
-    
+
     if not isinstance(mode, str):
         raise WrongArgumentsType("Mode must be provided as string")
 
     mode_arg = SKIMAGE_SAMPLING_REGISTRY.get(mode, None)
     if mode_arg is None:
-        DefaultSetting("Using constant as the mode for filling in the boundary pixels since the provided mode is not supported by the library yet")
+        DefaultSetting(
+            "Using constant as the mode for filling in the boundary pixels since the provided mode is not supported by the library yet"
+        )
         mode_arg = SKIMAGE_SAMPLING_REGISTRY["constant"]
 
     check_image = image_array_check_conversion(image)
     try:
         gradients = sk_hessian_matrix(check_image.image, sigma, mode_arg)
-        gradients = [gradient.astype(AllowedDataType.Float32.value, copy=False) for gradient in gradients]
+        gradients = [
+            gradient.astype(AllowedDataType.Float32.value, copy=False) for gradient in gradients
+        ]
     except Exception as e:
         raise FeatureError("Failed to compute the hessian matrix") from e
-    
+
     return gradients
 
 # -------------------------------------------------------------------------
@@ -585,13 +606,69 @@ def compute_hessian_matrix_eigvals(hessian_matrix: List[np.ndarray]) -> np.ndarr
         hessian_matrix[i] = check_user_provided_ndarray(hessian_matrix[i])
 
     try:
-        eigen_values = sk_hessian_matrix_eigvals(hessian_matrix).astype(AllowedDataType.Float32.value, copy=False)
+        eigen_values = sk_hessian_matrix_eigvals(hessian_matrix).astype(
+            AllowedDataType.Float32.value, copy=False
+        )
     except Exception as e:
         raise FeatureError("Failed to compute the eigen values of the provided hessian matrix")
-    
+
     return eigen_values
 
+# -------------------------------------------------------------------------
 
+@check_image_exist_external
+def compute_hog_descriptors(
+    image: BaseImage,
+    orientations: Optional[int] = 9,
+    pixels_in_cell: Optional[Tuple[int, int]] = (8, 8),
+    cells_per_block: Optional[Tuple[int, int]] = (3, 3)
+) -> Tuple[np.ndarray, BaseImage]:
+    """Computes the hog descriptor features of the provided image. Result is returned as a tuple of float32 array and image
+    where the first element represents the flattened hog features and the second element is a library image
+    for visualization."""
+
+    if not isinstance(orientations, int):
+        raise WrongArgumentsType("Orientations must be provided as an integer value")
+
+    for pixel in pixels_in_cell:
+        if not isinstance(pixel, int):
+            raise WrongArgumentsType(
+                "Pixels in cell must be provided as a tuple with only integer values"
+            )
+
+    if len(pixels_in_cell) != 2:
+        raise WrongArgumentsValue(
+            "Pixels in cell must be provided as a tuple with values in just row and col direction"
+        )
+
+    for cell in cells_per_block:
+        if not isinstance(cell, int):
+            raise WrongArgumentsType(
+                "Cells per block must be provided as a tuple with only integer values"
+            )
+
+    if len(cells_per_block) != 2:
+        raise WrongArgumentsValue(
+            "Cells per block must be provided as a tuple with values in just row and col direction"
+        )
+
+    check_image = image_array_check_conversion(image)
+    channel_axis = -1 if check_image.is_rgb() else None
+    try:
+        descriptors, image_hog = sk_hog_descriptors(
+            check_image.image,
+            pixels_per_cell=pixels_in_cell,
+            cells_per_block=cells_per_block,
+            visualize=True,
+            channel_axis=channel_axis
+        )
+        check_image._set_image(image_hog.astype(AllowedDataType.Float32.value, copy=False))
+        check_image._update_dtype()
+        descriptors.astype(AllowedDataType.Float32.value, copy=False)
+    except Exception as e:
+        raise FeatureError("Failed to compute the hog descriptors of the image") from e
+
+    return (descriptors, check_image)
 
 if __name__ == "__main__":
     from pathlib import Path
@@ -600,7 +677,7 @@ if __name__ == "__main__":
     import napari
     from image.load.loader import open_image
     from image.transform.color_conversion import convert
-    from skimage.feature import daisy, hessian_matrix_eigvals
+    from skimage.feature import daisy, hog
     import cv2
     path_image = Path(__file__).parent.parent.parent / "sample.jpg"
     image = open_image(str(path_image))
@@ -609,8 +686,7 @@ if __name__ == "__main__":
     #image_input = image.image.astype(np.uint16)
 
     #out = cv2.Canny(image_input, 100, 200)
-    out1 = compute_hessian_matrix(image, 1.0)
-    out3 = hessian_matrix_eigvals(out1)
+    out1 = compute_hog_descriptors(image)
     out2 = out1.astype(np.uint8)
 
     print("hallo")
