@@ -2,6 +2,7 @@
 # \brief Image feature detection methods
 
 from signal import default_int_handler
+from threading import local
 import numpy as np
 
 from commons.exceptions import WrongArgumentsType, WrongArgumentsValue, FeatureError
@@ -28,6 +29,8 @@ from skimage.feature import haar_like_feature as sk_haar_like_feature
 from skimage.feature import hessian_matrix as sk_hessian_matrix
 from skimage.feature import hessian_matrix_eigvals as sk_hessian_matrix_eigvals
 from skimage.feature import hog as sk_hog_descriptors
+from skimage.feature import local_binary_pattern as sk_local_binary_pattern
+from skimage.feature import match_descriptors as sk_match_descriptors
 
 # -------------------------------------------------------------------------
 
@@ -670,6 +673,78 @@ def compute_hog_descriptors(
 
     return (descriptors, check_image)
 
+@check_image_exist_external
+def compute_local_binary_pattern(
+    image: BaseImage,
+    neigbour_points: int,
+    radius: int,
+    method: Optional[str] = "default"
+) -> BaseImage:
+    """Computes the local binary pattern of a gray-scale image. Result is returned as a float32 image."""
+
+    possible_methods = {"default": "default", "ror": "ror", "uniform": "uniform", "var": "var"}
+
+    if not image.is_gray():
+        ImageModeConversion(
+            "Converting the image to grayscale since this method is only supported for grayscale images"
+        )
+        image = convert(image, "rgb2gray")
+
+    if not isinstance(neigbour_points, int):
+        raise WrongArgumentsType("Neighbour points must be provided as an integer")
+
+    if not isinstance(radius, int):
+        raise WrongArgumentsType("Radius must be provided as an integer")
+
+    if neigbour_points < 0:
+        raise WrongArgumentsValue("Neigbour points can not be a negative number")
+
+    if radius < 0:
+        raise WrongArgumentsValue("Radius can not be a negative number")
+
+    method_arg = possible_methods.get(method, None)
+    if method_arg is None:
+        DefaultSetting(
+            "Using default method since the provided method is not supported by the library yet"
+        )
+        method_arg = possible_methods["default"]
+
+    check_image = image_array_check_conversion(image)
+    try:
+        check_image._set_image(
+            sk_local_binary_pattern(check_image.image, neigbour_points, radius,
+                                    method_arg).astype(AllowedDataType.Float32.value, copy=False)
+        )
+        check_image._set_dtype()
+    except Exception as e:
+        raise FeatureError("Failed to compute the local binary pattern") from e
+
+    return check_image
+
+def match_image_descriptors(first: np.ndarray, second: np.ndarray) -> np.ndarray:
+    """Matches the provided first and second descriptors array with a brute-force approach.
+    It returns a (Q, 2) dimensional array, where the first column denotes the matched indices in the first and 
+    the second column denotes the matched indices in the second array of descriptors. Result is returned as a float32 array."""
+
+    dim_first, dim_second = first.shape, second.shape
+    
+    if len(dim_first) != 2 or len(dim_second) != 2:
+        raise WrongArgumentsValue("Either of the provided descriptors array does not have the right dimensions")
+    
+    if dim_first[1] != dim_second[1]:
+        raise WrongArgumentsValue("Dimensions of the provided descriptors array does not match")
+
+    check_first = check_user_provided_ndarray(first)
+    check_second = check_user_provided_ndarray(second)
+
+    try:
+        matches = sk_match_descriptors(check_first, check_second).astype(AllowedDataType.Float32.value, copy=False)
+    except Exception as e:
+        raise FeatureError("Failed to match the provided descriptors") from e
+    
+    return matches
+
+
 if __name__ == "__main__":
     from pathlib import Path
     from skimage import data
@@ -677,16 +752,16 @@ if __name__ == "__main__":
     import napari
     from image.load.loader import open_image
     from image.transform.color_conversion import convert
-    from skimage.feature import daisy, hog
+    from skimage.feature import daisy, local_binary_pattern
     import cv2
     path_image = Path(__file__).parent.parent.parent / "sample.jpg"
     image = open_image(str(path_image))
     #viewer = napari.view_image(image.image)
-    #image = convert(image, "rgb2gray")
+    image = convert(image, "rgb2gray")
     #image_input = image.image.astype(np.uint16)
 
     #out = cv2.Canny(image_input, 100, 200)
-    out1 = compute_hog_descriptors(image)
+    out1 = local_binary_pattern(image.image, 1, 1)
     out2 = out1.astype(np.uint8)
 
     print("hallo")
