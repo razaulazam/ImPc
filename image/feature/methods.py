@@ -673,6 +673,8 @@ def compute_hog_descriptors(
 
     return (descriptors, check_image)
 
+# -------------------------------------------------------------------------
+
 @check_image_exist_external
 def compute_local_binary_pattern(
     image: BaseImage,
@@ -721,6 +723,8 @@ def compute_local_binary_pattern(
 
     return check_image
 
+# -------------------------------------------------------------------------
+
 def match_image_descriptors(first: np.ndarray, second: np.ndarray) -> np.ndarray:
     """Matches the provided first and second descriptors array with a brute-force approach.
     It returns a (Q, 2) dimensional array, where the first column denotes the matched indices in the first and 
@@ -748,9 +752,13 @@ def match_image_descriptors(first: np.ndarray, second: np.ndarray) -> np.ndarray
 
     return matches
 
+# -------------------------------------------------------------------------
+
 @check_image_exist_external
 def match_image_template(image: BaseImage, template: Union[BaseImage, np.ndarray]) -> np.ndarray:
     ...
+
+# -------------------------------------------------------------------------
 
 if __name__ == "__main__":
     from pathlib import Path
