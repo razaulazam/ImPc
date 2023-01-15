@@ -727,10 +727,12 @@ def match_image_descriptors(first: np.ndarray, second: np.ndarray) -> np.ndarray
     the second column denotes the matched indices in the second array of descriptors. Result is returned as a float32 array."""
 
     dim_first, dim_second = first.shape, second.shape
-    
+
     if len(dim_first) != 2 or len(dim_second) != 2:
-        raise WrongArgumentsValue("Either of the provided descriptors array does not have the right dimensions")
-    
+        raise WrongArgumentsValue(
+            "Either of the provided descriptors array does not have the right dimensions"
+        )
+
     if dim_first[1] != dim_second[1]:
         raise WrongArgumentsValue("Dimensions of the provided descriptors array does not match")
 
@@ -738,12 +740,17 @@ def match_image_descriptors(first: np.ndarray, second: np.ndarray) -> np.ndarray
     check_second = check_user_provided_ndarray(second)
 
     try:
-        matches = sk_match_descriptors(check_first, check_second).astype(AllowedDataType.Float32.value, copy=False)
+        matches = sk_match_descriptors(check_first, check_second).astype(
+            AllowedDataType.Float32.value, copy=False
+        )
     except Exception as e:
         raise FeatureError("Failed to match the provided descriptors") from e
-    
+
     return matches
 
+@check_image_exist_external
+def match_image_template(image: BaseImage, template: Union[BaseImage, np.ndarray]) -> np.ndarray:
+    ...
 
 if __name__ == "__main__":
     from pathlib import Path
