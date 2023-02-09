@@ -106,7 +106,6 @@ def adaptive_threshold(
     check_image = image_array_check_conversion(image)
     if check_image.dtype is not AllowedDataType.Uint8.value:
         check_image._image_conversion_helper(AllowedDataType.Uint8)
-        check_image._update_dtype()
 
     try:
         check_image._set_image(
