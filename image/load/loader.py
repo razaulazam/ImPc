@@ -3,7 +3,6 @@
 
 import os
 import copy
-import re
 import io
 import cv2
 import numpy as np
@@ -16,7 +15,7 @@ from typing import Tuple, List, Optional, Any, Union
 from image.common.decorators import check_image_exist_internal
 from commons.exceptions import WrongArgumentsValue, NotSupportedDataType, NotSupportedMode
 from commons.exceptions import PathDoesNotExist, WrongArgumentsType, LoaderError
-from image.load._interface import BaseImage
+from image.common.interfaces.loader import BaseImage
 from image.common.datastructs import AllowedDataType, ALLOWED_DATA_TYPES, DataType
 
 # -------------------------------------------------------------------------
