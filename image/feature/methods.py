@@ -5,7 +5,7 @@ from signal import default_int_handler
 from threading import local
 import numpy as np
 
-from commons.exceptions import WrongArgumentsType, WrongArgumentsValue, FeatureError
+from commons.exceptions import ImageAlreadyClosed, WrongArgumentsType, WrongArgumentsValue, FeatureError
 from commons.warning import ImageModeConversion, DefaultSetting
 from image._decorators import check_image_exist_external
 from image._common_datastructs import SKIMAGE_SAMPLING_REGISTRY
@@ -753,10 +753,40 @@ def match_image_descriptors(first: np.ndarray, second: np.ndarray) -> np.ndarray
     return matches
 
 # -------------------------------------------------------------------------
-
+# Check this function and the return types of this function
 @check_image_exist_external
 def match_image_template(image: BaseImage, template: Union[BaseImage, np.ndarray]) -> np.ndarray:
-    ...
+    check_template = None
+    if isinstance(template, BaseImage):
+        if template.closed:
+            raise ImageAlreadyClosed("The provided template is already closed")
+        else:
+            check_template = image_array_check_conversion(template)
+    elif isinstance(template, np.ndarray):
+        check_tempalate = check_user_provided_ndarray(template)
+    else:
+        raise WrongArgumentsType(
+            "Provide template has a type which is not supported by this method"
+        )
+    if isinstance(template, BaseImage):
+        if template.width <= 0 or template.height or template.channels != image.channels:
+            raise WrongArgumentsValue("Image cannot have a width or height of zero or less than zero")
+        else:
+            width, height, channels = template.shape[:-1]
+            if width <= 0 or height <= 0 or channels != image.channels:
+                raise WrongArgumentsValue("Image cannot have a width or height of less than zero")
+            
+
+    check_image = image_array_check_conversion(image)
+    try:
+        check_image._set_image(
+            check_image.image,
+            check_template if isinstance(check_template, np.ndarray) else check_image.image
+        )
+        check_image._update_dtype()
+    except Exception as e:
+        raise FeatureError("Failed to peform the template matching") from e
+    return check_image
 
 # -------------------------------------------------------------------------
 
@@ -767,7 +797,7 @@ if __name__ == "__main__":
     import napari
     from image.load.loader import open_image
     from image.transform.color_conversion import convert
-    from skimage.feature import daisy, local_binary_pattern
+    from skimage.feature import daisy, local_binary_pattern, match_template
     import cv2
     path_image = Path(__file__).parent.parent.parent / "sample.jpg"
     image = open_image(str(path_image))
