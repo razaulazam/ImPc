@@ -9,10 +9,10 @@ from collections import namedtuple
 from commons.exceptions import FilteringError, WrongArgumentsType, WrongArgumentsValue
 from commons.warning import DefaultSetting, ImageDataTypeConversion
 from image.load._interface import BaseImage
-from image._decorators import check_image_exist_external
-from image._helpers import image_array_check_conversion, check_user_provided_ndarray
-from image._common_datastructs import AllowedDataType
-from image._common_datastructs import CV_BORDER_INTERPOLATION
+from image.common.decorators import check_image_exist_external
+from image.common.helpers import image_array_check_conversion, check_user_provided_ndarray
+from image.common.datastructs import AllowedDataType
+from image.common.datastructs import CV_BORDER_INTERPOLATION
 from image.filter._common_methods import is_not_namedtuple
 
 # -------------------------------------------------------------------------

@@ -16,8 +16,8 @@ from skimage.filters.thresholding import threshold_otsu as sk_thresh_otsu
 from skimage.filters.thresholding import threshold_triangle as sk_thresh_triangle
 from skimage.filters.thresholding import threshold_yen as sk_thresh_yen
 from skimage.filters.thresholding import threshold_multiotsu as sk_thresh_multiotsu
-from image._helpers import image_array_check_conversion
-from image._decorators import check_image_exist_external
+from image.common.helpers import image_array_check_conversion
+from image.common.decorators import check_image_exist_external
 
 # -------------------------------------------------------------------------
 

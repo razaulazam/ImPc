@@ -6,9 +6,9 @@ import cv2
 from image.load._interface import BaseImage
 from commons.exceptions import WrongArgumentsType, WrongArgumentsValue, FilteringError
 from commons.warning import DefaultSetting
-from image._decorators import check_image_exist_external
-from image._helpers import image_array_check_conversion
-from image._common_datastructs import AllowedDataType
+from image.common.decorators import check_image_exist_external
+from image.common.helpers import image_array_check_conversion
+from image.common.datastructs import AllowedDataType
 from skimage.filters.thresholding import threshold_niblack as sk_niblack
 from skimage.filters.thresholding import threshold_sauvola as sk_sauvola
 from typing import Union, Optional

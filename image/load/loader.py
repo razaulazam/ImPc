@@ -13,11 +13,11 @@ from PIL import Image
 from pathlib import Path
 from functools import singledispatch
 from typing import Tuple, List, Optional, Any, Union
-from image._decorators import check_image_exist_internal
+from image.common.decorators import check_image_exist_internal
 from commons.exceptions import WrongArgumentsValue, NotSupportedDataType, NotSupportedMode
 from commons.exceptions import PathDoesNotExist, WrongArgumentsType, LoaderError
 from image.load._interface import BaseImage
-from image._common_datastructs import AllowedDataType, ALLOWED_DATA_TYPES, DataType
+from image.common.datastructs import AllowedDataType, ALLOWED_DATA_TYPES, DataType
 
 # -------------------------------------------------------------------------
 

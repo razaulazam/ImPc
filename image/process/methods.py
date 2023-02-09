@@ -7,11 +7,11 @@ import numpy as np
 from typing import Union, Tuple, List
 from image.load._interface import BaseImage
 from commons.exceptions import WrongArgumentsType, WrongArgumentsValue
-from image._helpers import image_array_check_conversion
+from image.common.helpers import image_array_check_conversion
 from commons.exceptions import ProcessingError, ImageAlreadyClosed
 from image.transform.transforms import resize
-from image._decorators import check_image_exist_external
-from image._common_datastructs import AllowedDataType
+from image.common.decorators import check_image_exist_external
+from image.common.datastructs import AllowedDataType
 
 # -------------------------------------------------------------------------
 

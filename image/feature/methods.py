@@ -1,18 +1,16 @@
 # Copyright (C) Raza Ul Azam, All Rights Reserved.
 # \brief Image feature detection methods
 
-from signal import default_int_handler
-from threading import local
 import numpy as np
 
 from commons.exceptions import ImageAlreadyClosed, WrongArgumentsType, WrongArgumentsValue, FeatureError
 from commons.warning import ImageModeConversion, DefaultSetting
-from image._decorators import check_image_exist_external
-from image._common_datastructs import SKIMAGE_SAMPLING_REGISTRY
+from image.common.decorators import check_image_exist_external
+from image.common.datastructs import SKIMAGE_SAMPLING_REGISTRY
 from image.load._interface import BaseImage
-from image._helpers import AllowedDataType
+from image.common.helpers import AllowedDataType
 from image.transform.color_conversion import convert
-from image._helpers import image_array_check_conversion, check_user_provided_ndarray
+from image.common.helpers import image_array_check_conversion, check_user_provided_ndarray
 from typing import Optional, Tuple, Union, List
 from skimage.feature import canny as sk_canny
 from skimage.feature import blob_dog as sk_blob_dog

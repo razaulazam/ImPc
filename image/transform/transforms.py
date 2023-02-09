@@ -6,12 +6,12 @@ import numpy as np
 
 from skimage.transform import rotate as sk_rotate
 from typing import Tuple, Optional, Union, List
-from image._decorators import check_image_exist_external
+from image.common.decorators import check_image_exist_external
 from image.load._interface import BaseImage
 from commons.warning import DefaultSetting
 from commons.exceptions import WrongArgumentsType, TransformError, WrongArgumentsValue
-from image._helpers import image_array_check_conversion
-from image._common_datastructs import AllowedDataType, SKIMAGE_SAMPLING_REGISTRY
+from image.common.helpers import image_array_check_conversion
+from image.common.datastructs import AllowedDataType, SKIMAGE_SAMPLING_REGISTRY
 from image.transform.color_conversion import convert
 
 # -------------------------------------------------------------------------
