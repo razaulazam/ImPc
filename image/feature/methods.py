@@ -69,7 +69,6 @@ def canny(
                 high_threshold=thresh_high
             ).astype(AllowedDataType.Float32.value, copy=False)
         )
-        check_image._update_dtype()
     except Exception as e:
         raise FeatureError("Failed to compute the edges with the Canny algorithm") from e
 
@@ -248,7 +247,6 @@ def compute_fast_corners(
             sk_corner_fast(check_image.image, int(num_pixels),
                            threshold).astype(AllowedDataType.Float32.value, copy=False)
         )
-        check_image._update_dtype()
     except Exception as e:
         raise FeatureError("Failed to compute the FAST corners of the image") from e
 
@@ -278,8 +276,6 @@ def compute_foerstner_corners(image: BaseImage, sigma: Optional[float] = 1.0) ->
         check_image_one._set_image(
             roundness_ellipse.astype(AllowedDataType.Float32.value, copy=False)
         )
-        check_image._update_dtype()
-        check_image_one._update_dtype()
     except Exception as e:
         raise FeatureError("Failed to compute the foerstner corner of the image") from e
 
@@ -328,7 +324,6 @@ def compute_harris_corners(
             sk_corner_harris(check_image.image, method=method_arg, k=sens_factor,
                              sigma=sigma).astype(AllowedDataType.Float32.value, copy=False)
         )
-        check_image._update_dtype()
     except Exception as e:
         raise FeatureError("Failed to compute harris corners of the provided image") from e
 
@@ -366,7 +361,6 @@ def compute_kitchen_rosenfeld_corners(
             sk_corner_kr(check_image.image,
                          mode=mode_arg).astype(AllowedDataType.Float32.value, copy=False)
         )
-        check_image._update_dtype()
     except Exception as e:
         raise FeatureError("Failed to compute kitchen rosenfeld corners") from e
 
@@ -399,7 +393,6 @@ def compute_moravec_corners(
             sk_corner_moravec(check_image.image, window_size=int(kernel_size)
                               ).astype(AllowedDataType.Float32.value, copy=False)
         )
-        check_image._update_dtype()
     except Exception as e:
         raise FeatureError("Failed to compute moravec corners in the provided image") from e
 
@@ -427,7 +420,6 @@ def compute_shi_tomasi_corners(image: BaseImage, sigma: Optional[float] = 1.0) -
             sk_corner_shi_tomasi(check_image.image,
                                  float(sigma)).astype(AllowedDataType.Float32.value, copy=False)
         )
-        check_image._update_dtype()
     except Exception as e:
         raise FeatureError("Failed to compute shi tomasi corners in the provided image") from e
 
@@ -504,7 +496,6 @@ def compute_daisy_features(
         )
         if visualize:
             check_image._set_image(descriptors[1].astype(AllowedDataType.Float32.value, copy=False))
-            check_image._update_dtype()
     except Exception as e:
         raise FeatureError("Failed to compute daisy features of the provided image") from e
 
@@ -666,7 +657,6 @@ def compute_hog_descriptors(
             channel_axis=channel_axis
         )
         check_image._set_image(image_hog.astype(AllowedDataType.Float32.value, copy=False))
-        check_image._update_dtype()
         descriptors.astype(AllowedDataType.Float32.value, copy=False)
     except Exception as e:
         raise FeatureError("Failed to compute the hog descriptors of the image") from e
@@ -717,7 +707,6 @@ def compute_local_binary_pattern(
             sk_local_binary_pattern(check_image.image, neigbour_points, radius,
                                     method_arg).astype(AllowedDataType.Float32.value, copy=False)
         )
-        check_image._set_dtype()
     except Exception as e:
         raise FeatureError("Failed to compute the local binary pattern") from e
 
@@ -770,12 +759,13 @@ def match_image_template(image: BaseImage, template: Union[BaseImage, np.ndarray
         )
     if isinstance(template, BaseImage):
         if template.width <= 0 or template.height or template.channels != image.channels:
-            raise WrongArgumentsValue("Image cannot have a width or height of zero or less than zero")
+            raise WrongArgumentsValue(
+                "Image cannot have a width or height of zero or less than zero"
+            )
         else:
             width, height, channels = template.shape[:-1]
             if width <= 0 or height <= 0 or channels != image.channels:
                 raise WrongArgumentsValue("Image cannot have a width or height of less than zero")
-            
 
     check_image = image_array_check_conversion(image)
     try:
@@ -783,7 +773,6 @@ def match_image_template(image: BaseImage, template: Union[BaseImage, np.ndarray
             check_image.image,
             check_template if isinstance(check_template, np.ndarray) else check_image.image
         )
-        check_image._update_dtype()
     except Exception as e:
         raise FeatureError("Failed to peform the template matching") from e
     return check_image
