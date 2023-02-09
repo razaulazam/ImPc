@@ -146,7 +146,6 @@ def niblack_threshold(
             sk_niblack(check_image.image, kernel_size,
                        factor).astype(AllowedDataType.Float32.value, copy=False)
         )
-        check_image._update_dtype()
     except Exception as e:
         raise FilteringError("Failed to apply the Niblack threshold to the image") from e
 
@@ -178,7 +177,6 @@ def sauvola_threshold(
             sk_sauvola(check_image.image, kernel_size,
                        factor).astype(AllowedDataType.Float32.value, copy=False)
         )
-        check_image._update_dtype()
     except Exception as e:
         raise FilteringError("Failed to apply the Niblack threshold to the image") from e
 
