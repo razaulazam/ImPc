@@ -186,7 +186,6 @@ def scharr(
             sk_scharr(check_image.image, mask=check_mask,
                       mode=mode_arg).astype(AllowedDataType.Float32.value, copy=False)
         )
-        check_image._update_dtype()
     except Exception as e:
         raise FilteringError("Failed to filter the image using Prewitt transform") from e
 
@@ -222,7 +221,6 @@ def unsharp_mask_filter(
             ).astype(AllowedDataType.Float32.value),
             copy=False
         )
-        check_image._update_dtype()
     except Exception as e:
         raise FilteringError("Failed to filter the image with the Unsharp mask filter") from e
 
