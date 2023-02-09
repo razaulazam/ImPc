@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 
 from typing import Union, Tuple, List
-from image.load._interface import BaseImage
+from image.common.interfaces.loader import BaseImage
 from commons.exceptions import WrongArgumentsType, WrongArgumentsValue
 from image.common.helpers import image_array_check_conversion
 from commons.exceptions import ProcessingError, ImageAlreadyClosed

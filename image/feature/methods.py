@@ -7,7 +7,7 @@ from commons.exceptions import ImageAlreadyClosed, WrongArgumentsType, WrongArgu
 from commons.warning import ImageModeConversion, DefaultSetting
 from image.common.decorators import check_image_exist_external
 from image.common.datastructs import SKIMAGE_SAMPLING_REGISTRY
-from image.load._interface import BaseImage
+from image.common.interfaces.loader import BaseImage
 from image.common.helpers import AllowedDataType
 from image.transform.color_conversion import convert
 from image.common.helpers import image_array_check_conversion, check_user_provided_ndarray

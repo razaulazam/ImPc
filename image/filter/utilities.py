@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 
 from typing import Union, List, Tuple, Optional
-from image.load._interface import BaseImage
+from image.common.interfaces.loader import BaseImage
 from commons.exceptions import WrongArgumentsType, WrongArgumentsValue, FilteringError
 from collections import namedtuple
 from skimage.filters.thresholding import threshold_isodata as sk_thresh_isodata

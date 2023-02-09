@@ -4,7 +4,7 @@
 import re
 import numpy as np
 
-from image.load._interface import BaseImage
+from image.common.interfaces.loader import BaseImage
 from commons.exceptions import NotSupportedDataType
 from commons.warning import ImageDataTypeConversion
 from image.common.decorators import check_image_exist_external

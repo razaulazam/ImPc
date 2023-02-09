@@ -5,7 +5,7 @@ import cv2
 
 from commons.exceptions import TransformError, WrongArgumentsValue, WrongArgumentsType
 from image.common.decorators import check_image_exist_external
-from image.load._interface import BaseImage
+from image.common.interfaces.loader import BaseImage
 from image.common.helpers import image_array_check_conversion
 
 # -------------------------------------------------------------------------

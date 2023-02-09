@@ -3,7 +3,7 @@
 
 import numpy as np
 
-from image.load._interface import BaseImage
+from image.common.interfaces.loader import BaseImage
 from typing import Optional, Union
 from commons.exceptions import WrongArgumentsType, RestorationError
 from image.common.helpers import image_array_check_conversion

@@ -7,7 +7,7 @@ import numpy as np
 from typing import Optional, Union
 from commons.exceptions import WrongArgumentsType, RestorationError, WrongArgumentsValue
 from commons.warning import DefaultSetting, ImageDataTypeConversion, IgnoreArgument
-from image.load._interface import BaseImage
+from image.common.interfaces.loader import BaseImage
 from image.common.helpers import image_array_check_conversion, check_user_provided_ndarray
 from image.common.datastructs import AllowedDataType, CV_BORDER_INTERPOLATION
 from image.common.decorators import check_image_exist_external

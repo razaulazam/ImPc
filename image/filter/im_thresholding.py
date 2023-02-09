@@ -3,7 +3,7 @@
 
 import cv2
 
-from image.load._interface import BaseImage
+from image.common.interfaces.loader import BaseImage
 from commons.exceptions import WrongArgumentsType, WrongArgumentsValue, FilteringError
 from commons.warning import DefaultSetting
 from image.common.decorators import check_image_exist_external
