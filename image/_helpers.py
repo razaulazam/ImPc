@@ -33,7 +33,6 @@ def image_array_check_conversion(image: BaseImage) -> BaseImage:
             raise NotSupportedDataType("Image has a data-type which is currently not supported")
         image_new = image.copy()
         _convert_image_dtype(image_new)
-        image_new._update_dtype()
         return image_new
     return image.copy()
 
@@ -120,8 +119,6 @@ def safe_cast(image: BaseImage, desired_type: str):
     )
 
     check_image._set_image(internal_image)
-    check_image._update_dtype()
-
     return check_image
 
 # -------------------------------------------------------------------------

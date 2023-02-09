@@ -119,7 +119,6 @@ def rotate(
                 preserve_range=True
             ).astype(AllowedDataType.Float32.value, copy=False)
         )
-        check_image._update_dtype()
     except Exception as e:
         raise TransformError("Failed to rotate the image") from e
 
