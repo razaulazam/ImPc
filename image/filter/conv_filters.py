@@ -11,9 +11,10 @@ from commons.warning import DefaultSetting, ImageDataTypeConversion
 from image.common.interfaces.loader import BaseImage
 from image.common.decorators import check_image_exist_external
 from image.common.helpers import image_array_check_conversion, check_user_provided_ndarray
-from image.common.datastructs import AllowedDataType
+from image.common.datastructs import SKIMAGE_SAMPLING_REGISTRY, AllowedDataType
 from image.common.datastructs import CV_BORDER_INTERPOLATION
 from image.filter.common_methods import is_not_namedtuple
+from scipy.ndimage import convolve as scipy_convolve
 
 # -------------------------------------------------------------------------
 
@@ -288,6 +289,52 @@ def bilateral_filter(
         )
     except Exception as e:
         raise FilteringError("Failed to filter the image") from e
+
+    return check_image
+
+# -------------------------------------------------------------------------
+
+@check_image_exist_external
+def convolve(image: BaseImage, weights: np.ndarray, mode: Optional[str] = "reflect") -> BaseImage:
+    """Convolves the provided image (Rgb or Grayscale) with the weights (provided as np.ndarray). Result is returned as the 
+    image with the same datatype as the provided image."""
+
+    if not isinstance(weights, np.ndarray):
+        raise WrongArgumentsType("Weights must be provided as a np.ndarray")
+
+    if image.is_rgb() or image.is_hsv() or image.is_lab() or image.is_rgba() or image.is_ycbcr():
+        if len(weights.shape) != 3:
+            raise WrongArgumentsValue("Weights must have same number of dimensions as the image")
+        width, height, channels = weights.shape
+        is_correct_width = width > 0 and width <= image.width
+        is_correct_height = height > 0 and height <= image.height
+        is_correct_channels = channels == image.channels
+        if not is_correct_channels or not is_correct_height or not is_correct_width:
+            raise WrongArgumentsValue("Provided weights do not have the right dimensions")
+    elif image.is_gray():
+        if len(weights.shape) != 2:
+            raise WrongArgumentsValue("Weights must have same number of dimensions as the image")
+        width, height = weights.shape
+        is_correct_width = width > 0 and width <= image.width
+        is_correct_height = height > 0 and height <= image.height
+        if not is_correct_height or not is_correct_width:
+            raise WrongArgumentsValue("Provided weights do not have the right dimensions")
+    else:
+        raise WrongArgumentsValue("Provided image has a mode which is not supported by this method")
+
+    if not isinstance(mode, str):
+        raise WrongArgumentsType("Mode must be provided as str")
+
+    mode_arg = SKIMAGE_SAMPLING_REGISTRY.get(mode, None)
+    if mode_arg is None:
+        DefaultSetting("Using default mode since the provided mode is not supported by the library")
+        mode_arg = SKIMAGE_SAMPLING_REGISTRY["constant"]
+
+    check_image = image_array_check_conversion(image)
+    try:
+        check_image._set_image(scipy_convolve(check_image.image, weights, mode=mode_arg))
+    except Exception as e:
+        raise FilteringError("Failed to convolve the image with the provided weights") from e
 
     return check_image
 
