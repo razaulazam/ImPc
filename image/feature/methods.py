@@ -29,6 +29,7 @@ from skimage.feature import hessian_matrix_eigvals as sk_hessian_matrix_eigvals
 from skimage.feature import hog as sk_hog_descriptors
 from skimage.feature import local_binary_pattern as sk_local_binary_pattern
 from skimage.feature import match_descriptors as sk_match_descriptors
+from skimage.feature import match_template as sk_match_template
 
 # -------------------------------------------------------------------------
 
@@ -740,40 +741,51 @@ def match_image_descriptors(first: np.ndarray, second: np.ndarray) -> np.ndarray
     return matches
 
 # -------------------------------------------------------------------------
-# Check this function and the return types of this function
+
 @check_image_exist_external
 def match_image_template(image: BaseImage, template: Union[BaseImage, np.ndarray]) -> np.ndarray:
+    """Matches the provided template (np.ndarray or BaseImage) with the provided image and returns an array of type float32 with 
+    correlation coefficients."""
+
     check_template = None
+    is_base_image = False
     if isinstance(template, BaseImage):
         if template.closed:
-            raise ImageAlreadyClosed("The provided template is already closed")
+            raise ImageAlreadyClosed("The provided template cannot be processed since it is closed")
         else:
             check_template = image_array_check_conversion(template)
+            is_base_image = True
     elif isinstance(template, np.ndarray):
-        check_tempalate = check_user_provided_ndarray(template)
+        check_template = check_user_provided_ndarray(template)
     else:
         raise WrongArgumentsType(
             "Provide template has a type which is not supported by this method"
         )
-    if isinstance(template, BaseImage):
-        if template.width <= 0 or template.height or template.channels != image.channels:
-            raise WrongArgumentsValue(
-                "Image cannot have a width or height of zero or less than zero"
-            )
-        else:
-            width, height, channels = template.shape[:-1]
-            if width <= 0 or height <= 0 or channels != image.channels:
-                raise WrongArgumentsValue("Image cannot have a width or height of less than zero")
+    if is_base_image:
+        is_correct_width = check_template.width > 0 and check_template.width <= image.width
+        is_correct_height = check_template.height > 0 and check_template.height <= image.height
+        is_correct_channels = check_template.channels == image.channels
+        if not is_correct_width or not is_correct_channels or not is_correct_height:
+            raise WrongArgumentsValue("Provided template does not have accurate dimensions")
+    else:
+        if len(check_template.shape) != 3:
+            raise WrongArgumentsValue("Provided template does not have accurate number of channels")
+        width, height, channels = template.shape
+        is_correct_width = width > 0 and width <= image.width
+        is_correct_height = height > 0 and height <= image.height
+        is_correct_channels = channels == image.channels
+        if not is_correct_channels or not is_correct_height or not is_correct_width:
+            raise WrongArgumentsValue("Provided template does not have the right dimensions")
 
     check_image = image_array_check_conversion(image)
     try:
-        check_image._set_image(
-            check_image.image,
-            check_template if isinstance(check_template, np.ndarray) else check_image.image
+        coefficients = sk_match_template(
+            check_image.image, check_template.image if is_base_image else check_template
         )
     except Exception as e:
         raise FeatureError("Failed to peform the template matching") from e
-    return check_image
+
+    return coefficients
 
 # -------------------------------------------------------------------------
 
