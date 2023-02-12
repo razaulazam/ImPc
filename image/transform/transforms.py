@@ -13,6 +13,7 @@ from commons.exceptions import WrongArgumentsType, TransformError, WrongArgument
 from image.common.helpers import image_array_check_conversion
 from image.common.datastructs import AllowedDataType, SKIMAGE_SAMPLING_REGISTRY
 from image.transform.color_conversion import convert
+from cv2 import equalizeHist as cv_equalize_hist
 
 # -------------------------------------------------------------------------
 
@@ -191,5 +192,22 @@ def kmeans_quantize(
         raise TransformError("Failed to transform the image") from e
 
     return quantize_image
+
+# -------------------------------------------------------------------------
+
+@check_image_exist_external
+def histogram_equalization(image: BaseImage) -> BaseImage:
+    """Performs histogram equalization on the grayscale image. If the provided image is not
+    grayscale, a conversion is performed automatically. Result is returned as a uint8 image."""
+
+    check_image = image_array_check_conversion(image)
+    check_image._image_conversion_helper(AllowedDataType.Uint8)
+
+    try:
+        check_image._set_image(cv_equalize_hist(check_image.image))
+    except Exception as e:
+        raise TransformError("Failed to perform histogram equalization") from e
+
+    return check_image
 
 # -------------------------------------------------------------------------
