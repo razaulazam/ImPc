@@ -10,7 +10,7 @@ from image.common.interfaces.loader import BaseImage
 from image.common.helpers import image_array_check_conversion, check_user_provided_ndarray
 from image.common.decorators import check_image_exist_external
 from collections import namedtuple
-from image.filter._common_methods import is_not_namedtuple
+from image.filter.common_methods import is_not_namedtuple
 
 # -------------------------------------------------------------------------
 
