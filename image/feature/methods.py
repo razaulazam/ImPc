@@ -30,6 +30,7 @@ from skimage.feature import hog as sk_hog_descriptors
 from skimage.feature import local_binary_pattern as sk_local_binary_pattern
 from skimage.feature import match_descriptors as sk_match_descriptors
 from skimage.feature import match_template as sk_match_template
+from skimage.feature import structure_tensor as sk_structure_tensor
 
 # -------------------------------------------------------------------------
 
@@ -781,11 +782,45 @@ def match_image_template(image: BaseImage, template: Union[BaseImage, np.ndarray
     try:
         coefficients = sk_match_template(
             check_image.image, check_template.image if is_base_image else check_template
+        ).astype(
+            AllowedDataType.Float32.value, copy=False
         )
     except Exception as e:
         raise FeatureError("Failed to peform the template matching") from e
 
     return coefficients
+
+# -------------------------------------------------------------------------
+
+@check_image_exist_external
+def compute_structure_tensor(
+    image: BaseImage,
+    sigma: Optional[float] = 1.0,
+    mode: Optional[str] = "constant"
+) -> List[np.ndarray]:
+    """Computes the structure tensors of the provided image. Result is returned as a list of float32 np.ndarrays."""
+
+    if not isinstance(sigma, float):
+        raise WrongArgumentsType("Sigma value can only be provided as a float value")
+
+    if not isinstance(mode, str):
+        raise WrongArgumentsType("Mode can only be specified as a string")
+
+    mode_arg = SKIMAGE_SAMPLING_REGISTRY.get(mode, None)
+    if mode_arg is None:
+        DefaultSetting(
+            "Using default value of the mode (constant) since the provided mode is not supported by the library"
+        )
+        mode_arg = SKIMAGE_SAMPLING_REGISTRY.get("constant")
+
+    check_image = image_array_check_conversion(image)
+    try:
+        tensors = sk_structure_tensor(check_image.image, sigma, mode=mode_arg)
+        tensors = [tensor.astype(AllowedDataType.Float32.value, copy=False) for tensor in tensors]
+    except Exception as e:
+        raise FeatureError("Failed to compute the structure tensors") from e
+
+    return tensors
 
 # -------------------------------------------------------------------------
 
