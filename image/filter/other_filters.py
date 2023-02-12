@@ -3,12 +3,12 @@
 
 import numpy as np
 
-from image.load._interface import BaseImage
+from image.common.interfaces.loader import BaseImage
 from commons.exceptions import WrongArgumentsType, WrongArgumentsValue, FilteringError
 from commons.warning import DefaultSetting
-from image._decorators import check_image_exist_external
-from image._common_datastructs import AllowedDataType, SKIMAGE_SAMPLING_REGISTRY
-from image._helpers import image_array_check_conversion, check_user_provided_ndarray
+from image.common.decorators import check_image_exist_external
+from image.common.datastructs import AllowedDataType, SKIMAGE_SAMPLING_REGISTRY
+from image.common.helpers import image_array_check_conversion, check_user_provided_ndarray
 from skimage.filters._fft_based import butterworth as sk_butterworth
 from skimage.filters._gaussian import difference_of_gaussians as sk_difference_gaussians
 from skimage.filters._gabor import gabor as sk_gabor
@@ -64,7 +64,6 @@ def butterworth(
                 n_pad=padding
             ).astype(AllowedDataType.Float32.value, copy=False)
         )
-        check_image._update_dtype()
     except Exception as e:
         raise FilteringError("Failed to apply butterworth filter to the image") from e
 
@@ -113,7 +112,6 @@ def difference_gaussians(
                 channel_axis=channel_axis
             ).astype(AllowedDataType.Float32.value, copy=False)
         )
-        check_image._update_dtype()
     except Exception as e:
         raise FilteringError(
             "Failed to filter the image with difference of gaussians strategy"
@@ -161,7 +159,6 @@ def farid(
             sk_farid(check_image.image, mask=check_mask,
                      mode=mode_arg).astype(AllowedDataType.Float32.value, copy=False)
         )
-        check_image._update_dtype()
     except Exception as e:
         raise FilteringError("Failed to filter the image using Farid transform") from e
 
@@ -204,9 +201,7 @@ def gabor(
             check_image.image, frequency=frequency, sigma_x=sigma_x, sigma_y=sigma_y, mode=mode_arg
         )
         check_image._set_image(real_resp.astype(AllowedDataType.Float32.value, copy=False))
-        check_image._update_dtype()
         check_image_imaginary._set_image(im_resp.astype(AllowedDataType.Float32.value, copy=False))
-        check_image_imaginary._update_dtype()
     except Exception as e:
         raise FilteringError("Failed to filter the image using Gabor transform") from e
 
@@ -257,7 +252,6 @@ def prewitt(
             sk_prewitt(check_image.image, mask=check_mask,
                        mode=mode_arg).astype(AllowedDataType.Float32.value, copy=False)
         )
-        check_image._update_dtype()
     except Exception as e:
         raise FilteringError("Failed to filter the image using Prewitt transform") from e
 
@@ -305,7 +299,6 @@ def roberts(image: BaseImage, mask: Optional[np.ndarray] = None) -> BaseImage:
             sk_roberts(check_image.image,
                        mask=check_mask).astype(AllowedDataType.Float32.value, copy=False)
         )
-        check_image._update_dtype()
     except Exception as e:
         raise FilteringError("Failed to compute the edge magnitude using Roberts transform") from e
 
@@ -339,7 +332,6 @@ def roberts_neg_diag(image: BaseImage, mask: Optional[np.ndarray] = None) -> Bas
             sk_roberts_neg_diag(check_image.image,
                                 mask=check_mask).astype(AllowedDataType.Float32.value, copy=False)
         )
-        check_image._update_dtype()
     except Exception as e:
         raise FilteringError("Failed to compute the edge magnitude using Roberts transform") from e
 
@@ -373,7 +365,6 @@ def roberts_pos_diag(image: BaseImage, mask: Optional[np.ndarray] = None) -> Bas
             sk_roberts_pos_diag(check_image.image,
                                 mask=check_mask).astype(AllowedDataType.Float32.value, copy=False)
         )
-        check_image._update_dtype()
     except Exception as e:
         raise FilteringError("Failed to compute the edge magnitude using Roberts transform") from e
 

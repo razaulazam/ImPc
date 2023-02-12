@@ -5,13 +5,13 @@ import cv2
 import numpy as np
 
 from typing import Union, Tuple, List
-from image.load._interface import BaseImage
+from image.common.interfaces.loader import BaseImage
 from commons.exceptions import WrongArgumentsType, WrongArgumentsValue
-from image._helpers import image_array_check_conversion
+from image.common.helpers import image_array_check_conversion
 from commons.exceptions import ProcessingError, ImageAlreadyClosed
 from image.transform.transforms import resize
-from image._decorators import check_image_exist_external
-from image._common_datastructs import AllowedDataType
+from image.common.decorators import check_image_exist_external
+from image.common.datastructs import AllowedDataType
 
 # -------------------------------------------------------------------------
 
@@ -115,7 +115,7 @@ def composite(image_one: BaseImage, image_two: BaseImage, mask: np.ndarray) -> B
 @check_image_exist_external
 def gaussian_pyramid(image: BaseImage, level: Union[int, float]) -> List[BaseImage]:
     """Computes the gaussian pyramid where the first image is always the original image itself"""
-    
+
     if not isinstance(level, (int, float)):
         raise WrongArgumentsType("Provided level value does not have the accurate type")
 
@@ -152,7 +152,10 @@ def laplacian_pyramid(image: BaseImage, level: Union[int, float]) -> List[BaseIm
         pyr_level_down = gauss_pyramid[i - 1]
         if pyr_level.dims != pyr_level_down.dims:
             pyr_level_down = resize(pyr_level_down, pyr_level.dims)
-        pyr_level._set_image(cv2.subtract(pyr_level_down.image, pyr_level.image).astype(pyr_level.dtype.value, copy=False))
+        pyr_level._set_image(
+            cv2.subtract(pyr_level_down.image,
+                         pyr_level.image).astype(pyr_level.dtype.value, copy=False)
+        )
         laplacian_pyramid.append(pyr_level)
 
     assert len(laplacian_pyramid) == int(level), ProcessingError(
@@ -219,8 +222,12 @@ def pyramid_blend(
     start_level = combined_pyr[0]
     for i in range(1, len(combined_pyr)):
         level = combined_pyr[i]
-        start_level._set_image(cv2.pyrUp(start_level.image).astype(start_level.dtype.value, copy=False))
-        combined_image = cv2.add(level.image, start_level.image).astype(start_level.dtype.value, copy=False)
+        start_level._set_image(
+            cv2.pyrUp(start_level.image).astype(start_level.dtype.value, copy=False)
+        )
+        combined_image = cv2.add(level.image, start_level.image).astype(
+            start_level.dtype.value, copy=False
+        )
         start_level._set_image(combined_image)
 
     return start_level

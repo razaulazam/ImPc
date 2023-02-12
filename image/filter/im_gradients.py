@@ -4,16 +4,16 @@
 import cv2
 import numpy as np
 
-from image.load._interface import BaseImage
-from image._decorators import check_image_exist_external
-from image._helpers import image_array_check_conversion, check_user_provided_ndarray
+from image.common.interfaces.loader import BaseImage
+from image.common.decorators import check_image_exist_external
+from image.common.helpers import image_array_check_conversion, check_user_provided_ndarray
 from commons.exceptions import WrongArgumentsType, WrongArgumentsValue, FilteringError
 from commons.warning import DefaultSetting
 from typing import Union, List, Tuple, Optional
 from skimage.filters.edges import scharr as sk_scharr
 from skimage.filters._unsharp_mask import unsharp_mask as sk_unsharp_mask
-from image._common_datastructs import SKIMAGE_SAMPLING_REGISTRY, AllowedDataType
-from image._common_datastructs import CV_BORDER_INTERPOLATION
+from image.common.datastructs import SKIMAGE_SAMPLING_REGISTRY, AllowedDataType
+from image.common.datastructs import CV_BORDER_INTERPOLATION
 
 # -------------------------------------------------------------------------
 
@@ -186,7 +186,6 @@ def scharr(
             sk_scharr(check_image.image, mask=check_mask,
                       mode=mode_arg).astype(AllowedDataType.Float32.value, copy=False)
         )
-        check_image._update_dtype()
     except Exception as e:
         raise FilteringError("Failed to filter the image using Prewitt transform") from e
 
@@ -222,7 +221,6 @@ def unsharp_mask_filter(
             ).astype(AllowedDataType.Float32.value),
             copy=False
         )
-        check_image._update_dtype()
     except Exception as e:
         raise FilteringError("Failed to filter the image with the Unsharp mask filter") from e
 

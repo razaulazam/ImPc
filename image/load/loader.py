@@ -3,7 +3,6 @@
 
 import os
 import copy
-import re
 import io
 import cv2
 import numpy as np
@@ -13,11 +12,11 @@ from PIL import Image
 from pathlib import Path
 from functools import singledispatch
 from typing import Tuple, List, Optional, Any, Union
-from image._decorators import check_image_exist_internal
+from image.common.decorators import check_image_exist_internal
 from commons.exceptions import WrongArgumentsValue, NotSupportedDataType, NotSupportedMode
 from commons.exceptions import PathDoesNotExist, WrongArgumentsType, LoaderError
-from image.load._interface import BaseImage
-from image._common_datastructs import AllowedDataType, ALLOWED_DATA_TYPES, DataType
+from image.common.interfaces.loader import BaseImage
+from image.common.datastructs import AllowedDataType, ALLOWED_DATA_TYPES, DataType
 
 # -------------------------------------------------------------------------
 
@@ -112,19 +111,20 @@ class ImageLoader:
 
     def _image_conversion_helper(self, desired_type: DataType):
         self._image = self._image.astype(desired_type.value, copy=False)
-
-    @check_image_exist_internal
-    def _update_dtype(self):
-        self._data_type = ALLOWED_DATA_TYPES.get(str(self._image.dtype), None)
-        if self._data_type is None:
-            raise NotSupportedDataType(
-                "The data type of this image is currently not supported by the library"
-            )
+        self.__set_dtype()
 
     def _set_image(self, image: np.ndarray):
         assert isinstance(image, np.ndarray
                           ), WrongArgumentsValue("Trying to set the wrong image instance type")
         self._image = image
+        self.__set_dtype()
+
+    def __set_dtype(self):
+        self._data_type = ALLOWED_DATA_TYPES.get(str(self._image.dtype), None)
+        if self._data_type is None:
+            raise NotSupportedDataType(
+                "The data type of the image supplied to be set is currently not supported by the library"
+            )
 
     @property
     @check_image_exist_internal

@@ -3,15 +3,15 @@
 
 import numpy as np
 
-from commons.exceptions import WrongArgumentsType, WrongArgumentsValue, FeatureError
+from commons.exceptions import ImageAlreadyClosed, WrongArgumentsType, WrongArgumentsValue, FeatureError
 from commons.warning import ImageModeConversion, DefaultSetting
-from image._decorators import check_image_exist_external
-from image._common_datastructs import SKIMAGE_SAMPLING_REGISTRY
-from image.load._interface import BaseImage
-from image._helpers import AllowedDataType
+from image.common.decorators import check_image_exist_external
+from image.common.datastructs import SKIMAGE_SAMPLING_REGISTRY
+from image.common.interfaces.loader import BaseImage
+from image.common.helpers import AllowedDataType
 from image.transform.color_conversion import convert
-from image._helpers import image_array_check_conversion
-from typing import Optional, Tuple, Union
+from image.common.helpers import image_array_check_conversion, check_user_provided_ndarray
+from typing import Optional, Tuple, Union, List
 from skimage.feature import canny as sk_canny
 from skimage.feature import blob_dog as sk_blob_dog
 from skimage.feature import blob_doh as sk_blob_doh
@@ -24,6 +24,13 @@ from skimage.feature import corner_moravec as sk_corner_moravec
 from skimage.feature import corner_shi_tomasi as sk_corner_shi_tomasi
 from skimage.feature import daisy as sk_daisy
 from skimage.feature import haar_like_feature as sk_haar_like_feature
+from skimage.feature import hessian_matrix as sk_hessian_matrix
+from skimage.feature import hessian_matrix_eigvals as sk_hessian_matrix_eigvals
+from skimage.feature import hog as sk_hog_descriptors
+from skimage.feature import local_binary_pattern as sk_local_binary_pattern
+from skimage.feature import match_descriptors as sk_match_descriptors
+from skimage.feature import match_template as sk_match_template
+from skimage.feature import structure_tensor as sk_structure_tensor
 
 # -------------------------------------------------------------------------
 
@@ -62,7 +69,6 @@ def canny(
                 high_threshold=thresh_high
             ).astype(AllowedDataType.Float32.value, copy=False)
         )
-        check_image._update_dtype()
     except Exception as e:
         raise FeatureError("Failed to compute the edges with the Canny algorithm") from e
 
@@ -241,7 +247,6 @@ def compute_fast_corners(
             sk_corner_fast(check_image.image, int(num_pixels),
                            threshold).astype(AllowedDataType.Float32.value, copy=False)
         )
-        check_image._update_dtype()
     except Exception as e:
         raise FeatureError("Failed to compute the FAST corners of the image") from e
 
@@ -271,8 +276,6 @@ def compute_foerstner_corners(image: BaseImage, sigma: Optional[float] = 1.0) ->
         check_image_one._set_image(
             roundness_ellipse.astype(AllowedDataType.Float32.value, copy=False)
         )
-        check_image._update_dtype()
-        check_image_one._update_dtype()
     except Exception as e:
         raise FeatureError("Failed to compute the foerstner corner of the image") from e
 
@@ -321,7 +324,6 @@ def compute_harris_corners(
             sk_corner_harris(check_image.image, method=method_arg, k=sens_factor,
                              sigma=sigma).astype(AllowedDataType.Float32.value, copy=False)
         )
-        check_image._update_dtype()
     except Exception as e:
         raise FeatureError("Failed to compute harris corners of the provided image") from e
 
@@ -359,7 +361,6 @@ def compute_kitchen_rosenfeld_corners(
             sk_corner_kr(check_image.image,
                          mode=mode_arg).astype(AllowedDataType.Float32.value, copy=False)
         )
-        check_image._update_dtype()
     except Exception as e:
         raise FeatureError("Failed to compute kitchen rosenfeld corners") from e
 
@@ -392,7 +393,6 @@ def compute_moravec_corners(
             sk_corner_moravec(check_image.image, window_size=int(kernel_size)
                               ).astype(AllowedDataType.Float32.value, copy=False)
         )
-        check_image._update_dtype()
     except Exception as e:
         raise FeatureError("Failed to compute moravec corners in the provided image") from e
 
@@ -420,7 +420,6 @@ def compute_shi_tomasi_corners(image: BaseImage, sigma: Optional[float] = 1.0) -
             sk_corner_shi_tomasi(check_image.image,
                                  float(sigma)).astype(AllowedDataType.Float32.value, copy=False)
         )
-        check_image._update_dtype()
     except Exception as e:
         raise FeatureError("Failed to compute shi tomasi corners in the provided image") from e
 
@@ -497,7 +496,6 @@ def compute_daisy_features(
         )
         if visualize:
             check_image._set_image(descriptors[1].astype(AllowedDataType.Float32.value, copy=False))
-            check_image._update_dtype()
     except Exception as e:
         raise FeatureError("Failed to compute daisy features of the provided image") from e
 
@@ -508,14 +506,17 @@ def compute_daisy_features(
 
 # -------------------------------------------------------------------------
 
-"""Need to add the feature types because that would be used in other functions as well eventually"""
-def compute_haar_like_features(image: BaseImage, row: int, col: int, width: int, height: int) -> np.ndarray:
+def compute_haar_like_features(
+    image: BaseImage, row: int, col: int, width: int, height: int
+) -> np.ndarray:
     """Computes haar like features. Result is returned as a numpy array of float32 feature values"""
 
     if not image.is_gray():
-        ImageModeConversion("Converting the image to grayscale since this operation can only be applied to 2D images")
+        ImageModeConversion(
+            "Converting the image to grayscale since this operation can only be applied to 2D images"
+        )
         converted_image = convert(image, "rgb2gray")
-    
+
     if not isinstance(row, int):
         raise WrongArgumentsType("Row can only be supplied as an integer")
 
@@ -529,11 +530,15 @@ def compute_haar_like_features(image: BaseImage, row: int, col: int, width: int,
         raise WrongArgumentsType("Height can only be supplied as an integer")
 
     if row < 0:
-        raise WrongArgumentsValue("Row should be supplied as an integer greater than or equal to zero")
+        raise WrongArgumentsValue(
+            "Row should be supplied as an integer greater than or equal to zero"
+        )
 
     if col < 0:
-        raise WrongArgumentsValue("Col should be supplied as an integer greater than or equal to zero")
-    
+        raise WrongArgumentsValue(
+            "Col should be supplied as an integer greater than or equal to zero"
+        )
+
     if width <= 0:
         raise WrongArgumentsValue("Width should be supplied as an integer greater than zero")
 
@@ -542,11 +547,280 @@ def compute_haar_like_features(image: BaseImage, row: int, col: int, width: int,
 
     check_image = check_image_exist_external(converted_image)
     try:
-        features = sk_haar_like_feature(check_image.image, r=row, c=col, width=width, height=height).astype(AllowedDataType.Float32.value, copy=False)
+        features = sk_haar_like_feature(
+            check_image.image, r=row, c=col, width=width, height=height
+        ).astype(
+            AllowedDataType.Float32.value, copy=False
+        )
     except Exception as e:
         raise FeatureError("Failed to compute haar like features for the provided image") from e
-    
+
     return features
+
+# -------------------------------------------------------------------------
+
+@check_image_exist_external
+def compute_hessian_matrix(
+    image: BaseImage,
+    sigma: Optional[float] = 1.0,
+    mode: Optional[str] = "constant"
+) -> List[np.ndarray]:
+    """Computes the hessian matrix of the provided image. Result is returned as a list of float32 gradient arrays."""
+
+    if not isinstance(sigma, float):
+        raise WrongArgumentsType("Sigma must be provided as a float value")
+
+    if not isinstance(mode, str):
+        raise WrongArgumentsType("Mode must be provided as string")
+
+    mode_arg = SKIMAGE_SAMPLING_REGISTRY.get(mode, None)
+    if mode_arg is None:
+        DefaultSetting(
+            "Using constant as the mode for filling in the boundary pixels since the provided mode is not supported by the library yet"
+        )
+        mode_arg = SKIMAGE_SAMPLING_REGISTRY["constant"]
+
+    check_image = image_array_check_conversion(image)
+    try:
+        gradients = sk_hessian_matrix(check_image.image, sigma, mode_arg)
+        gradients = [
+            gradient.astype(AllowedDataType.Float32.value, copy=False) for gradient in gradients
+        ]
+    except Exception as e:
+        raise FeatureError("Failed to compute the hessian matrix") from e
+
+    return gradients
+
+# -------------------------------------------------------------------------
+
+def compute_hessian_matrix_eigvals(hessian_matrix: List[np.ndarray]) -> np.ndarray:
+    """Computes the eigen values of the hessian matrix. Result is returned as float """
+
+    for i in range(len(hessian_matrix)):
+        hessian_matrix[i] = check_user_provided_ndarray(hessian_matrix[i])
+
+    try:
+        eigen_values = sk_hessian_matrix_eigvals(hessian_matrix).astype(
+            AllowedDataType.Float32.value, copy=False
+        )
+    except Exception as e:
+        raise FeatureError("Failed to compute the eigen values of the provided hessian matrix")
+
+    return eigen_values
+
+# -------------------------------------------------------------------------
+
+@check_image_exist_external
+def compute_hog_descriptors(
+    image: BaseImage,
+    orientations: Optional[int] = 9,
+    pixels_in_cell: Optional[Tuple[int, int]] = (8, 8),
+    cells_per_block: Optional[Tuple[int, int]] = (3, 3)
+) -> Tuple[np.ndarray, BaseImage]:
+    """Computes the hog descriptor features of the provided image. Result is returned as a tuple of float32 array and image
+    where the first element represents the flattened hog features and the second element is a library image
+    for visualization."""
+
+    if not isinstance(orientations, int):
+        raise WrongArgumentsType("Orientations must be provided as an integer value")
+
+    for pixel in pixels_in_cell:
+        if not isinstance(pixel, int):
+            raise WrongArgumentsType(
+                "Pixels in cell must be provided as a tuple with only integer values"
+            )
+
+    if len(pixels_in_cell) != 2:
+        raise WrongArgumentsValue(
+            "Pixels in cell must be provided as a tuple with values in just row and col direction"
+        )
+
+    for cell in cells_per_block:
+        if not isinstance(cell, int):
+            raise WrongArgumentsType(
+                "Cells per block must be provided as a tuple with only integer values"
+            )
+
+    if len(cells_per_block) != 2:
+        raise WrongArgumentsValue(
+            "Cells per block must be provided as a tuple with values in just row and col direction"
+        )
+
+    check_image = image_array_check_conversion(image)
+    channel_axis = -1 if check_image.is_rgb() else None
+    try:
+        descriptors, image_hog = sk_hog_descriptors(
+            check_image.image,
+            pixels_per_cell=pixels_in_cell,
+            cells_per_block=cells_per_block,
+            visualize=True,
+            channel_axis=channel_axis
+        )
+        check_image._set_image(image_hog.astype(AllowedDataType.Float32.value, copy=False))
+        descriptors.astype(AllowedDataType.Float32.value, copy=False)
+    except Exception as e:
+        raise FeatureError("Failed to compute the hog descriptors of the image") from e
+
+    return (descriptors, check_image)
+
+# -------------------------------------------------------------------------
+
+@check_image_exist_external
+def compute_local_binary_pattern(
+    image: BaseImage,
+    neigbour_points: int,
+    radius: int,
+    method: Optional[str] = "default"
+) -> BaseImage:
+    """Computes the local binary pattern of a gray-scale image. Result is returned as a float32 image."""
+
+    possible_methods = {"default": "default", "ror": "ror", "uniform": "uniform", "var": "var"}
+
+    if not image.is_gray():
+        ImageModeConversion(
+            "Converting the image to grayscale since this method is only supported for grayscale images"
+        )
+        image = convert(image, "rgb2gray")
+
+    if not isinstance(neigbour_points, int):
+        raise WrongArgumentsType("Neighbour points must be provided as an integer")
+
+    if not isinstance(radius, int):
+        raise WrongArgumentsType("Radius must be provided as an integer")
+
+    if neigbour_points < 0:
+        raise WrongArgumentsValue("Neigbour points can not be a negative number")
+
+    if radius < 0:
+        raise WrongArgumentsValue("Radius can not be a negative number")
+
+    method_arg = possible_methods.get(method, None)
+    if method_arg is None:
+        DefaultSetting(
+            "Using default method since the provided method is not supported by the library yet"
+        )
+        method_arg = possible_methods["default"]
+
+    check_image = image_array_check_conversion(image)
+    try:
+        check_image._set_image(
+            sk_local_binary_pattern(check_image.image, neigbour_points, radius,
+                                    method_arg).astype(AllowedDataType.Float32.value, copy=False)
+        )
+    except Exception as e:
+        raise FeatureError("Failed to compute the local binary pattern") from e
+
+    return check_image
+
+# -------------------------------------------------------------------------
+
+def match_image_descriptors(first: np.ndarray, second: np.ndarray) -> np.ndarray:
+    """Matches the provided first and second descriptors array with a brute-force approach.
+    It returns a (Q, 2) dimensional array, where the first column denotes the matched indices in the first and 
+    the second column denotes the matched indices in the second array of descriptors. Result is returned as a float32 array."""
+
+    dim_first, dim_second = first.shape, second.shape
+
+    if len(dim_first) != 2 or len(dim_second) != 2:
+        raise WrongArgumentsValue(
+            "Either of the provided descriptors array does not have the right dimensions"
+        )
+
+    if dim_first[1] != dim_second[1]:
+        raise WrongArgumentsValue("Dimensions of the provided descriptors array does not match")
+
+    check_first = check_user_provided_ndarray(first)
+    check_second = check_user_provided_ndarray(second)
+
+    try:
+        matches = sk_match_descriptors(check_first, check_second).astype(
+            AllowedDataType.Float32.value, copy=False
+        )
+    except Exception as e:
+        raise FeatureError("Failed to match the provided descriptors") from e
+
+    return matches
+
+# -------------------------------------------------------------------------
+
+@check_image_exist_external
+def match_image_template(image: BaseImage, template: Union[BaseImage, np.ndarray]) -> np.ndarray:
+    """Matches the provided template (np.ndarray or BaseImage) with the provided image and returns an array of type float32 with 
+    correlation coefficients."""
+
+    check_template = None
+    is_base_image = False
+    if isinstance(template, BaseImage):
+        if template.closed:
+            raise ImageAlreadyClosed("The provided template cannot be processed since it is closed")
+        else:
+            check_template = image_array_check_conversion(template)
+            is_base_image = True
+    elif isinstance(template, np.ndarray):
+        check_template = check_user_provided_ndarray(template)
+    else:
+        raise WrongArgumentsType(
+            "Provide template has a type which is not supported by this method"
+        )
+    if is_base_image:
+        is_correct_width = check_template.width > 0 and check_template.width <= image.width
+        is_correct_height = check_template.height > 0 and check_template.height <= image.height
+        is_correct_channels = check_template.channels == image.channels
+        if not is_correct_width or not is_correct_channels or not is_correct_height:
+            raise WrongArgumentsValue("Provided template does not have accurate dimensions")
+    else:
+        if len(check_template.shape) != 3:
+            raise WrongArgumentsValue("Provided template does not have accurate number of channels")
+        width, height, channels = template.shape
+        is_correct_width = width > 0 and width <= image.width
+        is_correct_height = height > 0 and height <= image.height
+        is_correct_channels = channels == image.channels
+        if not is_correct_channels or not is_correct_height or not is_correct_width:
+            raise WrongArgumentsValue("Provided template does not have the right dimensions")
+
+    check_image = image_array_check_conversion(image)
+    try:
+        coefficients = sk_match_template(
+            check_image.image, check_template.image if is_base_image else check_template
+        ).astype(
+            AllowedDataType.Float32.value, copy=False
+        )
+    except Exception as e:
+        raise FeatureError("Failed to peform the template matching") from e
+
+    return coefficients
+
+# -------------------------------------------------------------------------
+
+@check_image_exist_external
+def compute_structure_tensor(
+    image: BaseImage,
+    sigma: Optional[float] = 1.0,
+    mode: Optional[str] = "constant"
+) -> List[np.ndarray]:
+    """Computes the structure tensors of the provided image. Result is returned as a list of float32 np.ndarrays."""
+
+    if not isinstance(sigma, float):
+        raise WrongArgumentsType("Sigma value can only be provided as a float value")
+
+    if not isinstance(mode, str):
+        raise WrongArgumentsType("Mode can only be specified as a string")
+
+    mode_arg = SKIMAGE_SAMPLING_REGISTRY.get(mode, None)
+    if mode_arg is None:
+        DefaultSetting(
+            "Using default value of the mode (constant) since the provided mode is not supported by the library"
+        )
+        mode_arg = SKIMAGE_SAMPLING_REGISTRY.get("constant")
+
+    check_image = image_array_check_conversion(image)
+    try:
+        tensors = sk_structure_tensor(check_image.image, sigma, mode=mode_arg)
+        tensors = [tensor.astype(AllowedDataType.Float32.value, copy=False) for tensor in tensors]
+    except Exception as e:
+        raise FeatureError("Failed to compute the structure tensors") from e
+
+    return tensors
 
 # -------------------------------------------------------------------------
 
@@ -557,7 +831,7 @@ if __name__ == "__main__":
     import napari
     from image.load.loader import open_image
     from image.transform.color_conversion import convert
-    from skimage.feature import daisy, corner_fast, haar_like_feature
+    from skimage.feature import daisy, local_binary_pattern, match_template
     import cv2
     path_image = Path(__file__).parent.parent.parent / "sample.jpg"
     image = open_image(str(path_image))
@@ -566,7 +840,7 @@ if __name__ == "__main__":
     #image_input = image.image.astype(np.uint16)
 
     #out = cv2.Canny(image_input, 100, 200)
-    out1 = haar_like_feature(image.image, 1, 1, 100, 100)
+    out1 = local_binary_pattern(image.image, 1, 1)
     out2 = out1.astype(np.uint8)
 
     print("hallo")

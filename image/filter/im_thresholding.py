@@ -3,12 +3,12 @@
 
 import cv2
 
-from image.load._interface import BaseImage
+from image.common.interfaces.loader import BaseImage
 from commons.exceptions import WrongArgumentsType, WrongArgumentsValue, FilteringError
 from commons.warning import DefaultSetting
-from image._decorators import check_image_exist_external
-from image._helpers import image_array_check_conversion
-from image._common_datastructs import AllowedDataType
+from image.common.decorators import check_image_exist_external
+from image.common.helpers import image_array_check_conversion
+from image.common.datastructs import AllowedDataType
 from skimage.filters.thresholding import threshold_niblack as sk_niblack
 from skimage.filters.thresholding import threshold_sauvola as sk_sauvola
 from typing import Union, Optional
@@ -106,7 +106,6 @@ def adaptive_threshold(
     check_image = image_array_check_conversion(image)
     if check_image.dtype is not AllowedDataType.Uint8.value:
         check_image._image_conversion_helper(AllowedDataType.Uint8)
-        check_image._update_dtype()
 
     try:
         check_image._set_image(
@@ -146,7 +145,6 @@ def niblack_threshold(
             sk_niblack(check_image.image, kernel_size,
                        factor).astype(AllowedDataType.Float32.value, copy=False)
         )
-        check_image._update_dtype()
     except Exception as e:
         raise FilteringError("Failed to apply the Niblack threshold to the image") from e
 
@@ -178,7 +176,6 @@ def sauvola_threshold(
             sk_sauvola(check_image.image, kernel_size,
                        factor).astype(AllowedDataType.Float32.value, copy=False)
         )
-        check_image._update_dtype()
     except Exception as e:
         raise FilteringError("Failed to apply the Niblack threshold to the image") from e
 

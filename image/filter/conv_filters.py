@@ -8,11 +8,11 @@ from typing import Union, Optional, Tuple, List
 from collections import namedtuple
 from commons.exceptions import FilteringError, WrongArgumentsType, WrongArgumentsValue
 from commons.warning import DefaultSetting, ImageDataTypeConversion
-from image.load._interface import BaseImage
-from image._decorators import check_image_exist_external
-from image._helpers import image_array_check_conversion, check_user_provided_ndarray
-from image._common_datastructs import AllowedDataType
-from image._common_datastructs import CV_BORDER_INTERPOLATION
+from image.common.interfaces.loader import BaseImage
+from image.common.decorators import check_image_exist_external
+from image.common.helpers import image_array_check_conversion, check_user_provided_ndarray
+from image.common.datastructs import AllowedDataType
+from image.common.datastructs import CV_BORDER_INTERPOLATION
 from image.filter._common_methods import is_not_namedtuple
 
 # -------------------------------------------------------------------------
@@ -222,7 +222,6 @@ def median_blur(image: BaseImage, kernel_size: Union[List[int], Tuple[int, int]]
             "Converting the image type to uint8 since for kernel sizes > 5 only this type is supported"
         )
         check_image._image_conversion_helper(AllowedDataType.Uint8)
-        check_image._update_dtype()
 
     try:
         check_image._set_image(cv2.medianBlur(check_image.image, int(kernel_size[0])))
@@ -271,7 +270,6 @@ def bilateral_filter(
             "Converting the image from 16 bits to 8 bits per channel since this is what is only supported for this filter"
         )
         check_image._image_conversion_helper(AllowedDataType.Uint8)
-        check_image._update_dtype()
 
     border = border.lower()
     border_actual = CV_BORDER_INTERPOLATION.get(border, None)
