@@ -149,7 +149,7 @@ class ImageLoader:
     @property
     @check_image_exist_internal
     def channels(self) -> int:
-        channels = 0
+        channels = 1
         image_dims = self.image.shape
         if len(image_dims) == 3:
             channels = image_dims[-1]

@@ -823,24 +823,3 @@ def compute_structure_tensor(
     return tensors
 
 # -------------------------------------------------------------------------
-
-if __name__ == "__main__":
-    from pathlib import Path
-    from skimage import data
-    import numpy as np
-    import napari
-    from image.load.loader import open_image
-    from image.transform.color_conversion import convert
-    from skimage.feature import daisy, local_binary_pattern, match_template
-    import cv2
-    path_image = Path(__file__).parent.parent.parent / "sample.jpg"
-    image = open_image(str(path_image))
-    #viewer = napari.view_image(image.image)
-    image = convert(image, "rgb2gray")
-    #image_input = image.image.astype(np.uint16)
-
-    #out = cv2.Canny(image_input, 100, 200)
-    out1 = local_binary_pattern(image.image, 1, 1)
-    out2 = out1.astype(np.uint8)
-
-    print("hallo")

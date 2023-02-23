@@ -8,11 +8,12 @@ from skimage.transform import rotate as sk_rotate
 from typing import Tuple, Optional, Union, List
 from image.common.decorators import check_image_exist_external
 from image.common.interfaces.loader import BaseImage
-from commons.warning import DefaultSetting
+from commons.warning import DefaultSetting, ImageModeConversion
 from commons.exceptions import WrongArgumentsType, TransformError, WrongArgumentsValue
 from image.common.helpers import image_array_check_conversion
 from image.common.datastructs import AllowedDataType, SKIMAGE_SAMPLING_REGISTRY
 from image.transform.color_conversion import convert
+from cv2 import equalizeHist as cv_equalize_hist
 
 # -------------------------------------------------------------------------
 
@@ -191,5 +192,28 @@ def kmeans_quantize(
         raise TransformError("Failed to transform the image") from e
 
     return quantize_image
+
+# -------------------------------------------------------------------------
+
+@check_image_exist_external
+def histogram_equalization(image: BaseImage) -> BaseImage:
+    """Performs histogram equalization on the grayscale image. If the provided image is not
+    grayscale, a conversion is performed automatically. Result is returned as a uint8 image."""
+
+    if not image.is_gray():
+        ImageModeConversion(
+            "Converting the image to grayscale since this method can only be applied to grayscale images"
+        )
+        converted_image = convert(image, "rgb2gray")
+
+    check_image = image_array_check_conversion(converted_image)
+    check_image._image_conversion_helper(AllowedDataType.Uint8)
+
+    try:
+        check_image._set_image(cv_equalize_hist(check_image.image))
+    except Exception as e:
+        raise TransformError("Failed to perform histogram equalization") from e
+
+    return check_image
 
 # -------------------------------------------------------------------------
