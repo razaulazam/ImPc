@@ -1,20 +1,12 @@
 # Introduction 
-TODO: Give a short introduction of your project. Let this section explain the objectives or the motivation behind this project. 
+ImPc is a library that wraps various other image processing libraries for providing a common set of operations applicable on images under one umbrella. It is currently in active development in terms of the set of features that it aims to offer
 
 # Getting Started
-TODO: Guide users through getting your code up and running on their own system. In this section you can talk about:
-1.	Installation process
-2.	Software dependencies
-3.	Latest releases
-4.	API references
-
-# Build and Test
-TODO: Describe and show how to build your code and run the tests. 
+In order to get started with contributing to this project, please follow these steps:
+1.	Create a conda/pip environment
+2.	Activate the environment
+3.	Execute the following command from the root of the project directory: `pip install -e .`
+4.	Excute: `pip install -r requirements.txt`
 
 # Contribute
-TODO: Explain how other users and developers can contribute to make your code better. 
-
-If you want to learn more about creating good readme files then refer the following [guidelines](https://docs.microsoft.com/en-us/azure/devops/repos/git/create-a-readme?view=azure-devops). You can also seek inspiration from the below readme files:
-- [ASP.NET Core](https://github.com/aspnet/Home)
-- [Visual Studio Code](https://github.com/Microsoft/vscode)
-- [Chakra Core](https://github.com/Microsoft/ChakraCore)
+Please feel free to contribute anything that you consider reasonable for this project
