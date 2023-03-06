@@ -5,7 +5,7 @@ import re
 import numpy as np
 
 from common.interfaces.loader import BaseImage
-from exceptions import NotSupportedDataType
+from common.exceptions import NotSupportedDataType
 from common.warning import ImageDataTypeConversion
 from common.decorators import check_image_exist_external
 from common.datastructs import DataType, ConversionDataType, AllowedDataType, ALLOWED_DATA_TYPES, CONVERSION_DATA_TYPES

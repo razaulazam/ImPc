@@ -377,7 +377,7 @@ INTERNAL_CONVERSION_MODES = {
 # -------------------------------------------------------------------------
 
 @check_image_exist_external
-def convert(image: BaseImage, code: str) -> BaseImage:
+def convert_color(image: BaseImage, code: str) -> BaseImage:
     """Converts the image to different color spaces"""
 
     if not isinstance(code, str):
