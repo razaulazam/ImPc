@@ -5,8 +5,8 @@ import cv2
 import numpy as np
 
 from typing import Union, List, Tuple, Optional
-from image.common.interfaces.loader import BaseImage
-from commons.exceptions import WrongArgumentsType, WrongArgumentsValue, FilteringError
+from common.interfaces.loader import BaseImage
+from common.exceptions import WrongArgumentsType, WrongArgumentsValue, FilteringError
 from collections import namedtuple
 from skimage.filters.thresholding import threshold_isodata as sk_thresh_isodata
 from skimage.filters.thresholding import threshold_li as sk_thresh_li
@@ -16,8 +16,8 @@ from skimage.filters.thresholding import threshold_otsu as sk_thresh_otsu
 from skimage.filters.thresholding import threshold_triangle as sk_thresh_triangle
 from skimage.filters.thresholding import threshold_yen as sk_thresh_yen
 from skimage.filters.thresholding import threshold_multiotsu as sk_thresh_multiotsu
-from image.common.helpers import image_array_check_conversion
-from image.common.decorators import check_image_exist_external
+from common.helpers import image_array_check_conversion
+from common.decorators import check_image_exist_external
 
 # -------------------------------------------------------------------------
 

@@ -1,8 +1,6 @@
 # Copyright (C) Raza Ul Azam, All Rights Reserved.
 # \brief Internal common methods for filtering
 
-import cv2
-
 from collections import namedtuple
 
 # -------------------------------------------------------------------------

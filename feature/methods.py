@@ -3,14 +3,14 @@
 
 import numpy as np
 
-from commons.exceptions import ImageAlreadyClosed, WrongArgumentsType, WrongArgumentsValue, FeatureError
+from common.exceptions import ImageAlreadyClosed, WrongArgumentsType, WrongArgumentsValue, FeatureError
 from common.warning import ImageModeConversion, DefaultSetting
-from image.common.decorators import check_image_exist_external
-from image.common.datastructs import SKIMAGE_SAMPLING_REGISTRY
-from image.common.interfaces.loader import BaseImage
-from image.common.helpers import AllowedDataType
-from image.transform.color_conversion import convert
-from image.common.helpers import image_array_check_conversion, check_user_provided_ndarray
+from common.decorators import check_image_exist_external
+from common.datastructs import SKIMAGE_SAMPLING_REGISTRY
+from common.interfaces.loader import BaseImage
+from common.helpers import AllowedDataType
+from transform.color_conversion import convert
+from common.helpers import image_array_check_conversion, check_user_provided_ndarray
 from typing import Optional, Tuple, Union, List
 from skimage.feature import canny as sk_canny
 from skimage.feature import blob_dog as sk_blob_dog

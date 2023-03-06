@@ -5,13 +5,13 @@ import cv2
 import numpy as np
 
 from typing import Union, Tuple, List
-from image.common.interfaces.loader import BaseImage
-from commons.exceptions import WrongArgumentsType, WrongArgumentsValue
-from image.common.helpers import image_array_check_conversion
-from commons.exceptions import ProcessingError, ImageAlreadyClosed
-from image.transform.transforms import resize
-from image.common.decorators import check_image_exist_external
-from image.common.datastructs import AllowedDataType
+from common.interfaces.loader import BaseImage
+from common.exceptions import WrongArgumentsType, WrongArgumentsValue
+from common.helpers import image_array_check_conversion
+from common.exceptions import ProcessingError, ImageAlreadyClosed
+from transform.transforms import resize
+from common.decorators import check_image_exist_external
+from common.datastructs import AllowedDataType
 
 # -------------------------------------------------------------------------
 
