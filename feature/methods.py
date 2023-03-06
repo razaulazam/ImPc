@@ -9,7 +9,7 @@ from common.decorators import check_image_exist_external
 from common.datastructs import SKIMAGE_SAMPLING_REGISTRY
 from common.interfaces.loader import BaseImage
 from common.helpers import AllowedDataType
-from transform.color_conversion import convert
+from transform.color import convert
 from common.helpers import image_array_check_conversion, check_user_provided_ndarray
 from typing import Optional, Tuple, Union, List
 from skimage.feature import canny as sk_canny
