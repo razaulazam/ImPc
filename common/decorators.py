@@ -2,7 +2,7 @@
 # \brief Internal library decorators
 
 from functools import wraps
-from commons.exceptions import ImageAlreadyClosed, WrongArgumentsType
+from common.exceptions import ImageAlreadyClosed, WrongArgumentsType
 from image.common.interfaces.loader import BaseImage
 
 # -------------------------------------------------------------------------

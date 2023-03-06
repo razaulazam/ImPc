@@ -4,7 +4,7 @@
 import numpy as np
 
 from commons.exceptions import ImageAlreadyClosed, WrongArgumentsType, WrongArgumentsValue, FeatureError
-from commons.warning import ImageModeConversion, DefaultSetting
+from common.warning import ImageModeConversion, DefaultSetting
 from image.common.decorators import check_image_exist_external
 from image.common.datastructs import SKIMAGE_SAMPLING_REGISTRY
 from image.common.interfaces.loader import BaseImage

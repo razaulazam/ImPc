@@ -5,7 +5,7 @@ import cv2
 
 from image.common.interfaces.loader import BaseImage
 from commons.exceptions import WrongArgumentsType, WrongArgumentsValue, FilteringError
-from commons.warning import DefaultSetting
+from common.warning import DefaultSetting
 from image.common.decorators import check_image_exist_external
 from image.common.helpers import image_array_check_conversion
 from image.common.datastructs import AllowedDataType

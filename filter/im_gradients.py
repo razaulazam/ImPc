@@ -8,7 +8,7 @@ from image.common.interfaces.loader import BaseImage
 from image.common.decorators import check_image_exist_external
 from image.common.helpers import image_array_check_conversion, check_user_provided_ndarray
 from commons.exceptions import WrongArgumentsType, WrongArgumentsValue, FilteringError
-from commons.warning import DefaultSetting
+from common.warning import DefaultSetting
 from typing import Union, List, Tuple, Optional
 from skimage.filters.edges import scharr as sk_scharr
 from skimage.filters._unsharp_mask import unsharp_mask as sk_unsharp_mask

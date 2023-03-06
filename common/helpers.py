@@ -6,7 +6,7 @@ import numpy as np
 
 from image.common.interfaces.loader import BaseImage
 from commons.exceptions import NotSupportedDataType
-from commons.warning import ImageDataTypeConversion
+from common.warning import ImageDataTypeConversion
 from image.common.decorators import check_image_exist_external
 from image.common.datastructs import DataType, ConversionDataType, AllowedDataType, ALLOWED_DATA_TYPES, CONVERSION_DATA_TYPES
 
