@@ -3,7 +3,7 @@
 
 from functools import wraps
 from common.exceptions import ImageAlreadyClosed, WrongArgumentsType
-from image.common.interfaces.loader import BaseImage
+from common.interfaces.loader import BaseImage
 
 # -------------------------------------------------------------------------
 

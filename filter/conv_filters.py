@@ -6,14 +6,14 @@ import numpy as np
 
 from typing import Union, Optional, Tuple, List
 from collections import namedtuple
-from commons.exceptions import FilteringError, WrongArgumentsType, WrongArgumentsValue
+from common.exceptions import FilteringError, WrongArgumentsType, WrongArgumentsValue
 from common.warning import DefaultSetting, ImageDataTypeConversion
-from image.common.interfaces.loader import BaseImage
-from image.common.decorators import check_image_exist_external
-from image.common.helpers import image_array_check_conversion, check_user_provided_ndarray
-from image.common.datastructs import SKIMAGE_SAMPLING_REGISTRY, AllowedDataType
-from image.common.datastructs import CV_BORDER_INTERPOLATION
-from image.filter.common_methods import is_not_namedtuple
+from common.interfaces.loader import BaseImage
+from common.decorators import check_image_exist_external
+from common.helpers import image_array_check_conversion, check_user_provided_ndarray
+from common.datastructs import SKIMAGE_SAMPLING_REGISTRY, AllowedDataType
+from common.datastructs import CV_BORDER_INTERPOLATION
+from filter.common_methods import is_not_namedtuple
 from scipy.ndimage import convolve as scipy_convolve
 from scipy.ndimage import correlate as scipy_correlate
 

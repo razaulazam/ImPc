@@ -3,12 +3,12 @@
 
 import numpy as np
 
-from image.common.interfaces.loader import BaseImage
-from commons.exceptions import WrongArgumentsType, WrongArgumentsValue, FilteringError
+from common.interfaces.loader import BaseImage
+from common.exceptions import WrongArgumentsType, WrongArgumentsValue, FilteringError
 from common.warning import DefaultSetting
-from image.common.decorators import check_image_exist_external
-from image.common.datastructs import AllowedDataType, SKIMAGE_SAMPLING_REGISTRY
-from image.common.helpers import image_array_check_conversion, check_user_provided_ndarray
+from common.decorators import check_image_exist_external
+from common.datastructs import AllowedDataType, SKIMAGE_SAMPLING_REGISTRY
+from common.helpers import image_array_check_conversion, check_user_provided_ndarray
 from skimage.filters._fft_based import butterworth as sk_butterworth
 from skimage.filters._gaussian import difference_of_gaussians as sk_difference_gaussians
 from skimage.filters._gabor import gabor as sk_gabor

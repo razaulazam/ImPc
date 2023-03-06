@@ -3,11 +3,11 @@
 
 import numpy as np
 
-from image.common.interfaces.loader import BaseImage
+from common.interfaces.loader import BaseImage
 from typing import Optional, Union
-from commons.exceptions import WrongArgumentsType, RestorationError
-from image.common.helpers import image_array_check_conversion
-from image.common.decorators import check_image_exist_external
+from common.exceptions import WrongArgumentsType, RestorationError
+from common.helpers import image_array_check_conversion
+from common.decorators import check_image_exist_external
 from skimage.restoration import estimate_sigma as sk_sigma_estimator
 from skimage.restoration import ellipsoid_kernel as sk_ellipsoid_kernel
 

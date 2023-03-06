@@ -4,11 +4,11 @@
 import re
 import numpy as np
 
-from image.common.interfaces.loader import BaseImage
-from commons.exceptions import NotSupportedDataType
+from common.interfaces.loader import BaseImage
+from exceptions import NotSupportedDataType
 from common.warning import ImageDataTypeConversion
-from image.common.decorators import check_image_exist_external
-from image.common.datastructs import DataType, ConversionDataType, AllowedDataType, ALLOWED_DATA_TYPES, CONVERSION_DATA_TYPES
+from common.decorators import check_image_exist_external
+from common.datastructs import DataType, ConversionDataType, AllowedDataType, ALLOWED_DATA_TYPES, CONVERSION_DATA_TYPES
 
 # -------------------------------------------------------------------------
 
