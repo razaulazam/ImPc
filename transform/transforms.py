@@ -12,7 +12,7 @@ from common.warning import DefaultSetting, ImageModeConversion
 from common.exceptions import WrongArgumentsType, TransformError, WrongArgumentsValue
 from common.helpers import image_array_check_conversion
 from common.datastructs import AllowedDataType, SKIMAGE_SAMPLING_REGISTRY
-from transform.color_conversion import convert
+from transform.color import convert
 from cv2 import equalizeHist as cv_equalize_hist
 
 # -------------------------------------------------------------------------
