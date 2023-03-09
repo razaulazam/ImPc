@@ -137,14 +137,11 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
-
 # vscode
 .vscode
 
 # sample images
-*.jpeg
 *.png
-*.jpg
 
 # nox packages
 .nox
