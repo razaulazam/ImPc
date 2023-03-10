@@ -256,12 +256,12 @@ def compute_foerstner_corners(image: BaseImage, sigma: Optional[float] = 1.0) ->
         ImageModeConversion(
             "convert_coloring the image to grayscale since this method only supports 2D images"
         )
-        convert_colored_image = convert_color(image, "rgb2gray")
+        image = convert_color(image, "rgb2gray")
 
     if not isinstance(sigma, float):
         raise WrongArgumentsType("Sigma must be provided as a float value")
 
-    check_image = image_array_check_conversion(convert_colored_image)
+    check_image = image_array_check_conversion(image)
     check_image_one = check_image.copy()
 
     try:
@@ -292,7 +292,7 @@ def compute_harris_corners(
         ImageModeConversion(
             "convert_coloring the image to grayscale since this method can only be applied on 2D images"
         )
-        convert_colored_image = convert_color(image, "rgb2gray")
+        image = convert_color(image, "rgb2gray")
 
     if not isinstance(method, str):
         raise WrongArgumentsType("Method should be supplied as a string")
@@ -311,7 +311,7 @@ def compute_harris_corners(
         )
         method_arg = methods["k"]
 
-    check_image = image_array_check_conversion(convert_colored_image)
+    check_image = image_array_check_conversion(image)
 
     try:
         check_image._set_image(
@@ -335,7 +335,7 @@ def compute_kitchen_rosenfeld_corners(
         ImageModeConversion(
             "convert_coloring the image to grayscale since this method can only be applied to 2D images"
         )
-        convert_colored_image = convert_color(image, "rgb2gray")
+        image = convert_color(image, "rgb2gray")
 
     if not isinstance(mode, str):
         raise WrongArgumentsType("Mode can only be supplied as a string")
@@ -348,7 +348,7 @@ def compute_kitchen_rosenfeld_corners(
         )
         mode_arg = SKIMAGE_SAMPLING_REGISTRY["constant"]
 
-    check_image = image_array_check_conversion(convert_colored_image)
+    check_image = image_array_check_conversion(image)
 
     try:
         check_image._set_image(
@@ -372,7 +372,7 @@ def compute_moravec_corners(
         ImageModeConversion(
             "convert_coloring the image to grayscale since this method can only be applied to 2D images"
         )
-        convert_colored_image = convert_color(image, "rgb2gray")
+        image = convert_color(image, "rgb2gray")
 
     if not isinstance(kernel_size, (float, int)):
         raise WrongArgumentsType("Kernel size must be provided as either integer or float")
@@ -380,7 +380,7 @@ def compute_moravec_corners(
     if kernel_size <= 0:
         raise WrongArgumentsValue("Kernel size must be > 0")
 
-    check_image = image_array_check_conversion(convert_colored_image)
+    check_image = image_array_check_conversion(image)
 
     try:
         check_image._set_image(

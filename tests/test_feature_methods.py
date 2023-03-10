@@ -7,7 +7,8 @@ from pathlib import Path
 from load import open_image
 from common.exceptions import WrongArgumentsValue, WrongArgumentsType
 from feature import canny, blob_diff_gaussian, blob_determinant_hessian
-from feature import blob_laplacian_gaussian, compute_fast_corners
+from feature import blob_laplacian_gaussian, compute_fast_corners, compute_foerstner_corners, compute_harris_corners
+from feature import compute_kitchen_rosenfeld_corners, compute_moravec_corners
 from transform import convert_color
 
 # -------------------------------------------------------------------------
@@ -101,6 +102,70 @@ def test_compute_fast_corners(sample_data_path):
         _ = compute_fast_corners(im, num_pixels=str(2))
 
 # -------------------------------------------------------------------------
+
+def test_compute_foerstner_corners(sample_data_path):
+    # Open the image.
+    im = open_image(sample_data_path)
+    with pytest.warns(UserWarning):
+        _ = compute_foerstner_corners(im)
+
+    # Convert the image to gray.
+    im = convert_color(im, "rgb2gray")
+    _ = compute_foerstner_corners(im)
+
+    # Call the function with wrong arguments.
+    with pytest.raises(WrongArgumentsType):
+        _ = compute_foerstner_corners(im, sigma=str(2))
+
+# -------------------------------------------------------------------------
+
+def test_compute_harris_corners(sample_data_path):
+    # Open the image.
+    im = open_image(sample_data_path)
+    with pytest.warns(UserWarning):
+        _ = compute_harris_corners(im)
+
+    # Convert the image to gray.
+    im = convert_color(im, "rgb2gray")
+    _ = compute_harris_corners(im)
+
+    # Call the function with wrong arguments.
+    with pytest.warns(UserWarning):
+        _ = compute_harris_corners(im, method="blah")
+    with pytest.raises(WrongArgumentsType):
+        _ = compute_harris_corners(im, sigma=str(2))
+
+# -------------------------------------------------------------------------
+
+def test_compute_kitchen_rosenfeld_corners(sample_data_path):
+    # Open the image.
+    im = open_image(sample_data_path)
+    with pytest.warns(UserWarning):
+        _ = compute_kitchen_rosenfeld_corners(im)
+
+    # Convert the image to gray.
+    im = convert_color(im, "rgb2gray")
+    _ = compute_kitchen_rosenfeld_corners(im)
+
+    # Call the function with wrong arguments.
+    with pytest.warns(UserWarning):
+        _ = compute_kitchen_rosenfeld_corners(im, mode="blah")
+
+# -------------------------------------------------------------------------
+
+def test_compute_moravec_corners(sample_data_path):
+    # Open the image.
+    im = open_image(sample_data_path)
+    with pytest.warns(UserWarning):
+        _ = compute_moravec_corners(im)
+
+    # Convert the image to gray.
+    im = convert_color(im, "rgb2gray")
+    _ = compute_moravec_corners(im)
+
+    # Call the function with wrong arguments.
+    with pytest.raises(WrongArgumentsValue):
+        _ = compute_moravec_corners(im, kernel_size=-1)
 
 if __name__ == "__main__":
     a = str(Path(__file__).parent / "data" / "sample.jpg")
