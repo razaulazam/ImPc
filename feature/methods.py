@@ -9,7 +9,7 @@ from common.decorators import check_image_exist_external
 from common.datastructs import SKIMAGE_SAMPLING_REGISTRY
 from common.interfaces.loader import BaseImage
 from common.helpers import AllowedDataType
-from transform.color import convert
+from transform.color import convert_color
 from common.helpers import image_array_check_conversion, check_user_provided_ndarray
 from typing import Optional, Tuple, Union, List
 from skimage.feature import canny as sk_canny
@@ -47,18 +47,18 @@ def canny(
         ImageModeConversion(
             "Canny algorithm only works with grayscale images. Performing the conversion automatically ..."
         )
-        converted_image = convert(image, "rgb2gray")
+        image = convert_color(image, "rgb2gray")
 
     if not isinstance(sigma, float):
         raise WrongArgumentsType("Sigma must have the float type")
 
-    if not isinstance(thresh_low, (float, int)):
+    if thresh_low and not isinstance(thresh_low, (float, int)):
         raise WrongArgumentsType("Low threshold value can either be float or integer")
 
-    if not isinstance(thresh_high, (float, int)):
+    if thresh_high and not isinstance(thresh_high, (float, int)):
         raise WrongArgumentsType("High threshold value can either be integer or float")
 
-    check_image = image_array_check_conversion(converted_image)
+    check_image = image_array_check_conversion(image)
 
     try:
         check_image._set_image(
@@ -89,9 +89,9 @@ def blob_diff_gaussian(
 
     if not image.is_gray():
         ImageModeConversion(
-            "Converting the image to grayscale since this method can only be applied to 2D images"
+            "convert_coloring the image to grayscale since this method can only be applied to 2D images"
         )
-        converted_image = convert(image, "rgb2gray")
+        image = convert_color(image, "rgb2gray")
 
     if not isinstance(sigma_min, float):
         raise WrongArgumentsType("Minimum sigma should be provided as float")
@@ -111,7 +111,7 @@ def blob_diff_gaussian(
     if overlap <= 0 or overlap >= 1:
         raise WrongArgumentsValue("Overlap value should be between 0 and 1")
 
-    check_image = image_array_check_conversion(converted_image)
+    check_image = image_array_check_conversion(image)
 
     try:
         found_blobs = sk_blob_dog(
@@ -129,7 +129,6 @@ def blob_determinant_hessian(
     image: BaseImage,
     sigma_min: Optional[float] = 1.0,
     sigma_max: Optional[float] = 50.0,
-    sigma_ratio: Optional[float] = 1.6,
     sigma_num: Optional[Union[int, float]] = 10,
     overlap: Optional[float] = 0.5
 ) -> np.ndarray:
@@ -137,18 +136,15 @@ def blob_determinant_hessian(
 
     if not image.is_gray():
         ImageModeConversion(
-            "Converting the image to grayscale since this method can only be applied to 2D images"
+            "convert_coloring the image to grayscale since this method can only be applied to 2D images"
         )
-        converted_image = convert(image, "rgb2gray")
+        image = convert_color(image, "rgb2gray")
 
     if not isinstance(sigma_min, float):
         raise WrongArgumentsType("Minimum sigma should be provided as float")
 
     if not isinstance(sigma_max, float):
         raise WrongArgumentsType("Maximum sigma should be provided as float")
-
-    if not isinstance(sigma_ratio, float):
-        raise WrongArgumentsType("Sigma ratio should be provided as float")
 
     if not isinstance(sigma_num, (int, float)):
         raise WrongArgumentsType("Number of sigmas must be provided as float or int")
@@ -159,12 +155,10 @@ def blob_determinant_hessian(
     if overlap <= 0 or overlap >= 1:
         raise WrongArgumentsValue("Overlap value should be between 0 and 1")
 
-    check_image = image_array_check_conversion(converted_image)
+    check_image = image_array_check_conversion(image)
 
     try:
-        found_blobs = sk_blob_doh(
-            check_image.image, sigma_min, sigma_max, sigma_ratio, int(sigma_num), overlap
-        )
+        found_blobs = sk_blob_doh(check_image.image, sigma_min, sigma_max, int(sigma_num), overlap)
     except Exception as e:
         raise FeatureError("Failed to find the blobs in the image") from e
 
@@ -185,9 +179,9 @@ def blob_laplacian_gaussian(
 
     if not image.is_gray():
         ImageModeConversion(
-            "Converting the image to grayscale since this method can only be applied to 2D images"
+            "convert_coloring the image to grayscale since this method can only be applied to 2D images"
         )
-        converted_image = convert(image, "rgb2gray")
+        image = convert_color(image, "rgb2gray")
 
     if not isinstance(sigma_min, float):
         raise WrongArgumentsType("Minimum sigma should be provided as float")
@@ -207,7 +201,7 @@ def blob_laplacian_gaussian(
     if overlap <= 0 or overlap >= 1:
         raise WrongArgumentsValue("Overlap value should be between 0 and 1")
 
-    check_image = image_array_check_conversion(converted_image)
+    check_image = image_array_check_conversion(image)
 
     try:
         found_blobs = sk_blob_log(
@@ -230,9 +224,9 @@ def compute_fast_corners(
 
     if not image.is_gray():
         ImageModeConversion(
-            "Converting the image to grayscale image since this method works only with 2D arrays"
+            "convert_coloring the image to grayscale image since this method works only with 2D arrays"
         )
-        converted_image = convert(image, "rgb2gray")
+        image = convert_color(image, "rgb2gray")
 
     if not isinstance(num_pixels, (float, int)):
         raise WrongArgumentsType("Num pixels can only be provided as either integer or float")
@@ -240,7 +234,7 @@ def compute_fast_corners(
     if not isinstance(threshold, float):
         raise WrongArgumentsType("Threshold can only be provided as float value")
 
-    check_image = image_array_check_conversion(converted_image)
+    check_image = image_array_check_conversion(image)
 
     try:
         check_image._set_image(
@@ -260,14 +254,14 @@ def compute_foerstner_corners(image: BaseImage, sigma: Optional[float] = 1.0) ->
 
     if not image.is_gray():
         ImageModeConversion(
-            "Converting the image to grayscale since this method only supports 2D images"
+            "convert_coloring the image to grayscale since this method only supports 2D images"
         )
-        converted_image = convert(image, "rgb2gray")
+        convert_colored_image = convert_color(image, "rgb2gray")
 
     if not isinstance(sigma, float):
         raise WrongArgumentsType("Sigma must be provided as a float value")
 
-    check_image = image_array_check_conversion(converted_image)
+    check_image = image_array_check_conversion(convert_colored_image)
     check_image_one = check_image.copy()
 
     try:
@@ -296,9 +290,9 @@ def compute_harris_corners(
 
     if not image.is_gray():
         ImageModeConversion(
-            "Converting the image to grayscale since this method can only be applied on 2D images"
+            "convert_coloring the image to grayscale since this method can only be applied on 2D images"
         )
-        converted_image = convert(image, "rgb2gray")
+        convert_colored_image = convert_color(image, "rgb2gray")
 
     if not isinstance(method, str):
         raise WrongArgumentsType("Method should be supplied as a string")
@@ -317,7 +311,7 @@ def compute_harris_corners(
         )
         method_arg = methods["k"]
 
-    check_image = image_array_check_conversion(converted_image)
+    check_image = image_array_check_conversion(convert_colored_image)
 
     try:
         check_image._set_image(
@@ -339,9 +333,9 @@ def compute_kitchen_rosenfeld_corners(
 
     if not image.is_gray():
         ImageModeConversion(
-            "Converting the image to grayscale since this method can only be applied to 2D images"
+            "convert_coloring the image to grayscale since this method can only be applied to 2D images"
         )
-        converted_image = convert(image, "rgb2gray")
+        convert_colored_image = convert_color(image, "rgb2gray")
 
     if not isinstance(mode, str):
         raise WrongArgumentsType("Mode can only be supplied as a string")
@@ -354,7 +348,7 @@ def compute_kitchen_rosenfeld_corners(
         )
         mode_arg = SKIMAGE_SAMPLING_REGISTRY["constant"]
 
-    check_image = image_array_check_conversion(converted_image)
+    check_image = image_array_check_conversion(convert_colored_image)
 
     try:
         check_image._set_image(
@@ -376,9 +370,9 @@ def compute_moravec_corners(
 
     if not image.is_gray():
         ImageModeConversion(
-            "Converting the image to grayscale since this method can only be applied to 2D images"
+            "convert_coloring the image to grayscale since this method can only be applied to 2D images"
         )
-        converted_image = convert(image, "rgb2gray")
+        convert_colored_image = convert_color(image, "rgb2gray")
 
     if not isinstance(kernel_size, (float, int)):
         raise WrongArgumentsType("Kernel size must be provided as either integer or float")
@@ -386,7 +380,7 @@ def compute_moravec_corners(
     if kernel_size <= 0:
         raise WrongArgumentsValue("Kernel size must be > 0")
 
-    check_image = image_array_check_conversion(converted_image)
+    check_image = image_array_check_conversion(convert_colored_image)
 
     try:
         check_image._set_image(
@@ -406,14 +400,14 @@ def compute_shi_tomasi_corners(image: BaseImage, sigma: Optional[float] = 1.0) -
 
     if not image.is_gray():
         ImageModeConversion(
-            "Converting the image to grayscale since this method can only be applied to 2D images"
+            "convert_coloring the image to grayscale since this method can only be applied to 2D images"
         )
-        converted_image = convert(image, "rgb2gray")
+        convert_colored_image = convert_color(image, "rgb2gray")
 
     if not isinstance(sigma, float):
         raise WrongArgumentsType("Sigma should be provided as a float value")
 
-    check_image = image_array_check_conversion(converted_image)
+    check_image = image_array_check_conversion(convert_colored_image)
 
     try:
         check_image._set_image(
@@ -445,9 +439,9 @@ def compute_daisy_features(
 
     if not image.is_gray():
         ImageModeConversion(
-            "Converting the image to grayscale since this method can only be applied to 2D images"
+            "convert_coloring the image to grayscale since this method can only be applied to 2D images"
         )
-        converted_image = convert(image, "rgb2gray")
+        convert_colored_image = convert_color(image, "rgb2gray")
 
     if not isinstance(sample_step, int):
         raise WrongArgumentsType("Sampling step argument can only be supplied as integer")
@@ -475,7 +469,7 @@ def compute_daisy_features(
     if not isinstance(visualize, bool):
         raise WrongArgumentsType("Visualize argument must be provided as boolean")
 
-    check_image = image_array_check_conversion(converted_image)
+    check_image = image_array_check_conversion(convert_colored_image)
 
     norm_method_arg = norm_methods.get("normalization", None)
     if norm_method_arg is None:
@@ -513,9 +507,9 @@ def compute_haar_like_features(
 
     if not image.is_gray():
         ImageModeConversion(
-            "Converting the image to grayscale since this operation can only be applied to 2D images"
+            "convert_coloring the image to grayscale since this operation can only be applied to 2D images"
         )
-        converted_image = convert(image, "rgb2gray")
+        convert_colored_image = convert_color(image, "rgb2gray")
 
     if not isinstance(row, int):
         raise WrongArgumentsType("Row can only be supplied as an integer")
@@ -545,7 +539,7 @@ def compute_haar_like_features(
     if height <= 0:
         raise WrongArgumentsValue("Height should be supplied as an integer greater than zero")
 
-    check_image = check_image_exist_external(converted_image)
+    check_image = check_image_exist_external(convert_colored_image)
     try:
         features = sk_haar_like_feature(
             check_image.image, r=row, c=col, width=width, height=height
@@ -678,9 +672,9 @@ def compute_local_binary_pattern(
 
     if not image.is_gray():
         ImageModeConversion(
-            "Converting the image to grayscale since this method is only supported for grayscale images"
+            "convert_coloring the image to grayscale since this method is only supported for grayscale images"
         )
-        image = convert(image, "rgb2gray")
+        image = convert_color(image, "rgb2gray")
 
     if not isinstance(neigbour_points, int):
         raise WrongArgumentsType("Neighbour points must be provided as an integer")

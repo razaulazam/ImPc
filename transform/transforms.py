@@ -12,7 +12,7 @@ from common.warning import DefaultSetting, ImageModeConversion
 from common.exceptions import WrongArgumentsType, TransformError, WrongArgumentsValue
 from common.helpers import image_array_check_conversion
 from common.datastructs import AllowedDataType, SKIMAGE_SAMPLING_REGISTRY
-from transform.color import convert
+from transform.color import convert_color
 from cv2 import equalizeHist as cv_equalize_hist
 
 # -------------------------------------------------------------------------
@@ -170,7 +170,7 @@ def kmeans_quantize(
     if check_image.mode == "LAB":
         quantize_image = check_image
     elif check_image.mode == "RGB":
-        quantize_image = convert(check_image, "rgb2lab")
+        quantize_image = convert_color(check_image, "rgb2lab")
 
     try:
         quantize_image_flatten = quantize_image.image.reshape(
@@ -187,7 +187,7 @@ def kmeans_quantize(
         )
         quantize_image._set_image(final_result)
         if quantize_image.mode == "LAB":
-            quantize_image = convert(quantize_image, "lab2rgb")
+            quantize_image = convert_color(quantize_image, "lab2rgb")
     except Exception as e:
         raise TransformError("Failed to transform the image") from e
 
@@ -202,11 +202,11 @@ def histogram_equalization(image: BaseImage) -> BaseImage:
 
     if not image.is_gray():
         ImageModeConversion(
-            "Converting the image to grayscale since this method can only be applied to grayscale images"
+            "convert_coloring the image to grayscale since this method can only be applied to grayscale images"
         )
-        converted_image = convert(image, "rgb2gray")
+        convert_colored_image = convert_color(image, "rgb2gray")
 
-    check_image = image_array_check_conversion(converted_image)
+    check_image = image_array_check_conversion(convert_colored_image)
     check_image._image_conversion_helper(AllowedDataType.Uint8)
 
     try:
