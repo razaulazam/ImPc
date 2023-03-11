@@ -402,12 +402,12 @@ def compute_shi_tomasi_corners(image: BaseImage, sigma: Optional[float] = 1.0) -
         ImageModeConversion(
             "convert_coloring the image to grayscale since this method can only be applied to 2D images"
         )
-        convert_colored_image = convert_color(image, "rgb2gray")
+        image = convert_color(image, "rgb2gray")
 
     if not isinstance(sigma, float):
         raise WrongArgumentsType("Sigma should be provided as a float value")
 
-    check_image = image_array_check_conversion(convert_colored_image)
+    check_image = image_array_check_conversion(image)
 
     try:
         check_image._set_image(
@@ -441,7 +441,7 @@ def compute_daisy_features(
         ImageModeConversion(
             "convert_coloring the image to grayscale since this method can only be applied to 2D images"
         )
-        convert_colored_image = convert_color(image, "rgb2gray")
+        image = convert_color(image, "rgb2gray")
 
     if not isinstance(sample_step, int):
         raise WrongArgumentsType("Sampling step argument can only be supplied as integer")
@@ -469,7 +469,7 @@ def compute_daisy_features(
     if not isinstance(visualize, bool):
         raise WrongArgumentsType("Visualize argument must be provided as boolean")
 
-    check_image = image_array_check_conversion(convert_colored_image)
+    check_image = image_array_check_conversion(image)
 
     norm_method_arg = norm_methods.get("normalization", None)
     if norm_method_arg is None:
@@ -509,7 +509,7 @@ def compute_haar_like_features(
         ImageModeConversion(
             "convert_coloring the image to grayscale since this operation can only be applied to 2D images"
         )
-        convert_colored_image = convert_color(image, "rgb2gray")
+        image = convert_color(image, "rgb2gray")
 
     if not isinstance(row, int):
         raise WrongArgumentsType("Row can only be supplied as an integer")
@@ -539,7 +539,7 @@ def compute_haar_like_features(
     if height <= 0:
         raise WrongArgumentsValue("Height should be supplied as an integer greater than zero")
 
-    check_image = check_image_exist_external(convert_colored_image)
+    check_image = image_array_check_conversion(image)
     try:
         features = sk_haar_like_feature(
             check_image.image, r=row, c=col, width=width, height=height
