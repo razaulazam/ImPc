@@ -5,10 +5,13 @@ import pytest
 
 from pathlib import Path
 from load import open_image
-from common.exceptions import WrongArgumentsValue, WrongArgumentsType
+from common.exceptions import WrongArgumentsValue, WrongArgumentsType, ImageAlreadyClosed
 from feature import canny, blob_diff_gaussian, blob_determinant_hessian
 from feature import blob_laplacian_gaussian, compute_fast_corners, compute_foerstner_corners, compute_harris_corners
-from feature import compute_kitchen_rosenfeld_corners, compute_moravec_corners
+from feature import compute_kitchen_rosenfeld_corners, compute_moravec_corners, compute_shi_tomasi_corners
+from feature import compute_daisy_features, compute_haar_like_features, compute_hessian_matrix, compute_hessian_matrix_eigvals
+from feature import compute_hog_descriptors, compute_local_binary_pattern
+from feature import match_image_descriptors, match_image_template, compute_structure_tensor
 from transform import convert_color
 
 # -------------------------------------------------------------------------
@@ -167,7 +170,151 @@ def test_compute_moravec_corners(sample_data_path):
     with pytest.raises(WrongArgumentsValue):
         _ = compute_moravec_corners(im, kernel_size=-1)
 
-if __name__ == "__main__":
-    a = str(Path(__file__).parent / "data" / "sample.jpg")
-    b = open_image(a)
-    c = blob_determinant_hessian(b)
+# -------------------------------------------------------------------------
+
+def test_compute_shi_tomasi_corners(sample_data_path):
+    # Open the image.
+    im = open_image(sample_data_path)
+    with pytest.warns(UserWarning):
+        _ = compute_shi_tomasi_corners(im)
+
+    # Convert the image to gray.
+    im = convert_color(im, "rgb2gray")
+    _ = compute_shi_tomasi_corners(im)
+
+    # Call the function with wrong arguments.
+    with pytest.raises(WrongArgumentsType):
+        _ = compute_shi_tomasi_corners(im, sigma="1")
+
+# -------------------------------------------------------------------------
+
+def test_compute_daisy_features(sample_data_path):
+    # Open the image.
+    im = open_image(sample_data_path)
+    with pytest.warns(UserWarning):
+        _ = compute_daisy_features(im)
+
+    # Convert the image to gray.
+    im = convert_color(im, "rgb2gray")
+    _ = compute_daisy_features(im)
+
+    # Call the function with wrong arguments.
+    with pytest.raises(WrongArgumentsValue):
+        _ = compute_daisy_features(im, radius_outer=-1)
+    with pytest.raises(WrongArgumentsValue):
+        _ = compute_daisy_features(im, num_rings=-1)
+    with pytest.warns(UserWarning):
+        _ = compute_daisy_features(im, normalization="blah")
+    with pytest.raises(WrongArgumentsValue):
+        _ = compute_moravec_corners(im, kernel_size=-1)
+
+# -------------------------------------------------------------------------
+
+def test_compute_haar_like_features(sample_data_path):
+    # Open the image.
+    im = open_image(sample_data_path)
+    with pytest.warns(UserWarning):
+        _ = compute_haar_like_features(im, row=20, col=20, width=4, height=4)
+
+    # Convert the image to gray.
+    im = convert_color(im, "rgb2gray")
+    _ = compute_haar_like_features(im, row=20, col=20, width=4, height=4)
+
+    # Call the function with wrong arguments.
+    with pytest.raises(WrongArgumentsValue):
+        _ = compute_haar_like_features(im, row=-1, col=20, width=4, height=4)
+    with pytest.raises(WrongArgumentsValue):
+        _ = compute_haar_like_features(im, row=20, col=-1, width=4, height=4)
+
+# -------------------------------------------------------------------------
+
+def test_compute_hessian_matrix(sample_data_path):
+    # Open the image.
+    im = open_image(sample_data_path)
+    _ = compute_hessian_matrix(im)
+
+    # Call the function with wrong arguments.
+    with pytest.raises(WrongArgumentsType):
+        _ = compute_hessian_matrix(im, mode=1)
+    with pytest.warns(UserWarning):
+        _ = compute_hessian_matrix(im, mode="blah")
+
+# -------------------------------------------------------------------------
+
+def test_compute_hessian_matrix_eig_vals(sample_data_path):
+    # Open the image and compute the vals
+    im = open_image(sample_data_path)
+    hessian = compute_hessian_matrix(im)
+    _ = compute_hessian_matrix_eigvals(hessian)
+
+# -------------------------------------------------------------------------
+
+def test_compute_hog_descriptors(sample_data_path):
+    # Open the image.
+    im = open_image(sample_data_path)
+    _ = compute_hog_descriptors(im)
+
+    # Call the function with wrong arguments.
+    with pytest.raises(WrongArgumentsValue):
+        _ = compute_hog_descriptors(im, pixels_in_cell=(3, 3, 3))
+    with pytest.raises(WrongArgumentsValue):
+        _ = compute_hog_descriptors(im, cells_per_block=(2, 2, 2))
+
+# -------------------------------------------------------------------------
+
+def test_compute_local_binary_pattern(sample_data_path):
+    # Open the image.
+    im = open_image(sample_data_path)
+    with pytest.warns(UserWarning):
+        _ = compute_local_binary_pattern(im, radius=2, neigbour_points=2)
+
+    # Call the function with wrong arguments.
+    with pytest.raises(WrongArgumentsValue):
+        _ = compute_local_binary_pattern(im, radius=-1, neigbour_points=2)
+    with pytest.raises(WrongArgumentsValue):
+        _ = compute_local_binary_pattern(im, radius=2, neigbour_points=-1)
+
+# -------------------------------------------------------------------------
+
+def test_match_image_descriptors(sample_data_path):
+    # Open the image.
+    im = open_image(sample_data_path)
+    with pytest.raises(WrongArgumentsValue):
+        _ = match_image_descriptors(im.image, im.image)
+
+    im = convert_color(im, "rgb2gray")
+    _ = match_image_descriptors(im.image, im.image)
+
+    # Call the function with wrong arguments.
+    import numpy as np
+    dummy_image = np.ones((300, 300))
+    with pytest.raises(WrongArgumentsValue):
+        _ = match_image_descriptors(im.image, dummy_image)
+
+# -------------------------------------------------------------------------
+
+def test_match_image_template(sample_data_path):
+    # Open the image.
+    im = open_image(sample_data_path)
+    template = open_image(sample_data_path)
+    template.close()
+    with pytest.raises(ImageAlreadyClosed):
+        _ = match_image_template(im, template)
+
+    template_new = open_image(sample_data_path)
+    _ = match_image_template(im, template_new)
+
+# -------------------------------------------------------------------------
+
+def test_compute_structure_tensor(sample_data_path):
+    # Open the image.
+    im = open_image(sample_data_path)
+    _ = compute_structure_tensor(im)
+
+    # Call the function with wrong arguments.
+    with pytest.raises(WrongArgumentsType):
+        _ = compute_structure_tensor(im, sigma="1")
+    with pytest.warns(UserWarning):
+        _ = compute_structure_tensor(im, mode="blah")
+
+# -------------------------------------------------------------------------
