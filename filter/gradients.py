@@ -76,7 +76,12 @@ def laplacian(
     try:
         check_image._set_image(
             cv2.Laplacian(
-                check_image.image, int(kernel_size[0]), float(scale), float(delta), border_actual
+                check_image.image,
+                ksize=int(kernel_size[0]),
+                scale=float(scale),
+                delta=float(delta),
+                ddepth=-1,
+                borderType=border_actual
             ).astype(check_image.dtype.value, copy=False)
         )
     except Exception as e:

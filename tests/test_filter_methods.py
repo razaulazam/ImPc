@@ -10,6 +10,7 @@ from load import open_image
 from filter.conv import corr2d, average_blur, gaussian_blur, median_blur
 from filter.conv import bilateral_filter, convolve, correlate
 from filter.general import butterworth, difference_gaussians, farid, gabor, prewitt, rank_order, roberts, roberts_neg_diag, roberts_pos_diag
+from filter.gradients import laplacian, sobel, scharr, unsharp_mask_filter
 
 # -------------------------------------------------------------------------
 
@@ -227,7 +228,22 @@ def test_roberts_pos_diag(sample_data_path):
 
 # -------------------------------------------------------------------------
 
+def test_laplacian(sample_data_path):
+    # Open the image.
+    im = open_image(sample_data_path)
+    _ = laplacian(im, (3, 3))
+
+    # Try with wrong kernel size.
+    with pytest.raises(WrongArgumentsValue):
+        _ = laplacian(im, (3, 3, 3))
+
+    # Trigger the warnings.
+    with pytest.warns(UserWarning):
+        _ = laplacian(im, (3, 3), border="blah")
+
+# -------------------------------------------------------------------------
+
 if __name__ == "__main__":
     a = str(Path(__file__).parent / "data" / "sample.jpg")
     b = open_image(a)
-    c = rank_order(b)
+    c = laplacian(b, (3, 3))
