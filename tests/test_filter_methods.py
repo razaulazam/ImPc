@@ -243,7 +243,22 @@ def test_laplacian(sample_data_path):
 
 # -------------------------------------------------------------------------
 
+def test_sobel(sample_data_path):
+    # Open the image.
+    im = open_image(sample_data_path)
+    _ = sobel(im, 1, 0, 1.0, 1.0)
+
+    # Try with wrong kernel size.
+    with pytest.raises(WrongArgumentsValue):
+        _ = sobel(im, 3, 3, 1.0, "1")
+
+    # Trigger the warnings.
+    with pytest.warns(UserWarning):
+        _ = sobel(im, 0, 1, 1.0, 1.0, border="blah")
+
+# -------------------------------------------------------------------------
+
 if __name__ == "__main__":
     a = str(Path(__file__).parent / "data" / "sample.jpg")
     b = open_image(a)
-    c = laplacian(b, (3, 3))
+    c = sobel(b, 1, 0, 1.0, 1.0)

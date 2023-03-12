@@ -108,6 +108,12 @@ def sobel(
     if not isinstance(yorder, int):
         raise WrongArgumentsType("Provided argument (yorder) should have a integer type")
 
+    if xorder > 0 and yorder > 0:
+        raise WrongArgumentsValue("Either xorder or yorder should be set to 1")
+
+    if xorder == 0 and yorder == 0:
+        raise WrongArgumentsValue("None of the required xorder or yorder is currently set")
+
     if not isinstance(scale, (int, float)):
         raise WrongArgumentsType("Provided value of scale does not have the accurate type")
 
@@ -137,8 +143,14 @@ def sobel(
     try:
         check_image._set_image(
             cv2.Sobel(
-                check_image.image, -1, xorder, yorder, cv2.FILTER_SCHARR, float(scale),
-                float(delta), border_actual
+                check_image.image,
+                ddepth=-1,
+                dx=xorder,
+                dy=yorder,
+                ksize=cv2.FILTER_SCHARR,
+                scale=float(scale),
+                delta=float(delta),
+                borderType=border_actual
             )
         )
     except Exception as e:
