@@ -179,10 +179,10 @@ def scharr(
     if not isinstance(mode, str):
         raise WrongArgumentsType("Mode should be provided as a string")
 
-    if image.is_gray() and image.dims != mask.shape:
+    if mask and image.is_gray() and image.dims != mask.shape:
         raise WrongArgumentsValue("Dimensions of the image and the mask does not match")
 
-    if image.is_rgb():
+    if mask and image.is_rgb():
         if len(mask.shape) == 2 and image.dims != mask.shape:
             raise WrongArgumentsValue("Dimensions of the image and the mask does not match")
         elif len(mask.shape) == 3 and (image.dims + (image.channels) != mask.shape):
@@ -235,8 +235,7 @@ def unsharp_mask_filter(
                 amount=float(scale_factor),
                 preserve_range=True,
                 channel_axis=channel_axis
-            ).astype(AllowedDataType.Float32.value),
-            copy=False
+            ).astype(AllowedDataType.Float32.value, copy=False),
         )
     except Exception as e:
         raise FilteringError("Failed to filter the image with the Unsharp mask filter") from e

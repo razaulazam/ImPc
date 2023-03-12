@@ -258,7 +258,28 @@ def test_sobel(sample_data_path):
 
 # -------------------------------------------------------------------------
 
+def test_scharr(sample_data_path):
+    # Open the image.
+    im = open_image(sample_data_path)
+    _ = scharr(im)
+
+    # Try with wrong value.
+    with pytest.raises(WrongArgumentsType):
+        _ = scharr(im, mask=[1, 2, 3])
+
+# -------------------------------------------------------------------------
+
+def test_unsharp_mask_filter(sample_data_path):
+    # Open the image.
+    im = open_image(sample_data_path)
+    _ = unsharp_mask_filter(im)
+
+    # Try with wrong value.
+    with pytest.raises(WrongArgumentsType):
+        _ = unsharp_mask_filter(im, radius="1")
+
+# -------------------------------------------------------------------------
 if __name__ == "__main__":
     a = str(Path(__file__).parent / "data" / "sample.jpg")
     b = open_image(a)
-    c = sobel(b, 1, 0, 1.0, 1.0)
+    c = unsharp_mask_filter(b)
