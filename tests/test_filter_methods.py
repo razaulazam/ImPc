@@ -193,6 +193,40 @@ def test_rank_order(sample_data_path):
     _ = rank_order(im)
 
 # -------------------------------------------------------------------------
+
+def test_roberts(sample_data_path):
+    # Open the image.
+    im = open_image(sample_data_path)
+    _ = roberts(im)
+
+    # Try with wrong value.
+    with pytest.raises(WrongArgumentsType):
+        _ = roberts(im, mask=[1, 2, 3])
+
+# -------------------------------------------------------------------------
+
+def test_roberts_neg_diag(sample_data_path):
+    # Open the image.
+    im = open_image(sample_data_path)
+    _ = roberts_neg_diag(im)
+
+    # Try with wrong value.
+    with pytest.raises(WrongArgumentsType):
+        _ = roberts_neg_diag(im, mask=[1, 2, 3])
+
+# -------------------------------------------------------------------------
+
+def test_roberts_pos_diag(sample_data_path):
+    # Open the image.
+    im = open_image(sample_data_path)
+    _ = roberts_pos_diag(im)
+
+    # Try with wrong value.
+    with pytest.raises(WrongArgumentsType):
+        _ = roberts_pos_diag(im, mask=[1, 2, 3])
+
+# -------------------------------------------------------------------------
+
 if __name__ == "__main__":
     a = str(Path(__file__).parent / "data" / "sample.jpg")
     b = open_image(a)

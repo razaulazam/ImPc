@@ -268,7 +268,10 @@ def roberts(image: BaseImage, mask: Optional[np.ndarray] = None) -> BaseImage:
     """Edge magnitude using Robert transform. Result is returned as a float32 image"""
 
     if not image.is_gray():
-        raise WrongArgumentsValue("This method only work with gray images")
+        DefaultSetting(
+            "Converting the image to grayscale since this method only works with grayscale images"
+        )
+        image = convert_color(image, "rgb2gray")
 
     if mask and not isinstance(mask, np.ndarray):
         raise WrongArgumentsType(
@@ -278,7 +281,7 @@ def roberts(image: BaseImage, mask: Optional[np.ndarray] = None) -> BaseImage:
     if mask and (len(mask.shape) > 2 or len(mask.shape) < 2):
         raise WrongArgumentsValue("Mask can only be provided as a 2D array")
 
-    if image.dims != mask.shape:
+    if mask and image.dims != mask.shape:
         raise WrongArgumentsValue("Dimensions of the image and the mask does not match")
 
     check_mask = check_user_provided_ndarray(mask) if mask else None
@@ -301,7 +304,10 @@ def roberts_neg_diag(image: BaseImage, mask: Optional[np.ndarray] = None) -> Bas
     """Cross edges of image using Robert's cross transform. Result is returned as a float32 image"""
 
     if not image.is_gray():
-        raise WrongArgumentsValue("This method only work with gray images")
+        DefaultSetting(
+            "Converting the image to grayscale since this method only works with grayscale images"
+        )
+        image = convert_color(image, "rgb2gray")
 
     if mask and not isinstance(mask, np.ndarray):
         raise WrongArgumentsType(
@@ -311,7 +317,7 @@ def roberts_neg_diag(image: BaseImage, mask: Optional[np.ndarray] = None) -> Bas
     if mask and (len(mask.shape) > 2 or len(mask.shape) < 2):
         raise WrongArgumentsValue("Mask can only be provided as a 2D array")
 
-    if image.dims != mask.shape:
+    if mask and image.dims != mask.shape:
         raise WrongArgumentsValue("Dimensions of the image and the mask does not match")
 
     check_mask = check_user_provided_ndarray(mask) if mask else None
@@ -334,7 +340,10 @@ def roberts_pos_diag(image: BaseImage, mask: Optional[np.ndarray] = None) -> Bas
     """Cross edges of image using Robert's cross transform. Result is returned as a float32 image"""
 
     if not image.is_gray():
-        raise WrongArgumentsValue("This method only work with gray images")
+        DefaultSetting(
+            "Converting the image to grayscale since this method only works with grayscale images"
+        )
+        image = convert_color(image, "rgb2gray")
 
     if mask and not isinstance(mask, np.ndarray):
         raise WrongArgumentsType(
@@ -344,7 +353,7 @@ def roberts_pos_diag(image: BaseImage, mask: Optional[np.ndarray] = None) -> Bas
     if mask and (len(mask.shape) > 2 or len(mask.shape) < 2):
         raise WrongArgumentsValue("Mask can only be provided as a 2D array")
 
-    if image.dims != mask.shape:
+    if mask and image.dims != mask.shape:
         raise WrongArgumentsValue("Dimensions of the image and the mask does not match")
 
     check_mask = check_user_provided_ndarray(mask) if mask else None
