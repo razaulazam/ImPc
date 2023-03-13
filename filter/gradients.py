@@ -76,7 +76,12 @@ def laplacian(
     try:
         check_image._set_image(
             cv2.Laplacian(
-                check_image.image, int(kernel_size[0]), float(scale), float(delta), border_actual
+                check_image.image,
+                ksize=int(kernel_size[0]),
+                scale=float(scale),
+                delta=float(delta),
+                ddepth=-1,
+                borderType=border_actual
             ).astype(check_image.dtype.value, copy=False)
         )
     except Exception as e:
@@ -102,6 +107,12 @@ def sobel(
 
     if not isinstance(yorder, int):
         raise WrongArgumentsType("Provided argument (yorder) should have a integer type")
+
+    if xorder > 0 and yorder > 0:
+        raise WrongArgumentsValue("Either xorder or yorder should be set to 1")
+
+    if xorder == 0 and yorder == 0:
+        raise WrongArgumentsValue("None of the required xorder or yorder is currently set")
 
     if not isinstance(scale, (int, float)):
         raise WrongArgumentsType("Provided value of scale does not have the accurate type")
@@ -132,8 +143,14 @@ def sobel(
     try:
         check_image._set_image(
             cv2.Sobel(
-                check_image.image, -1, xorder, yorder, cv2.FILTER_SCHARR, float(scale),
-                float(delta), border_actual
+                check_image.image,
+                ddepth=-1,
+                dx=xorder,
+                dy=yorder,
+                ksize=cv2.FILTER_SCHARR,
+                scale=float(scale),
+                delta=float(delta),
+                borderType=border_actual
             )
         )
     except Exception as e:
@@ -162,10 +179,10 @@ def scharr(
     if not isinstance(mode, str):
         raise WrongArgumentsType("Mode should be provided as a string")
 
-    if image.is_gray() and image.dims != mask.shape:
+    if mask and image.is_gray() and image.dims != mask.shape:
         raise WrongArgumentsValue("Dimensions of the image and the mask does not match")
 
-    if image.is_rgb():
+    if mask and image.is_rgb():
         if len(mask.shape) == 2 and image.dims != mask.shape:
             raise WrongArgumentsValue("Dimensions of the image and the mask does not match")
         elif len(mask.shape) == 3 and (image.dims + (image.channels) != mask.shape):
@@ -218,8 +235,7 @@ def unsharp_mask_filter(
                 amount=float(scale_factor),
                 preserve_range=True,
                 channel_axis=channel_axis
-            ).astype(AllowedDataType.Float32.value),
-            copy=False
+            ).astype(AllowedDataType.Float32.value, copy=False),
         )
     except Exception as e:
         raise FilteringError("Failed to filter the image with the Unsharp mask filter") from e

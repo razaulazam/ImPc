@@ -6,6 +6,7 @@ import numpy as np
 from common.interfaces.loader import BaseImage
 from common.exceptions import WrongArgumentsType, WrongArgumentsValue, FilteringError
 from common.warning import DefaultSetting
+from transform import convert_color
 from common.decorators import check_image_exist_external
 from common.datastructs import AllowedDataType, SKIMAGE_SAMPLING_REGISTRY
 from common.helpers import image_array_check_conversion, check_user_provided_ndarray
@@ -28,7 +29,6 @@ def butterworth(
     f_cutoff_ratio: Optional[float] = 0.005,
     high_pass: Optional[bool] = True,
     filter_order: Optional[Union[int, float]] = 2.0,
-    padding: Optional[int] = 0
 ) -> BaseImage:
     """Applies the butterworth filter. The result is returned as float32"""
 
@@ -44,12 +44,6 @@ def butterworth(
     if not isinstance(filter_order, (int, float)):
         raise WrongArgumentsType("Filter order argument must be provided as integer or float")
 
-    if not isinstance(padding, int):
-        raise WrongArgumentsType("Padding argument must be provided as integer")
-
-    if padding < 0:
-        raise WrongArgumentsValue("Padding value must be >= 0")
-
     check_image = image_array_check_conversion(image)
     channel_axis = None if check_image.channels == 0 else 2
 
@@ -61,7 +55,6 @@ def butterworth(
                 high_pass=high_pass,
                 channel_axis=channel_axis,
                 order=filter_order,
-                n_pad=padding
             ).astype(AllowedDataType.Float32.value, copy=False)
         )
     except Exception as e:
@@ -125,12 +118,14 @@ def difference_gaussians(
 def farid(
     image: BaseImage,
     mask: Optional[np.ndarray] = None,
-    mode: Optional[str] = "reflect"
 ) -> BaseImage:
     """Computes the Farid transform which finds the edge magnitude. Result is return as float32"""
 
     if not image.is_gray():
-        raise WrongArgumentsValue("This method only work with gray images")
+        DefaultSetting(
+            "Converting the image to grayscale since this method only works with grayscale images"
+        )
+        image = convert_color(image, "rgb2gray")
 
     if mask and not isinstance(mask, np.ndarray):
         raise WrongArgumentsType(
@@ -140,24 +135,16 @@ def farid(
     if mask and (len(mask.shape) > 2 or len(mask.shape) < 2):
         raise WrongArgumentsValue("Mask can only be provided as a 2D array")
 
-    if not isinstance(mode, str):
-        raise WrongArgumentsType("Mode should be provided as a string")
-
-    if image.dims != mask.shape:
+    if mask and image.dims != mask.shape:
         raise WrongArgumentsValue("Dimensions of the image and the mask does not match")
 
     check_mask = check_user_provided_ndarray(mask) if mask else None
     check_image = image_array_check_conversion(image)
 
-    mode_arg = SKIMAGE_SAMPLING_REGISTRY.get(mode.lower(), None)
-    if mode_arg is None:
-        mode_arg = SKIMAGE_SAMPLING_REGISTRY["reflect"]
-        DefaultSetting("Using default mode (reflect) since the provided mode type is not supported")
-
     try:
         check_image._set_image(
-            sk_farid(check_image.image, mask=check_mask,
-                     mode=mode_arg).astype(AllowedDataType.Float32.value, copy=False)
+            sk_farid(check_image.image,
+                     mask=check_mask).astype(AllowedDataType.Float32.value, copy=False)
         )
     except Exception as e:
         raise FilteringError("Failed to filter the image using Farid transform") from e
@@ -177,7 +164,10 @@ def gabor(
     """Return imaginary and real response to the gabor filter. Responses are returned as a tuple of float32 image loader instances"""
 
     if not image.is_gray():
-        raise WrongArgumentsValue("This method only work with gray images")
+        DefaultSetting(
+            "Converting the image to grayscale since this method only works with grayscale images"
+        )
+        image = convert_color(image, "rgb2gray")
 
     if not isinstance(frequency, float):
         raise WrongArgumentsType("Frequency argument should be specified as a float value")
@@ -228,10 +218,10 @@ def prewitt(
     if not isinstance(mode, str):
         raise WrongArgumentsType("Mode should be provided as a string")
 
-    if image.is_gray() and image.dims != mask.shape:
+    if mask and image.is_gray() and image.dims != mask.shape:
         raise WrongArgumentsValue("Dimensions of the image and the mask does not match")
 
-    if image.is_rgb():
+    if mask and image.is_rgb():
         if len(mask.shape) == 2 and image.dims != mask.shape:
             raise WrongArgumentsValue("Dimensions of the image and the mask does not match")
         elif len(mask.shape) == 3 and (image.dims + (image.channels) != mask.shape):
@@ -265,11 +255,11 @@ def rank_order(image: BaseImage) -> np.ndarray:
 
     check_image = image_array_check_conversion(image)
     try:
-        order, _ = sk_rank_order(check_image.image).astype(check_image.dtype.value, copy=False)
+        order, _ = sk_rank_order(check_image.image)
     except Exception as e:
         raise FilteringError("Failed to find the rank order of the image") from e
 
-    return order
+    return order.astype(check_image.dtype.value, copy=False)
 
 # -------------------------------------------------------------------------
 
@@ -278,7 +268,10 @@ def roberts(image: BaseImage, mask: Optional[np.ndarray] = None) -> BaseImage:
     """Edge magnitude using Robert transform. Result is returned as a float32 image"""
 
     if not image.is_gray():
-        raise WrongArgumentsValue("This method only work with gray images")
+        DefaultSetting(
+            "Converting the image to grayscale since this method only works with grayscale images"
+        )
+        image = convert_color(image, "rgb2gray")
 
     if mask and not isinstance(mask, np.ndarray):
         raise WrongArgumentsType(
@@ -288,7 +281,7 @@ def roberts(image: BaseImage, mask: Optional[np.ndarray] = None) -> BaseImage:
     if mask and (len(mask.shape) > 2 or len(mask.shape) < 2):
         raise WrongArgumentsValue("Mask can only be provided as a 2D array")
 
-    if image.dims != mask.shape:
+    if mask and image.dims != mask.shape:
         raise WrongArgumentsValue("Dimensions of the image and the mask does not match")
 
     check_mask = check_user_provided_ndarray(mask) if mask else None
@@ -311,7 +304,10 @@ def roberts_neg_diag(image: BaseImage, mask: Optional[np.ndarray] = None) -> Bas
     """Cross edges of image using Robert's cross transform. Result is returned as a float32 image"""
 
     if not image.is_gray():
-        raise WrongArgumentsValue("This method only work with gray images")
+        DefaultSetting(
+            "Converting the image to grayscale since this method only works with grayscale images"
+        )
+        image = convert_color(image, "rgb2gray")
 
     if mask and not isinstance(mask, np.ndarray):
         raise WrongArgumentsType(
@@ -321,7 +317,7 @@ def roberts_neg_diag(image: BaseImage, mask: Optional[np.ndarray] = None) -> Bas
     if mask and (len(mask.shape) > 2 or len(mask.shape) < 2):
         raise WrongArgumentsValue("Mask can only be provided as a 2D array")
 
-    if image.dims != mask.shape:
+    if mask and image.dims != mask.shape:
         raise WrongArgumentsValue("Dimensions of the image and the mask does not match")
 
     check_mask = check_user_provided_ndarray(mask) if mask else None
@@ -344,7 +340,10 @@ def roberts_pos_diag(image: BaseImage, mask: Optional[np.ndarray] = None) -> Bas
     """Cross edges of image using Robert's cross transform. Result is returned as a float32 image"""
 
     if not image.is_gray():
-        raise WrongArgumentsValue("This method only work with gray images")
+        DefaultSetting(
+            "Converting the image to grayscale since this method only works with grayscale images"
+        )
+        image = convert_color(image, "rgb2gray")
 
     if mask and not isinstance(mask, np.ndarray):
         raise WrongArgumentsType(
@@ -354,7 +353,7 @@ def roberts_pos_diag(image: BaseImage, mask: Optional[np.ndarray] = None) -> Bas
     if mask and (len(mask.shape) > 2 or len(mask.shape) < 2):
         raise WrongArgumentsValue("Mask can only be provided as a 2D array")
 
-    if image.dims != mask.shape:
+    if mask and image.dims != mask.shape:
         raise WrongArgumentsValue("Dimensions of the image and the mask does not match")
 
     check_mask = check_user_provided_ndarray(mask) if mask else None
