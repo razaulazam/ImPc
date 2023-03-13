@@ -7,10 +7,13 @@ import numpy as np
 from pathlib import Path
 from common.exceptions import WrongArgumentsType, WrongArgumentsValue
 from load import open_image
+from filter.utils import get_kernel
 from filter.conv import corr2d, average_blur, gaussian_blur, median_blur
 from filter.conv import bilateral_filter, convolve, correlate
 from filter.general import butterworth, difference_gaussians, farid, gabor, prewitt, rank_order, roberts, roberts_neg_diag, roberts_pos_diag
 from filter.gradients import laplacian, sobel, scharr, unsharp_mask_filter
+from filter.morph import erode, dilate, closing, morph_gradient, top_hat, black_hat
+from filter.thresholding import simple_threshold, adaptive_threshold, niblack_threshold, sauvola_threshold
 
 # -------------------------------------------------------------------------
 
@@ -277,6 +280,74 @@ def test_unsharp_mask_filter(sample_data_path):
     # Try with wrong value.
     with pytest.raises(WrongArgumentsType):
         _ = unsharp_mask_filter(im, radius="1")
+
+# -------------------------------------------------------------------------
+
+def test_erode(sample_data_path):
+    # Open the image.
+    im = open_image(sample_data_path)
+    kernel = get_kernel("rectangle", (3, 3))
+    kernel_array = np.ones((3, 3))
+    _ = erode(im, kernel)
+    _ = erode(im, kernel_array)
+
+    # Try with wrong value.
+    with pytest.raises(WrongArgumentsType):
+        _ = erode(im, kernel, iterations="1")
+
+# -------------------------------------------------------------------------
+
+def test_dilate(sample_data_path):
+    # Open the image.
+    im = open_image(sample_data_path)
+    kernel = get_kernel("ellipse", (3, 3))
+    kernel_array = np.ones((3, 3))
+    _ = dilate(im, kernel)
+    _ = dilate(im, kernel_array)
+
+    # Try with wrong value.
+    with pytest.raises(WrongArgumentsType):
+        _ = dilate(im, kernel, iterations="1")
+
+# -------------------------------------------------------------------------
+
+def test_closing(sample_data_path):
+    # Open the image.
+    im = open_image(sample_data_path)
+    kernel = get_kernel("rectangle", (3, 3))
+    kernel_array = np.ones((3, 3))
+    _ = closing(im, kernel)
+    _ = closing(im, kernel_array)
+
+# -------------------------------------------------------------------------
+
+def test_morph_gradient(sample_data_path):
+    # Open the image.
+    im = open_image(sample_data_path)
+    kernel = get_kernel("rectangle", (3, 3))
+    kernel_array = np.ones((3, 3))
+    _ = morph_gradient(im, kernel)
+    _ = morph_gradient(im, kernel_array)
+
+# -------------------------------------------------------------------------
+
+def test_top_hat(sample_data_path):
+    # Open the image.
+    im = open_image(sample_data_path)
+    kernel = get_kernel("rectangle", (3, 3))
+    kernel_array = np.ones((3, 3))
+    _ = top_hat(im, kernel)
+    _ = top_hat(im, kernel_array)
+
+# -------------------------------------------------------------------------
+
+def test_black_hat(sample_data_path):
+    # Open the image.
+    im = open_image(sample_data_path)
+    kernel = get_kernel("rectangle", (3, 3))
+    kernel_array = np.ones((3, 3))
+    _ = black_hat(im, kernel)
+    _ = black_hat(im, kernel_array)
 
 # -------------------------------------------------------------------------
 if __name__ == "__main__":
