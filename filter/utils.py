@@ -77,7 +77,7 @@ def compute_threshold_isodata(image: BaseImage,
     check_image = image_array_check_conversion(image)
 
     try:
-        threshold = sk_thresh_isodata(check_image.image, nbins=int(bins))[0]
+        threshold = sk_thresh_isodata(check_image.image, nbins=int(bins))
     except Exception as e:
         raise FilteringError("Failed to compute the threshold based on isodata strategy") from e
 

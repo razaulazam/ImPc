@@ -5,6 +5,8 @@ import cv2
 
 from common.interfaces.loader import BaseImage
 from common.exceptions import WrongArgumentsType, WrongArgumentsValue, FilteringError
+from common.warning import ImageModeConversion
+from transform import convert_color
 from common.decorators import check_image_exist_external
 from common.helpers import image_array_check_conversion
 from common.datastructs import AllowedDataType
@@ -68,10 +70,13 @@ def adaptive_threshold(
     image: BaseImage, max_val: Union[float, int], adaptive_method: str, threshold_method: str,
     block_size: int, subtract_val: Union[float, int]
 ) -> BaseImage:
-    """Works on grayscale 8 bit images only"""
+    """Applies adaptive threshold strategy. Result is returned as a float32 image."""
 
     if not image.is_gray():
-        raise WrongArgumentsValue("This method only works with grayscale images")
+        ImageModeConversion(
+            "convert_coloring the image to grayscale since this method can only be applied to grayscale images"
+        )
+        image = convert_color(image, "rgb2gray")
 
     if not isinstance(max_val, (float, int)):
         raise WrongArgumentsType("Maximum value can only be provided as integer or float")
@@ -85,7 +90,7 @@ def adaptive_threshold(
     if not isinstance(block_size, int):
         raise WrongArgumentsType("Block size argument can only be provided as a integer")
 
-    if block_size <= 1 or block_size % 2 == 1:
+    if block_size <= 1 or block_size % 2 == 0:
         raise WrongArgumentsValue(
             "Block size can not be less than or equal to 1. Further it should be odd e.g. 3, 5, 7, 9 ..."
         )

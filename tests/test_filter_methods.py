@@ -7,7 +7,7 @@ import numpy as np
 from pathlib import Path
 from common.exceptions import WrongArgumentsType, WrongArgumentsValue
 from load import open_image
-from filter.utils import get_kernel
+from filter.utils import get_kernel, compute_threshold_isodata, compute_threshold_li
 from filter.conv import corr2d, average_blur, gaussian_blur, median_blur
 from filter.conv import bilateral_filter, convolve, correlate
 from filter.general import butterworth, difference_gaussians, farid, gabor, prewitt, rank_order, roberts, roberts_neg_diag, roberts_pos_diag
@@ -350,7 +350,62 @@ def test_black_hat(sample_data_path):
     _ = black_hat(im, kernel_array)
 
 # -------------------------------------------------------------------------
-if __name__ == "__main__":
-    a = str(Path(__file__).parent / "data" / "sample.jpg")
-    b = open_image(a)
-    c = unsharp_mask_filter(b)
+
+def test_simple_threshold(sample_data_path):
+    # Open the image.
+    im = open_image(sample_data_path)
+    threshold = compute_threshold_isodata(im)
+    _ = simple_threshold(im, float(threshold), max_val=200, method="binary")
+
+    # Trigger errors and warnings.
+    with pytest.raises(WrongArgumentsType):
+        _ = simple_threshold(im, threshold, max_val="200", method="binary")
+
+# -------------------------------------------------------------------------
+
+def test_adaptive_threshold(sample_data_path):
+    # Open the image.
+    im = open_image(sample_data_path)
+    _ = adaptive_threshold(
+        im,
+        max_val=200,
+        adaptive_method="binary",
+        threshold_method="binary",
+        block_size=3,
+        subtract_val=1
+    )
+
+    # Trigger errors and warnings.
+    with pytest.raises(WrongArgumentsValue):
+        _ = adaptive_threshold(
+            im,
+            max_val=200,
+            adaptive_method="binary",
+            threshold_method="binary",
+            block_size=2,
+            subtract_val=1
+        )
+
+# -------------------------------------------------------------------------
+
+def test_niblack_threshold(sample_data_path):
+    # Open the image.
+    im = open_image(sample_data_path)
+    _ = niblack_threshold(im, kernel_size=3)
+
+    # Trigger errors and warnings.
+    with pytest.raises(WrongArgumentsValue):
+        _ = niblack_threshold(im, kernel_size=2)
+
+# -------------------------------------------------------------------------
+
+def test_sauvola_threshold(sample_data_path):
+    # Open the image.
+    im = open_image(sample_data_path)
+    _ = sauvola_threshold(im, kernel_size=3)
+
+    # Trigger errors and warnings.
+    with pytest.raises(WrongArgumentsValue):
+        _ = sauvola_threshold(im, kernel_size=2)
+
+# -------------------------------------------------------------------------
