@@ -51,7 +51,11 @@ def blend(image_one: BaseImage, image_two: BaseImage, alpha: float) -> BaseImage
     try:
         checked_image_one._set_image(
             cv2.addWeighted(
-                checked_image_one.image, alpha, checked_image_two.image, float(1.0 - alpha)
+                checked_image_one.image,
+                alpha,
+                checked_image_two.image,
+                float(1.0 - alpha),
+                gamma=0
             ).astype(checked_image_one.dtype.value, copy=False)
         )
     except Exception as e:
@@ -93,7 +97,7 @@ def composite(image_one: BaseImage, image_two: BaseImage, mask: np.ndarray) -> B
     except Exception as e:
         raise RuntimeError("Provide mask image does not have the accurate dimensions") from e
 
-    if image_one.dims == image_two.dims == mask_dims:
+    if image_one.dims != mask_dims:
         raise WrongArgumentsValue("Dimensions of the provided images do not match")
 
     mask = _adjust_mask_dtype(mask, AllowedDataType.Uint8)
@@ -104,7 +108,11 @@ def composite(image_one: BaseImage, image_two: BaseImage, mask: np.ndarray) -> B
 
     raw_image_one = checked_image_one.image
     raw_image_two = checked_image_two.image
-    raw_image_one[mask == 1] = raw_image_two
+
+    for row in range(mask.shape[0]):
+        for col in range(mask.shape[1]):
+            if mask[row, col] == 1:
+                raw_image_one[row, col] = raw_image_two[row, col]
 
     checked_image_one._set_image(raw_image_one)
 
@@ -245,13 +253,15 @@ def _compute_mask_dims(mask: np.ndarray) -> Union[Tuple[int, int, int], Tuple[in
     mask_shape = mask.shape
     length_mask_shape = len(mask_shape)
 
-    if length_mask_shape < 2:
-        raise ValueError("Mask must be at least two dimensional")
+    if length_mask_shape < 2 or length_mask_shape > 3:
+        raise ValueError(
+            "Mask must be at least two dimensional and must not exceed three dimensions"
+        )
 
-    if length_mask_shape == 2 or (length_mask_shape == 3 and mask_shape[-1] == 3):
+    if length_mask_shape == 2:
         return mask_shape
 
-    if length_mask_shape == 3 and mask_shape[-1] == 1:
+    if length_mask_shape == 3:
         return mask_shape[:-1]
 
 # -------------------------------------------------------------------------
