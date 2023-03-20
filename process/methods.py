@@ -9,7 +9,7 @@ from common.interfaces.loader import BaseImage
 from common.exceptions import WrongArgumentsType, WrongArgumentsValue
 from common.helpers import image_array_check_conversion
 from common.exceptions import ProcessingError, ImageAlreadyClosed
-from transform.transforms import resize
+from transform import resize
 from common.decorators import check_image_exist_external
 from common.datastructs import AllowedDataType
 
@@ -233,6 +233,11 @@ def pyramid_blend(
         start_level._set_image(
             cv2.pyrUp(start_level.image).astype(start_level.dtype.value, copy=False)
         )
+        dim_level, dim_start_level = level.dims, start_level.dims
+        if dim_level > dim_start_level:
+            level = _adjust_dims(level, dim_start_level)
+        else:
+            start_level = _adjust_dims(start_level, dim_level)
         combined_image = cv2.add(level.image, start_level.image).astype(
             start_level.dtype.value, copy=False
         )
@@ -275,5 +280,12 @@ def _normalize_mask(mask: np.ndarray) -> np.ndarray:
     if max_val != float(1) if "float" in mask_data_type else 1:
         mask = mask / max_val
     return mask.astype(mask_data_type)
+
+# -------------------------------------------------------------------------
+
+def _adjust_dims(image_one: BaseImage, dims: Tuple[int, int]) -> BaseImage:
+    """Adjust the dimensions of the image"""
+
+    return resize(image_one, dims)
 
 # -------------------------------------------------------------------------
