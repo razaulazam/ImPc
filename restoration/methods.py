@@ -314,7 +314,7 @@ def wavelet_denoising(
     if image.is_gray() and conversion_ycbcr:
         raise RestorationError("Conversion to YCbCr is only possible for multichannel images")
 
-    if not isinstance(sigma, float):
+    if sigma and not isinstance(sigma, float):
         raise WrongArgumentsType("Sigma value should be provided as float")
 
     if not isinstance(wavelet, str):
@@ -323,7 +323,7 @@ def wavelet_denoising(
     if not isinstance(mode, str):
         raise WrongArgumentsType("Mode value should be provided as string")
 
-    if not isinstance(levels, (int, float)):
+    if levels and not isinstance(levels, (int, float)):
         raise WrongArgumentsType("Levels value should be provided as integer")
 
     if not isinstance(conversion_ycbcr, bool):
@@ -361,10 +361,10 @@ def wavelet_denoising(
         check_image._set_image(
             sk_denoise_wavelet(
                 check_image.image,
-                sigma=float(sigma),
+                sigma=float(sigma) if sigma else None,
                 wavelet=wavelet_arg,
                 mode=mode_arg,
-                wavelet_levels=int(levels),
+                wavelet_levels=int(levels) if levels else None,
                 convert2ycbcr=conversion_ycbcr,
                 method=method_arg,
                 rescale_sigma=True,
@@ -447,6 +447,9 @@ def deconv_richardson_lucy(
     if image.channels > 0 and len(kernel.shape) < 3:
         raise WrongArgumentsValue("Kernel must have a channels dimension as the image")
 
+    if image.channels > 0 and len(kernel.shape) > 3:
+        raise WrongArgumentsValue("Kernel has the wrong dimensions")
+
     if not isinstance(iterations, (float, int)):
         raise WrongArgumentsType("Number of iterations can only be specified as integer or float")
 
@@ -475,22 +478,22 @@ def rolling_ball(
 ) -> BaseImage:
     """Estimates the background intensity by rolling/translating a kernel. Result is returned as float32 image"""
 
-    if not ball_kernel:
+    if ball_kernel is None:
         if not isinstance(radius, (float, int)):
             raise WrongArgumentsType("Radius can only be supplied as either integer or float")
         if radius <= 0:
             raise WrongArgumentsValue("Radius can not have a negative value")
 
-    if ball_kernel and not isinstance(ball_kernel, np.ndarray):
+    if ball_kernel is not None and not isinstance(ball_kernel, np.ndarray):
         raise WrongArgumentsType("Kernel can only be supplied as a numpy array")
 
-    if ball_kernel:
+    if ball_kernel is not None:
         IgnoreArgument("Value of the radius would be ignored since the kernel is already provided")
         if ball_kernel.shape != ((*image.dims, image.channels)):
             raise WrongArgumentsValue("Dimensions of the kernel must be equal to the image")
 
     check_image = image_array_check_conversion(image)
-    check_kernel = check_user_provided_ndarray(ball_kernel) if ball_kernel else None
+    check_kernel = check_user_provided_ndarray(ball_kernel) if ball_kernel is not None else None
 
     try:
         check_image._set_image(

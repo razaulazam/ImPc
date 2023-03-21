@@ -9,7 +9,7 @@ from common.interfaces.loader import BaseImage
 from common.exceptions import WrongArgumentsType, WrongArgumentsValue
 from common.helpers import image_array_check_conversion
 from common.exceptions import ProcessingError, ImageAlreadyClosed
-from transform.transforms import resize
+from transform import resize
 from common.decorators import check_image_exist_external
 from common.datastructs import AllowedDataType
 
@@ -51,7 +51,11 @@ def blend(image_one: BaseImage, image_two: BaseImage, alpha: float) -> BaseImage
     try:
         checked_image_one._set_image(
             cv2.addWeighted(
-                checked_image_one.image, alpha, checked_image_two.image, float(1.0 - alpha)
+                checked_image_one.image,
+                alpha,
+                checked_image_two.image,
+                float(1.0 - alpha),
+                gamma=0
             ).astype(checked_image_one.dtype.value, copy=False)
         )
     except Exception as e:
@@ -93,7 +97,7 @@ def composite(image_one: BaseImage, image_two: BaseImage, mask: np.ndarray) -> B
     except Exception as e:
         raise RuntimeError("Provide mask image does not have the accurate dimensions") from e
 
-    if image_one.dims == image_two.dims == mask_dims:
+    if image_one.dims != mask_dims:
         raise WrongArgumentsValue("Dimensions of the provided images do not match")
 
     mask = _adjust_mask_dtype(mask, AllowedDataType.Uint8)
@@ -104,7 +108,11 @@ def composite(image_one: BaseImage, image_two: BaseImage, mask: np.ndarray) -> B
 
     raw_image_one = checked_image_one.image
     raw_image_two = checked_image_two.image
-    raw_image_one[mask == 1] = raw_image_two
+
+    for row in range(mask.shape[0]):
+        for col in range(mask.shape[1]):
+            if mask[row, col] == 1:
+                raw_image_one[row, col] = raw_image_two[row, col]
 
     checked_image_one._set_image(raw_image_one)
 
@@ -225,6 +233,11 @@ def pyramid_blend(
         start_level._set_image(
             cv2.pyrUp(start_level.image).astype(start_level.dtype.value, copy=False)
         )
+        dim_level, dim_start_level = level.dims, start_level.dims
+        if dim_level > dim_start_level:
+            level = _adjust_dims(level, dim_start_level)
+        else:
+            start_level = _adjust_dims(start_level, dim_level)
         combined_image = cv2.add(level.image, start_level.image).astype(
             start_level.dtype.value, copy=False
         )
@@ -245,13 +258,15 @@ def _compute_mask_dims(mask: np.ndarray) -> Union[Tuple[int, int, int], Tuple[in
     mask_shape = mask.shape
     length_mask_shape = len(mask_shape)
 
-    if length_mask_shape < 2:
-        raise ValueError("Mask must be at least two dimensional")
+    if length_mask_shape < 2 or length_mask_shape > 3:
+        raise ValueError(
+            "Mask must be at least two dimensional and must not exceed three dimensions"
+        )
 
-    if length_mask_shape == 2 or (length_mask_shape == 3 and mask_shape[-1] == 3):
+    if length_mask_shape == 2:
         return mask_shape
 
-    if length_mask_shape == 3 and mask_shape[-1] == 1:
+    if length_mask_shape == 3:
         return mask_shape[:-1]
 
 # -------------------------------------------------------------------------
@@ -265,5 +280,12 @@ def _normalize_mask(mask: np.ndarray) -> np.ndarray:
     if max_val != float(1) if "float" in mask_data_type else 1:
         mask = mask / max_val
     return mask.astype(mask_data_type)
+
+# -------------------------------------------------------------------------
+
+def _adjust_dims(image_one: BaseImage, dims: Tuple[int, int]) -> BaseImage:
+    """Adjust the dimensions of the image"""
+
+    return resize(image_one, dims)
 
 # -------------------------------------------------------------------------
