@@ -9,6 +9,7 @@ from load import open_image
 from common.exceptions import WrongArgumentsType, WrongArgumentsValue
 from restoration import bilateral_filter, bregman_denoising, tv_chambolle_denoising, wavelet_denoising, biharmonic_inpainting
 from restoration import deconv_richardson_lucy, rolling_ball, unwrap_phase
+from restoration.utils import calculate_sigma, get_ellipsoid_kernel
 
 # -------------------------------------------------------------------------
 
@@ -109,6 +110,24 @@ def test_unwrap_phase(sample_data_path):
     # Trigger the errors and warnings.
     with pytest.raises(WrongArgumentsType):
         _ = unwrap_phase(im, wrap="true")
+
+# -------------------------------------------------------------------------
+
+def test_calculate_sigma(sample_data_path):
+    # Open the image.
+    im = open_image(sample_data_path)
+    _ = calculate_sigma(im)
+    _ = calculate_sigma(im, sigma_every_channel=True)
+
+# -------------------------------------------------------------------------
+
+def test_get_ellipsoid_kernel(sample_data_path):
+    # Call the method.
+    _ = get_ellipsoid_kernel((3, 3), 1)
+
+    # Trigger errors and warnings.
+    with pytest.raises(WrongArgumentsType):
+        _ = get_ellipsoid_kernel((3, 3), "1")
 
 # -------------------------------------------------------------------------
 if __name__ == "__main__":
