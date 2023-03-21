@@ -115,7 +115,7 @@ def rotate(
                 check_image.image,
                 float(angle),
                 resize,
-                center[::-1],
+                center[::-1] if center else None,
                 mode=resample,
                 preserve_range=True
             ).astype(AllowedDataType.Float32.value, copy=False)

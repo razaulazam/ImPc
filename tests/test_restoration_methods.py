@@ -130,8 +130,3 @@ def test_get_ellipsoid_kernel(sample_data_path):
         _ = get_ellipsoid_kernel((3, 3), "1")
 
 # -------------------------------------------------------------------------
-if __name__ == "__main__":
-    a = str(Path(__file__).parent / "data" / "sample.jpg")
-    b = open_image(a)
-    kernel = np.ones((3, 3))
-    c = rolling_ball(b, ball_kernel=kernel)
