@@ -75,8 +75,3 @@ def test_pyramid_blend(sample_data_path):
         _ = pyramid_blend(im, im, 4)
 
 # -------------------------------------------------------------------------
-
-if __name__ == "__main__":
-    a = str(Path(__file__).parent / "data" / "sample.jpg")
-    b = open_image(a)
-    c = pyramid_blend(b, b, 3)
