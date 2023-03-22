@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/razaulazam/ImPc.svg?style=svg)](https://circleci.com/gh/razaulazam/ImPc)
+
 # Introduction 
 ImPc is a library that wraps various other image processing libraries for providing a common set of operations applicable on images under one umbrella. It is currently in active development in terms of the set of features that it aims to offer
 
