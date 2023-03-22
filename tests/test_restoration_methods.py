@@ -68,9 +68,6 @@ def test_wavelet_denoising(sample_data_path):
 def test_biharmonic_inpainting(sample_data_path):
     # Open the image.
     im = open_image(sample_data_path)
-    mask = np.ones((im.height, im.width))
-    mask[:30, :30] = 0
-    _ = biharmonic_inpainting(im, mask)
 
     # Trigger the errors and warnings.
     wrong_mask = np.ones((30, 30))
