@@ -12,3 +12,6 @@ In order to get started with contributing to this project, please follow these s
 
 # Contribute
 Please feel free to contribute anything that you consider reasonable for this project
+
+# Notes
+Some help was taken from [ChatGPT][https://chatgptspanish.org] while writing this code
